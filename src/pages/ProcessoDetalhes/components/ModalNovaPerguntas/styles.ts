@@ -54,7 +54,7 @@ export const HeaderContent = styled.header`
   button {
     padding: 0.625rem;
     border: 1px solid ${(props) => props.theme["border"]};
-    color: ${props => props.theme['text']};
+    color: ${(props) => props.theme["text"]};
     background: transparent;
     font-size: 0.75rem;
     cursor: pointer;
@@ -68,10 +68,10 @@ export const HeaderContent = styled.header`
   }
 `;
 
-export const Title = styled(Dialog.Title) `
+export const Title = styled(Dialog.Title)`
   font-size: 1.25rem;
-  color: ${props => props.theme['text']}
-`
+  color: ${(props) => props.theme["text"]};
+`;
 
 export const FormStyles = styled.form`
   padding: 1rem;
@@ -87,6 +87,10 @@ export const Row = styled.div`
 
   @media (min-width: 560px) {
     grid-template-columns: 1fr 1fr;
+  }
+
+  &.row-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 `;
 
@@ -113,21 +117,21 @@ export const Footer = styled.div`
   }
 
   .secondary {
-    background: ${props => props.theme.lightPrimary};
-    color: ${props => props.theme.primary};
-    border-color: ${props => props.theme.active};
+    background: ${(props) => props.theme.lightPrimary};
+    color: ${(props) => props.theme.primary};
+    border-color: ${(props) => props.theme.active};
 
     &:hover:not(:disabled) {
-      background: ${props => props.theme.active};
+      background: ${(props) => props.theme.active};
     }
   }
 
   .primary {
-    background: ${props => props.theme.primary};
-    color: ${props => props.theme["text-white"]};
+    background: ${(props) => props.theme.primary};
+    color: ${(props) => props.theme["text-white"]};
 
     &:hover:not(:disabled) {
-      background: ${props => props.theme.primaryHover};
+      background: ${(props) => props.theme.primaryHover};
     }
   }
 `;

@@ -44,7 +44,16 @@ type PerguntaToEdit = {
   obrigatoria: boolean;
   ordem: number;
   ativa: boolean;
-  regra_json?: string | null;
+
+  // ✅ pontuação (apenas pra casos simples, ex: BOOLEAN)
+  pontuacao_fundamental?: number | null;
+  pontuacao_medio?: number | null;
+  pontuacao_superior?: number | null;
+  pontuacao_maxima?: number | null;
+
+  // ✅ comprovante/anexo (novos nomes)
+  exige_comprovante?: boolean | null;
+  label_comprovante?: string | null;
 };
 
 interface IModalNovaPergunta {
@@ -67,6 +76,8 @@ export function ModalNovaPergunta({
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateNovaPerguntaFormData>({
     resolver: zodResolver(
@@ -80,10 +91,20 @@ export function ModalNovaPergunta({
       obrigatoria: false,
       ordem: 0,
       ativa: true,
+
+      pontuacao_fundamental: null,
+      pontuacao_medio: null,
+      pontuacao_superior: null,
+
+      // ✅ novos campos
+      exige_comprovante: false,
+      label_comprovante: "",
     },
   });
 
-  // ✅ POPULA O FORM QUANDO ABRIR / QUANDO TROCAR A PERGUNTA
+  const tipo = watch("tipo");
+  const exigeComprovante = watch("exige_comprovante");
+
   useEffect(() => {
     if (!open) return;
 
@@ -95,6 +116,14 @@ export function ModalNovaPergunta({
         obrigatoria: !!perguntaToEdit.obrigatoria,
         ordem: Number(perguntaToEdit.ordem ?? 0),
         ativa: !!perguntaToEdit.ativa,
+
+        pontuacao_fundamental: perguntaToEdit.pontuacao_fundamental ?? null,
+        pontuacao_medio: perguntaToEdit.pontuacao_medio ?? null,
+        pontuacao_superior: perguntaToEdit.pontuacao_superior ?? null,
+
+        // ✅ novos campos
+        exige_comprovante: !!perguntaToEdit.exige_comprovante,
+        label_comprovante: perguntaToEdit.label_comprovante ?? "",
       });
       return;
     }
@@ -107,8 +136,36 @@ export function ModalNovaPergunta({
       obrigatoria: false,
       ordem: 0,
       ativa: true,
+
+      pontuacao_fundamental: null,
+      pontuacao_medio: null,
+      pontuacao_superior: null,
+
+      // ✅ novos campos
+      exige_comprovante: false,
+      label_comprovante: "",
     });
   }, [open, perguntaToEdit, reset]);
+
+  // ✅ limpa campos de pontuação se não for BOOLEAN (evita enviar lixo)
+  useEffect(() => {
+    if (!open) return;
+
+    if (tipo !== "BOOLEAN") {
+      setValue("pontuacao_fundamental", null, { shouldValidate: true });
+      setValue("pontuacao_medio", null, { shouldValidate: true });
+      setValue("pontuacao_superior", null, { shouldValidate: true });
+    }
+  }, [tipo, open, setValue]);
+
+  // ✅ se desmarcar comprovante, limpa label
+  useEffect(() => {
+    if (!open) return;
+
+    if (!exigeComprovante) {
+      setValue("label_comprovante", "", { shouldValidate: true });
+    }
+  }, [exigeComprovante, open, setValue]);
 
   function handleClose() {
     onOpenChange(false);
@@ -157,6 +214,17 @@ export function ModalNovaPergunta({
         obrigatoria: data.obrigatoria,
         ordem: data.ordem,
         ativa: data.ativa,
+
+        // pontuação (somente p/ boolean no backend, mas pode enviar)
+        pontuacao_fundamental: data.pontuacao_fundamental ?? null,
+        pontuacao_medio: data.pontuacao_medio ?? null,
+        pontuacao_superior: data.pontuacao_superior ?? null,
+
+        // ✅ comprovante/anexo (novos nomes)
+        exige_comprovante: data.exige_comprovante,
+        label_comprovante: data.exige_comprovante
+          ? data.label_comprovante?.trim() || null
+          : null,
       };
 
       if (isEdit && perguntaToEdit?.id_pergunta) {
@@ -181,6 +249,8 @@ export function ModalNovaPergunta({
       toast.error(e?.message ?? "Não foi possível salvar a pergunta");
     }
   };
+
+  const showPontuacaoPorNivel = tipo === "BOOLEAN";
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -262,6 +332,74 @@ export function ModalNovaPergunta({
               </SelectBase>
             </Row>
 
+            {showPontuacaoPorNivel ? (
+              <>
+                <Row className="row-grid">
+                  <InputBase
+                    label="Pontuação (Fundamental)"
+                    type="number"
+                    placeholder="Ex: 0"
+                    {...register("pontuacao_fundamental", {
+                      valueAsNumber: true,
+                    })}
+                    error={errors.pontuacao_fundamental?.message}
+                  />
+
+                  <InputBase
+                    label="Pontuação (Médio)"
+                    type="number"
+                    placeholder="Ex: 10"
+                    {...register("pontuacao_medio", { valueAsNumber: true })}
+                    error={errors.pontuacao_medio?.message}
+                  />
+                  <InputBase
+                    label="Pontuação (Superior)"
+                    type="number"
+                    placeholder="Ex: 5"
+                    {...register("pontuacao_superior", {
+                      valueAsNumber: true,
+                    })}
+                    error={errors.pontuacao_superior?.message}
+                  />
+                </Row>
+
+                <p style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
+                  Para perguntas SELECT/MULTISELECT, a pontuação deve ficar nas
+                  opções.
+                </p>
+              </>
+            ) : null}
+
+            {/* ✅ Comprovante / Anexo */}
+            <Row>
+              <SelectBase
+                label="Exige comprovante?"
+                {...register("exige_comprovante", {
+                  setValueAs: (v) => v === "true",
+                })}
+                error={errors.exige_comprovante?.message as any}
+              >
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </SelectBase>
+
+              {exigeComprovante ? (
+                <>
+                  <InputBase
+                    label="Texto do comprovante"
+                    placeholder="Ex: Anexar certificado / carteira de trabalho"
+                    {...register("label_comprovante")}
+                    error={errors.label_comprovante?.message}
+                  />
+
+                  <p style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
+                    Dica: use PDF e imagens (JPG/PNG). O backend deve validar
+                    isso no envio da inscrição.
+                  </p>
+                </>
+              ) : null}
+            </Row>
+
             <Footer>
               <button type="button" className="secondary" onClick={handleClose}>
                 Cancelar
@@ -273,7 +411,6 @@ export function ModalNovaPergunta({
                 title={
                   !isValid ? "Preencha os campos corretamente" : submitText
                 }
-                disabled={isSubmitting || !isValid}
               >
                 {isSubmitting ? "Salvando..." : submitText}
               </button>

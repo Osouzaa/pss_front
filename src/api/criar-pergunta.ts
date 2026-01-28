@@ -1,12 +1,29 @@
 import { api } from "../lib/axios";
 
+export type PerguntaTipo =
+  | "BOOLEAN"
+  | "NUMERO"
+  | "TEXTO"
+  | "SELECT"
+  | "MULTISELECT"
+  | "DATA";
+
 type Payload = {
   titulo: string;
   descricao?: string | null;
-  tipo: "BOOLEAN" | "NUMERO" | "TEXTO" | "SELECT" | "MULTISELECT" | "DATA";
+  tipo: PerguntaTipo;
   obrigatoria?: boolean;
   ordem?: number;
   ativa?: boolean;
+
+  pontuacao_fundamental?: number | null;
+  pontuacao_medio?: number | null;
+  pontuacao_superior?: number | null;
+  pontuacao_maxima?: number | null;
+
+  // ✅ comprovante/anexo (nomes corretos)
+  exige_comprovante?: boolean;
+  label_comprovante?: string | null;
 };
 
 export async function criarPergunta(input: {
