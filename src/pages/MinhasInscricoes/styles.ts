@@ -21,13 +21,7 @@ const ui = {
 };
 
 export const Page = styled.div`
-  max-width: 1100px;
   margin: 0 auto;
-  padding: ${ui.space.xl};
-
-  @media (max-width: 768px) {
-    padding: ${ui.space.lg};
-  }
 `;
 
 export const Header = styled.header`
@@ -100,7 +94,10 @@ const buttonBase = css`
   letter-spacing: 0.01em;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease,
+  transition:
+    transform 0.08s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
     opacity 0.15s ease;
 
   &:active {
@@ -163,7 +160,10 @@ export const SearchInput = styled.input`
   padding: 0 12px;
   color: ${({ theme }) => theme.text};
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 
   &::placeholder {
     color: ${({ theme }) => theme.description};
