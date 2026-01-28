@@ -312,9 +312,8 @@ export function ModalNovaPergunta({
               <SelectBase
                 label="Obrigatória?"
                 {...register("obrigatoria", {
-                  setValueAs: (v) => v === "true",
+                  setValueAs: (v) => v === true || v === "true",
                 })}
-                error={errors.obrigatoria?.message as any}
               >
                 <option value="false">Não</option>
                 <option value="true">Sim</option>
@@ -323,9 +322,9 @@ export function ModalNovaPergunta({
               <SelectBase
                 label="Ativa?"
                 {...register("ativa", {
-                  setValueAs: (v) => v === "true",
+                  setValueAs: (v) => v === true || v === "true",
                 })}
-                error={errors.ativa?.message as any}
+                error={errors.ativa?.message}
               >
                 <option value="true">Sim</option>
                 <option value="false">Não</option>
@@ -375,9 +374,8 @@ export function ModalNovaPergunta({
               <SelectBase
                 label="Exige comprovante?"
                 {...register("exige_comprovante", {
-                  setValueAs: (v) => v === "true",
+                  setValueAs: (v) => v === true || v === "true",
                 })}
-                error={errors.exige_comprovante?.message as any}
               >
                 <option value="false">Não</option>
                 <option value="true">Sim</option>
