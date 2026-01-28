@@ -121,7 +121,7 @@ export function Processo() {
                   <S.MetaItem>
                     <S.MetaLabel>Período</S.MetaLabel>
                     <S.MetaValue>
-                      {formatDate(p.data_inicio_inscricoes)} {" "} • {" "}
+                      {formatDate(p.data_inicio_inscricoes)} •{" "}
                       {formatDate(p.data_fim_inscricoes)}
                     </S.MetaValue>
                   </S.MetaItem>
@@ -143,6 +143,7 @@ export function Processo() {
                   <S.PrimaryButton
                     type="button"
                     onClick={() => handleSubscribe(p.id_processo_seletivo)}
+                    disabled={p.status !== "ABERTO"}
                     title={
                       p.status !== "ABERTO"
                         ? "Inscrições fechadas"

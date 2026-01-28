@@ -4,38 +4,11 @@ import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import * as S from "./styles";
 
-import { getInscricoesMe, type InscricaoStatus } from "../../api/get-inscricoes-me";
-
-type ProcessoVM = {
-  id_processo_seletivo: string;
-  titulo?: string;
-  ano?: number;
-  status?: string;
-};
-
-type InscricaoVM = {
-  id_inscricao: string;
-  numero_inscricao: string;
-  cargo_funcao: string;
-  status: InscricaoStatus;
-  pontuacao_total: number;
-  data_criacao: string;
-  data_atualizacao: string;
-  processo?: ProcessoVM;
-  id_processo_seletivo?: string;
-};
-
-type Meta = {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
-};
-
-type ListResponse = {
-  meta: Meta;
-  items: InscricaoVM[];
-};
+import {
+  getMinhasInscricoes,
+  type InscricaoStatus,
+  type MinhaInscricaoListItem,
+} from "../../api/inscricoes";
 
 function fmtDateTimeBR(iso?: string) {
   if (!iso) return "—";
@@ -49,6 +22,8 @@ function normalizeStatusLabel(s?: string) {
   return s.replaceAll("_", " ");
 }
 
+type MinhasInscricoesRaw = [MinhaInscricaoListItem[], number];
+
 export function MinhasInscricoes() {
   const navigate = useNavigate();
 
@@ -56,30 +31,46 @@ export function MinhasInscricoes() {
   const [status, setStatus] = useState<InscricaoStatus | "TODAS">("TODAS");
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isError, error, refetch } = useQuery<ListResponse>({
-    queryKey: ["minhas-inscricoes", page, q, status],
-    queryFn: async () => {
-      const res = await getInscricoesMe({
-        page,
-        limit: 10,
-        q,
-        status: status === "TODAS" ? undefined : status,
-      });
+  const limit = 10;
 
-      return res as ListResponse;
-    },
-  });
+  const { data, isLoading, isError, error, refetch } =
+    useQuery<MinhasInscricoesRaw>({
+      queryKey: ["minhas-inscricoes", page, q, status],
+      queryFn: async () => {
+        const res = await getMinhasInscricoes({
+          page,
+          limit,
+          q,
+          status: status === "TODAS" ? undefined : status,
+        });
 
-  const meta = data?.meta;
-  const items = data?.items ?? [];
+        // backend está retornando findAndCount -> [items, total]
+        return res as any;
+      },
+    });
+
+  const items = data?.[0] ?? [];
+  const total = data?.[1] ?? 0;
+
+  const meta = useMemo(
+    () => ({
+      page,
+      limit,
+      total,
+      pages: Math.max(1, Math.ceil(total / limit)),
+    }),
+    [page, limit, total],
+  );
+
   const hasData = items.length > 0;
 
   const counters = useMemo(() => {
-    return { total: meta?.total ?? 0 };
-  }, [meta?.total]);
+    return { total: meta.total ?? 0 };
+  }, [meta.total]);
 
-  function handleOpen(item: InscricaoVM) {
-    const pid = item.id_processo_seletivo ?? item.processo?.id_processo_seletivo;
+  function handleOpen(item: MinhaInscricaoListItem) {
+    const pid =
+      item.id_processo_seletivo ?? item.processo?.id_processo_seletivo;
     if (!pid) return;
     navigate(`/processos/${pid}/inscricao`);
   }
@@ -90,16 +81,22 @@ export function MinhasInscricoes() {
         <S.TitleWrap>
           <S.Title>Minhas inscrições</S.Title>
           <S.Subtitle>
-            Acompanhe o status das suas inscrições e reabra um rascunho quando precisar.
+            Acompanhe o status das suas inscrições e reabra um rascunho quando
+            precisar.
           </S.Subtitle>
         </S.TitleWrap>
 
         <S.HeaderRight>
           <S.CounterPill>
-            <b>{counters.total}</b> {counters.total === 1 ? "inscrição" : "inscrições"}
+            <b>{counters.total}</b>{" "}
+            {counters.total === 1 ? "inscrição" : "inscrições"}
           </S.CounterPill>
 
-          <S.RefreshButton type="button" onClick={() => refetch()} disabled={isLoading}>
+          <S.RefreshButton
+            type="button"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
             Atualizar
           </S.RefreshButton>
         </S.HeaderRight>
@@ -115,7 +112,7 @@ export function MinhasInscricoes() {
               setQ(e.target.value);
               setPage(1);
             }}
-            placeholder="Buscar por nº, cargo ou título do processo..."
+            placeholder="Buscar por título do processo..."
           />
         </S.SearchWrap>
 
@@ -132,25 +129,17 @@ export function MinhasInscricoes() {
             <option value="TODAS">Todas</option>
             <option value="RASCUNHO">Rascunho</option>
             <option value="ENVIADA">Enviada</option>
-            <option value="EM_ANALISE">Em análise</option>
-            <option value="DEFERIDA">Deferida</option>
-            <option value="INDEFERIDA">Indeferida</option>
+            <option value="CANCELADA">Cancelada</option>
           </S.Select>
         </S.SelectWrap>
 
         <S.MetaRight>
-          {meta ? (
-            <>
-              <S.MetaText>
-                Página <b>{meta.page}</b> de <b>{meta.pages}</b>
-              </S.MetaText>
-              <S.MetaMuted>
-                Mostrando {items.length} de {meta.total}
-              </S.MetaMuted>
-            </>
-          ) : (
-            <S.MetaMuted>—</S.MetaMuted>
-          )}
+          <S.MetaText>
+            Página <b>{meta.page}</b> de <b>{meta.pages}</b>
+          </S.MetaText>
+          <S.MetaMuted>
+            Mostrando {items.length} de {meta.total}
+          </S.MetaMuted>
         </S.MetaRight>
       </S.Toolbar>
 
@@ -179,9 +168,11 @@ export function MinhasInscricoes() {
         <>
           <S.Grid>
             {items.map((i) => {
-              const pid = i.id_processo_seletivo ?? i.processo?.id_processo_seletivo;
+              const pid =
+                i.id_processo_seletivo ?? i.processo?.id_processo_seletivo;
+
               const processoTitulo = i.processo?.titulo ?? "Processo seletivo";
-              const processoAno = i.processo?.ano ? ` • ${i.processo?.ano}` : "";
+              const processoAno = i.processo?.ano ? ` • ${i.processo.ano}` : "";
 
               return (
                 <S.Card key={i.id_inscricao}>
@@ -198,13 +189,8 @@ export function MinhasInscricoes() {
 
                   <S.MetaRow>
                     <S.MetaItem>
-                      <S.MetaLabel>Nº inscrição</S.MetaLabel>
-                      <S.MetaValue>{i.numero_inscricao}</S.MetaValue>
-                    </S.MetaItem>
-
-                    <S.MetaItem>
-                      <S.MetaLabel>Cargo/Função</S.MetaLabel>
-                      <S.MetaValue>{i.cargo_funcao || "—"}</S.MetaValue>
+                      <S.MetaLabel>Vaga</S.MetaLabel>
+                      <S.MetaValue>{i.vaga?.nome ?? "—"}</S.MetaValue>
                     </S.MetaItem>
 
                     <S.MetaItem>
@@ -216,14 +202,27 @@ export function MinhasInscricoes() {
                       <S.MetaLabel>Criada em</S.MetaLabel>
                       <S.MetaValue>{fmtDateTimeBR(i.data_criacao)}</S.MetaValue>
                     </S.MetaItem>
+
+                    <S.MetaItem>
+                      <S.MetaLabel>Enviada em</S.MetaLabel>
+                      <S.MetaValue>
+                        {fmtDateTimeBR(i.data_envio ?? undefined)}
+                      </S.MetaValue>
+                    </S.MetaItem>
                   </S.MetaRow>
 
                   <S.CardFooter>
                     <S.SecondaryButton
                       type="button"
-                      onClick={() => pid && navigate(`/processos_detalhes/${pid}`)}
+                      onClick={() =>
+                        pid && navigate(`/processos_detalhes/${pid}`)
+                      }
                       disabled={!pid}
-                      title={!pid ? "Processo não encontrado na inscrição" : "Ver detalhes do processo"}
+                      title={
+                        !pid
+                          ? "Processo não encontrado na inscrição"
+                          : "Ver detalhes do processo"
+                      }
                     >
                       Ver processo
                     </S.SecondaryButton>
@@ -232,7 +231,11 @@ export function MinhasInscricoes() {
                       type="button"
                       onClick={() => handleOpen(i)}
                       disabled={!pid}
-                      title={!pid ? "Processo não encontrado na inscrição" : "Abrir inscrição"}
+                      title={
+                        !pid
+                          ? "Processo não encontrado na inscrição"
+                          : "Abrir inscrição"
+                      }
                     >
                       {i.status === "RASCUNHO" ? "Continuar" : "Abrir"}
                     </S.PrimaryButton>
