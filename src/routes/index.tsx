@@ -23,7 +23,7 @@ const Router = () => {
             element={<ProcessoSeletivosDetalhes />}
           />
           <Route path="/perfil" element={<Perfil />} />
-          <Route path="/processos/:id/inscricao" element={<InscricaoPage />} />
+          <Route path="/processos/:id/inscricao/:id_inscricao" element={<InscricaoPage />} />
           <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
         </Route>
       </Routes>
