@@ -15,6 +15,7 @@ import { login } from "../../api/login";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { TokenSistems } from "../../constants/env.constantes";
+import { queryClient } from "../../lib/react-query";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -73,8 +74,10 @@ export function Login() {
         JSON.stringify(response.user),
       );
 
+      queryClient.clear();
+
       toast.success("Login realizado com sucesso!");
-      navigate("/home");
+      navigate("/home", { replace: true });
     } catch (err: any) {
       toast.error("Não foi possível entrar. Verifique seus dados.");
     }

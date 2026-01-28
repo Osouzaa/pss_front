@@ -118,6 +118,7 @@ export function Perfil() {
       uf: (cand.uf ?? "MG").toUpperCase(),
     });
   }, [result, reset]);
+  
 
   const updateMutation = useMutation({
     mutationFn: atualizarInfoCandidate,
