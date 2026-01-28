@@ -25,22 +25,13 @@ import {
 
 import { criarNovoProcesso } from "../../../../api/criar-novo-processo";
 import { editarProcesso } from "../../../../api/editar-processo";
-
-type ProcessoToEdit = {
-  id_processo_seletivo: string;
-  titulo: string;
-  secretaria: string;
-  ano: number;
-  status: "RASCUNHO" | "ABERTO" | "FECHADO";
-  data_inicio_inscricoes: string; // ISO
-  data_fim_inscricoes: string; // ISO
-};
+import type { ProcessoSeletivoResponse } from "../../../../api/get-processo-id";
 
 interface IModalNovoProcesso {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 
-  processoToEdit?: ProcessoToEdit | null;
+  processoToEdit?: ProcessoSeletivoResponse | null;
 }
 
 function isoToInputDate(iso?: string | null) {
