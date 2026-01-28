@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router";
+import { NavLink, replace, useLocation, useNavigate } from "react-router";
 import * as S from "./styles";
 
 import {
@@ -10,6 +10,8 @@ import {
   FiSun,
   FiMoon,
 } from "react-icons/fi";
+import { toast } from "sonner";
+import { TokenSistems } from "../../constants/env.constantes";
 
 type Props = {
   brandTitle?: string;
@@ -25,8 +27,8 @@ export function ProcessoSidebar({
   onToggleTheme,
 }: Props) {
   const location = useLocation();
-  const [open, setOpen] = useState(false); 
-
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
@@ -35,11 +37,23 @@ export function ProcessoSidebar({
     () => [
       { to: "/", label: "Home", icon: <FiHome size={18} /> },
       { to: "/processos", label: "Processo", icon: <FiClipboard size={18} /> },
-      { to: "/minhas-inscricoes", label: "Inscrições", icon: <FiUsers size={18} /> },
+      {
+        to: "/minhas-inscricoes",
+        label: "Inscrições",
+        icon: <FiUsers size={18} />,
+      },
       { to: "/perfil", label: "Perfil", icon: <FiUser size={18} /> },
     ],
     [],
   );
+
+  const handleSignOut = () => {
+    toast.success("Saindo do sistema!");
+    localStorage.removeItem(TokenSistems.TOKEN_PSS);
+    localStorage.removeItem(TokenSistems.TOKEN_USER);
+
+    navigate("/login", { replace: true });
+  };
 
   return (
     <>
@@ -77,7 +91,9 @@ export function ProcessoSidebar({
             </S.ThemeToggleFooter>
           </S.FooterRow>
 
-          <S.LogoutButton type="button">Sair</S.LogoutButton>
+          <S.LogoutButton type="button" onClick={handleSignOut}>
+            Sair
+          </S.LogoutButton>
         </S.SidebarFooter>
       </S.Sidebar>
 

@@ -1,8 +1,6 @@
-// src/pages/Perfil/index.tsx
 import { useEffect, useState } from "react";
 import {
   FiUser,
-  FiCalendar,
   FiMapPin,
   FiFileText,
   FiUploadCloud,
@@ -13,7 +11,7 @@ import {
 
 import * as S from "./styles";
 import { InputBase } from "../../components/InputBase";
-import { useForm } from "react-hook-form";
+import { Controller, useController, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createCandidateSchema,
@@ -27,9 +25,12 @@ import { getMe } from "../../api/get-me";
 
 import { ModalAddAnexo } from "./components/ModalAddAnexo";
 import { getDocumentosMe } from "../../api/get-documentos-me";
-import { removeDocumentoMe, type CandidatoDocumentoDTO } from "../../api/remove-documento-me";
-
-
+import {
+  removeDocumentoMe,
+  type CandidatoDocumentoDTO,
+} from "../../api/remove-documento-me";
+import { formatTelefone, unformatTelefone } from "../../utils/formart-phone";
+import { formatCPF } from "../../utils/formart-cpf";
 
 type ViaCepResponse = {
   cep?: string;
@@ -85,10 +86,16 @@ export function Perfil() {
     setError,
     reset,
     formState: { errors },
+    control,
   } = useForm<CreateCandidateFormData>({
     resolver: zodResolver(createCandidateSchema),
     mode: "onBlur",
     defaultValues: { uf: "MG" },
+  });
+
+  const { field: cpfField } = useController({
+    name: "cpf",
+    control,
   });
 
   useEffect(() => {
@@ -306,15 +313,29 @@ export function Perfil() {
               {...register("email")}
             />
 
-            <InputBase
-              id="telefone"
-              label="Telefone"
-              placeholder="(00) 00000-0000"
-              inputMode="tel"
-              autoComplete="tel"
-              error={errors.telefone?.message}
-              disabled={locked}
-              {...register("telefone")}
+            <Controller
+              name="telefone"
+              control={control}
+              render={({ field }) => {
+                const formmatedValue = formatTelefone(field.value || "");
+                return (
+                  <InputBase
+                    id="telefone"
+                    label="Telefone"
+                    placeholder="(00) 00000-0000"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    error={errors.telefone?.message}
+                    disabled={locked}
+                    value={formmatedValue}
+                    onChange={(e) => {
+                      const rawValue = unformatTelefone(e.target.value);
+                      field.onChange(rawValue);
+                    }}
+                    onBlur={field.onBlur}
+                  />
+                );
+              }}
             />
 
             <InputBase
@@ -335,6 +356,9 @@ export function Perfil() {
               error={errors.cpf?.message}
               disabled={locked}
               {...register("cpf")}
+              value={cpfField.value ?? ""}
+              onChange={(e) => cpfField.onChange(formatCPF(e.target.value))}
+              onBlur={cpfField.onBlur}
             />
 
             <InputBase
@@ -428,10 +452,40 @@ export function Perfil() {
 
             <S.SelectField>
               <S.SelectLabel htmlFor="uf">UF</S.SelectLabel>
-              <S.Select id="uf" defaultValue="MG" disabled={locked} {...register("uf")}>
+              <S.Select
+                id="uf"
+                defaultValue="MG"
+                disabled={locked}
+                {...register("uf")}
+              >
                 {[
-                  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
-                  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+                  "AC",
+                  "AL",
+                  "AP",
+                  "AM",
+                  "BA",
+                  "CE",
+                  "DF",
+                  "ES",
+                  "GO",
+                  "MA",
+                  "MT",
+                  "MS",
+                  "MG",
+                  "PA",
+                  "PB",
+                  "PR",
+                  "PE",
+                  "PI",
+                  "RJ",
+                  "RN",
+                  "RS",
+                  "RO",
+                  "RR",
+                  "SC",
+                  "SP",
+                  "SE",
+                  "TO",
                 ].map((uf) => (
                   <option key={uf} value={uf}>
                     {uf}
@@ -440,16 +494,6 @@ export function Perfil() {
               </S.Select>
             </S.SelectField>
           </S.FormGrid>
-
-          <S.HintRow>
-            <S.HintIcon aria-hidden="true">
-              <FiCalendar />
-            </S.HintIcon>
-            <S.HintText>
-              Assim que o CEP tiver 8 dígitos, o endereço é consultado automaticamente no ViaCEP.
-            </S.HintText>
-          </S.HintRow>
-
           <S.FooterActions>
             <S.SecondaryButton
               type="button"
@@ -469,15 +513,14 @@ export function Perfil() {
 
             <S.CardHeaderText>
               <S.CardTitle>Documentos</S.CardTitle>
-              <S.CardDesc>Envie arquivos e mantenha tudo organizado.</S.CardDesc>
+              <S.CardDesc>
+                Envie arquivos e mantenha tudo organizado.
+              </S.CardDesc>
             </S.CardHeaderText>
           </S.CardHeader>
 
           <S.DocActions>
-            <S.UploadButton
-              type="button"
-              onClick={() => setOpenModal(true)}
-            >
+            <S.UploadButton type="button" onClick={() => setOpenModal(true)}>
               <FiUploadCloud />
               Adicionar arquivo
             </S.UploadButton>
@@ -494,7 +537,8 @@ export function Perfil() {
               </S.EmptyIcon>
               <S.EmptyTitle>Nenhum documento enviado</S.EmptyTitle>
               <S.EmptyDesc>
-                Clique em <strong>Adicionar arquivo</strong> para enviar seus documentos.
+                Clique em <strong>Adicionar arquivo</strong> para enviar seus
+                documentos.
               </S.EmptyDesc>
             </S.Empty>
           ) : (
@@ -519,9 +563,7 @@ export function Perfil() {
                       type="button"
                       title="Remover"
                       disabled={
-                        !isEditing ||
-                        isSaving ||
-                        removeDocMutation.isPending
+                        !isEditing || isSaving || removeDocMutation.isPending
                       }
                       onClick={() =>
                         removeDocMutation.mutate(d.id_candidato_documento)

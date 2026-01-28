@@ -1,4 +1,3 @@
-// styles.ts
 import styled from "styled-components";
 
 const ui = {
@@ -219,7 +218,9 @@ export const UploadButton = styled.button`
   padding: 0 ${ui.space.lg};
   cursor: pointer;
 
-  transition: background 0.2s ease, transform 0.05s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.05s ease;
 
   &:hover {
     background: ${({ theme }) => theme.primaryHover};
@@ -312,7 +313,9 @@ export const DangerIconButton = styled.button`
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 0.05s ease, background 0.2s ease;
+  transition:
+    transform 0.05s ease,
+    background 0.2s ease;
 
   svg {
     color: ${({ theme }) => theme.danger};
@@ -427,7 +430,9 @@ export const PrimaryButton = styled.button`
   cursor: pointer;
   width: 100%;
 
-  transition: background 0.2s ease, transform 0.05s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.05s ease;
 
   &:hover {
     background: ${({ theme }) => theme.primaryHover};
@@ -461,7 +466,10 @@ export const SecondaryButton = styled.button`
   cursor: pointer;
   width: 100%;
 
-  transition: background 0.2s ease, transform 0.05s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.05s ease,
+    border-color 0.2s ease;
 
   &:hover {
     background: ${({ theme }) => theme.active};
