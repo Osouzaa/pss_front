@@ -16,7 +16,7 @@ export const inscricaoSchema = z.object({
   possui_mestrado: z.boolean().optional(),
   possui_doutorado: z.boolean().optional(),
 
-  tempo_experiencia_meses: z.number().int().min(0).max(360).optional(),
+  tempo_experiencia_dias: z.number().int().min(0).optional(),
 
   observacao: z.string().max(500).optional(),
 });

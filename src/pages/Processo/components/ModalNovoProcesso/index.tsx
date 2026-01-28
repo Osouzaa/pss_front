@@ -40,7 +40,6 @@ interface IModalNovoProcesso {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 
-  /** se vier, modal vira edição */
   processoToEdit?: ProcessoToEdit | null;
 }
 
@@ -88,7 +87,9 @@ export function ModalNovoProcesso({
         secretaria: processoToEdit.secretaria ?? "",
         ano: processoToEdit.ano ?? new Date().getFullYear(),
         status: (processoToEdit.status ?? "ABERTO") as any,
-        data_inicio_inscricoes: isoToInputDate(processoToEdit.data_inicio_inscricoes),
+        data_inicio_inscricoes: isoToInputDate(
+          processoToEdit.data_inicio_inscricoes,
+        ),
         data_fim_inscricoes: isoToInputDate(processoToEdit.data_fim_inscricoes),
       });
       return;
@@ -121,7 +122,7 @@ export function ModalNovoProcesso({
   const { mutateAsync: criarNovoProcessoFn } = useMutation({
     mutationFn: criarNovoProcesso,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["processos"] });
+      queryClient.invalidateQueries({ queryKey: ["all-processos"] });
     },
   });
 
@@ -133,7 +134,7 @@ export function ModalNovoProcesso({
           queryKey: ["processo-id", processoToEdit.id_processo_seletivo],
         });
       }
-      queryClient.invalidateQueries({ queryKey: ["processos"] });
+      queryClient.invalidateQueries({ queryKey: ["all-processos"] });
     },
   });
 

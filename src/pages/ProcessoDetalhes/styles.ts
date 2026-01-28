@@ -33,7 +33,6 @@ export const Container = styled.div`
   flex-direction: column;
   gap: 14px;
   background: ${({ theme }) => theme.bodyBg};
-
 `;
 
 /* =========================
@@ -144,7 +143,9 @@ export const SecondaryButton = styled.button`
   font-weight: 700;
 
   cursor: pointer;
-  transition: transform 0.14s ease, background 0.14s ease,
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
     border-color 0.14s ease;
 
   &:hover {
@@ -172,8 +173,11 @@ export const PrimaryButton = styled.button`
   cursor: pointer;
   box-shadow: 0 16px 34px ${({ theme }) => theme.active};
 
-  transition: transform 0.14s ease, background 0.14s ease,
-    opacity 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    opacity 0.14s ease,
+    box-shadow 0.14s ease;
 
   &:hover {
     transform: translateY(-1px);
@@ -231,10 +235,14 @@ export const TabButton = styled.button<{ $active: boolean }>`
   cursor: pointer;
   font-weight: 700;
 
-  background: ${({ $active, theme }) => ($active ? theme.active : theme.lightDefault)};
+  background: ${({ $active, theme }) =>
+    $active ? theme.active : theme.lightDefault};
   color: ${({ $active, theme }) => ($active ? theme.primary : theme.text)};
 
-  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
 
   &:hover {
     transform: translateY(-1px);
@@ -379,7 +387,9 @@ export const SearchInput = styled.input`
   padding: 0 12px;
   outline: none;
 
-  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
@@ -541,7 +551,7 @@ export const VagasTable = styled.table`
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 760px; /* força tabela a não “quebrar” feio no mobile */
+  min-width: 760px; /* força tabela a não "quebrar" feio no mobile */
 
   thead tr {
     background: ${({ theme }) => theme.lightDefault};
@@ -739,7 +749,6 @@ export const MetaValue = styled.span`
   white-space: nowrap;
 `;
 
-
 export const EmptyState = styled.div`
   border: 1px dashed ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
@@ -761,4 +770,389 @@ export const EmptyText = styled.p`
   margin: 0;
   font-size: 13px;
   color: ${({ theme }) => theme.description};
+`;
+
+/* =========================
+   PERGUNTAS GRID & CARD
+========================= */
+export const PerguntasGrid = styled.div`
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+`;
+
+export const PerguntaCard = styled.article`
+  position: relative;
+  overflow: hidden;
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+  border-radius: ${ui.radius.xl};
+  padding: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  box-shadow: ${ui.shadow.sm};
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${ui.shadow.md};
+  }
+`;
+
+export const PerguntaHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+export const PerguntaOrderBadge = styled.div`
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: ${ui.radius.md};
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: ${({ theme }) => theme.lightPrimary};
+  color: ${({ theme }) => theme.primary};
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const PerguntaBadgesRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+`;
+
+const perguntaTipoTokens = (tipo: string, theme: any) => {
+  const tipoUpper = tipo?.toUpperCase() || "";
+
+  switch (tipoUpper) {
+    case "BOOLEAN":
+      return { bg: "#E3F2FD", fg: "#1976D2", label: "Booleano" };
+    case "NUMERO":
+      return { bg: "#FFF3E0", fg: "#F57C00", label: "Número" };
+    case "TEXTO":
+      return { bg: "#F3E5F5", fg: "#7B1FA2", label: "Texto" };
+    case "SELECT":
+      return { bg: theme.lightPrimary, fg: theme.primary, label: "Seleção" };
+    case "MULTISELECT":
+      return { bg: "#E8F5E9", fg: "#388E3C", label: "Múltipla Escolha" };
+    case "DATA":
+      return { bg: "#FFEBEE", fg: "#C62828", label: "Data" };
+    default:
+      return { bg: theme.lightDefault, fg: theme.text, label: tipo };
+  }
+};
+
+export const PerguntaTipoPill = styled.span<{ $tipo: string }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  text-transform: uppercase;
+
+  ${({ $tipo, theme }) => {
+    const c = perguntaTipoTokens($tipo, theme);
+    return `
+      background: ${c.bg};
+      color: ${c.fg};
+      
+      &::after {
+        content: "${c.label}";
+      }
+    `;
+  }}
+`;
+
+export const PerguntaObrigatoriaPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: #ffebee;
+  color: #c62828;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+`;
+
+export const PerguntaInativaPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.statusCancelBg};
+  color: ${({ theme }) => theme.statusCancelText};
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+`;
+
+export const PerguntaTitulo = styled.h3`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: ${({ theme }) => theme.text};
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const PerguntaDescricao = styled.p`
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.description};
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const PerguntaFooter = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const PerguntaMetaRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+`;
+
+export const PerguntaMetaItem = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: ${ui.radius.pill};
+  background: ${({ theme }) => theme.lightDefault};
+  border: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const PerguntaMetaIcon = styled.span`
+  font-size: 12px;
+  line-height: 1;
+`;
+
+export const PerguntaMetaText = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.description};
+  white-space: nowrap;
+`;
+
+export const PerguntaActions = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+export const PerguntasTableWrap = styled.div`
+  width: 100%;
+  border-radius: ${ui.radius.xl};
+  overflow: hidden;
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+`;
+
+export const PerguntasTable = styled.table`
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 980px;
+
+  thead tr {
+    background: ${({ theme }) => theme.lightDefault};
+  }
+
+  tbody tr + tr td {
+    border-top: 1px solid ${({ theme }) => theme.border};
+  }
+`;
+
+export const PerguntaOrderPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 10px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.lightPrimary};
+  color: ${({ theme }) => theme.primary};
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+export const PerguntaTitleCell = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+  line-height: 1.25;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 520px;
+`;
+
+export const PerguntaDescCell = styled.div`
+  margin-top: 4px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  line-height: 1.35;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 520px;
+`;
+
+export const YesPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.statusDoneBg};
+  color: ${({ theme }) => theme.statusDoneText};
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+export const NoPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.statusCancelBg};
+  color: ${({ theme }) => theme.statusCancelText};
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+export const OpcoesCountPill = styled.span<{ "data-has"?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 44px;
+  padding: 6px 10px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.lightDefault};
+  color: ${({ theme }) => theme.text};
+  font-size: 11px;
+  font-weight: 900;
+
+  &[data-has="true"] {
+    background: ${({ theme }) => theme.lightPrimary};
+    color: ${({ theme }) => theme.primary};
+  }
+`;
+
+export const Muted = styled.span`
+  color: ${({ theme }) => theme.description};
+  font-size: 12px;
+`;
+
+export const IconButton = styled.button`
+  height: ${ui.h.btn};
+  width: ${ui.h.btn};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: ${ui.radius.md};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.lightDefault};
+  color: ${({ theme }) => theme.text};
+
+  cursor: pointer;
+  transition: 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.active};
+    border-color: ${({ theme }) => theme.primary};
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &.danger {
+    color: ${({ theme }) => theme.danger};
+  }
+
+  &.danger:hover:not(:disabled) {
+    background: ${({ theme }) => theme.hoverDanger};
+    border-color: ${({ theme }) => theme.hoverDanger};
+    color: ${({ theme }) => theme["text-white"]};
+  }
 `;

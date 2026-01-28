@@ -39,7 +39,7 @@ export type ProcessoSeletivoInscricao = {
   possui_mestrado?: boolean | null;
   possui_doutorado?: boolean | null;
 
-  tempo_experiencia_meses?: number | null;
+  tempo_experiencia_dias?: number | null;
   total_dias_experiencia?: number | null;
 
   data_criacao: string;

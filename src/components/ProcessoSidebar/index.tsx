@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, replace, useLocation, useNavigate } from "react-router";
+import { NavLink, useLocation, useNavigate } from "react-router";
 import * as S from "./styles";
 
 import {
@@ -35,7 +35,7 @@ export function ProcessoSidebar({
 
   const nav = useMemo(
     () => [
-      { to: "/", label: "Home", icon: <FiHome size={18} /> },
+      { to: "/home", label: "Home", icon: <FiHome size={18} /> },
       { to: "/processos", label: "Processo", icon: <FiClipboard size={18} /> },
       {
         to: "/minhas-inscricoes",
