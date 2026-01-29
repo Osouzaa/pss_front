@@ -20,11 +20,10 @@ import { handleLoginError } from "../../errs/handle.login.erro";
 // import Logo from "../../assets/logo.png";
 import logo_pmi from "../../assets/logo-pmi-positiva.png";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
-import Logo from "../../assets/logo_pss_ok.png";
-// import Logo from "../../assets/logo_pss_funil.png"
-// import Logo from "../../assets/logo_pss_funil0.png";
+// import Logo from "../../assets/logo_pss_ok.png";
+// import Logo from "../../assets/logo_pss_funil.png";
+import Logo from "../../assets/logo_pss_funil0.png";
 
-// ✅ novo: consome o tema global
 import { useTheme } from "../../contexts/ThemeContext";
 import { PageTransition } from "../../components/PageTransition";
 
@@ -33,7 +32,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function Login() {
   const navigate = useNavigate();
 
-  // ✅ vem do contexto (global)
   const { mode, toggleTheme } = useTheme();
 
   const [showPass, setShowPass] = useState(false);

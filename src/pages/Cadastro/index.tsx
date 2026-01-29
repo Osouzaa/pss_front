@@ -1,4 +1,3 @@
-// src/pages/Cadastro/index.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";

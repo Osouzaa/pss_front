@@ -76,9 +76,6 @@ export const LogoCircleImg = styled.img`
   height: 50px;
   border-radius: ${ui.radius.pill};
   object-fit: cover;
-
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
 `;
 
 export const LogoDivider = styled.div`

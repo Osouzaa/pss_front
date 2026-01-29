@@ -57,8 +57,6 @@ export const LogoCircleImg = styled.img`
   border-radius: 999px;
   display: block;
   object-fit: contain;
-  background: ${({ theme }) => theme.backgroundInput};
-  border: 1px solid ${({ theme }) => theme.border};
   padding: 8px;
 `;
 
@@ -69,8 +67,6 @@ export const SystemLogoImg = styled.img`
   border-radius: 16px;
   display: block;
   object-fit: contain;
-  background: ${({ theme }) => theme.backgroundInput};
-  border: 1px solid ${({ theme }) => theme.border};
   padding: 8px;
 `;
 
