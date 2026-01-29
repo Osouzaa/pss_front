@@ -119,7 +119,7 @@ export async function salvarRespostas(
 
 export async function enviarInscricao(idProcesso: string, idInscricao: string) {
   const { data } = await api.post(
-    `/processos_seletivos/${idProcesso}/inscricoes/${idInscricao}/enviar`,
+    `/processos-seletivos-inscricoes/${idProcesso}/inscricoes/${idInscricao}/enviar`,
     {},
   );
   return data as { ok: true; status: "ENVIADA"; pontuacao_total: number };

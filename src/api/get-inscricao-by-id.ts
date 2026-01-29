@@ -7,5 +7,7 @@ export async function getInscricaoById(
   const { data } = await api.get(
     `/processo-seletivo/${id_processo_seletivo}/inscricao/${id_inscricao}`,
   );
+
+  console.log(data);
   return data;
 }

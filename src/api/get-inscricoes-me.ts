@@ -7,12 +7,6 @@ export type InscricaoStatus =
   | "DEFERIDA"
   | "INDEFERIDA";
 
-type GetInscricoesMeParams = {
-  page?: number;
-  limit?: number;
-  q?: string;
-  status?: InscricaoStatus;
-};
 /** ===== VAGA ===== */
 export interface VagaResponse {
   id_vaga: string;

@@ -6,7 +6,8 @@ export type PerguntaTipo =
   | "TEXTO"
   | "SELECT"
   | "MULTISELECT"
-  | "DATA";
+  | "DATA"
+  | "EXPERIENCIA_DIAS";
 
 type Payload = Partial<{
   titulo: string;
@@ -16,15 +17,16 @@ type Payload = Partial<{
   ordem: number;
   ativa: boolean;
 
-  // ✅ pontuação (para perguntas simples, ex: BOOLEAN)
   pontuacao_fundamental: number | null;
   pontuacao_medio: number | null;
   pontuacao_superior: number | null;
   pontuacao_maxima: number | null;
 
-  // ✅ comprovante/anexo (novos nomes)
   exige_comprovante: boolean;
   label_comprovante: string | null;
+
+  // ✅ ESSENCIAL pro EXPERIENCIA_DIAS
+  regra_json: string | null;
 }>;
 
 export async function editarPergunta(input: {
@@ -32,7 +34,6 @@ export async function editarPergunta(input: {
   payload: Payload;
 }) {
   const { id_pergunta, payload } = input;
-
   const { data } = await api.patch(`/perguntas/${id_pergunta}`, payload);
   return data;
 }

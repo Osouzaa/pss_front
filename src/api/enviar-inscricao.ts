@@ -1,4 +1,3 @@
-// src/api/inscricoes.ts
 import { api } from "../lib/axios";
 
 export type EnviarInscricaoBody = {
@@ -11,13 +10,9 @@ export type EnviarInscricaoResponse = {
   pontuacao_total: number;
 };
 
-export async function enviarInscricaoTwo(
-  idInscricao: string,
-  body: EnviarInscricaoBody,
-) {
+export async function enviarInscricaoTwo(idInscricao: string) {
   const { data } = await api.post<EnviarInscricaoResponse>(
     `/processos-seletivos-inscricoes/${idInscricao}/enviar`,
-    body,
   );
   return data;
 }
