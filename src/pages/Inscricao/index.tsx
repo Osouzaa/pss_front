@@ -18,7 +18,6 @@ import { TextAreaBase } from "../../components/TextAreaBase";
 
 import { getRespostasByInscricao } from "../../api/inscricao-respostas";
 import { salvarRespostasLote } from "../../api/salvar-lote";
-import { enviarInscricao } from "../../api/inscricoes";
 import { enviarInscricaoTwo } from "../../api/enviar-inscricao";
 
 type RespostasState = Record<
