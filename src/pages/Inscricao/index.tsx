@@ -21,7 +21,10 @@ import { salvarRespostasLote } from "../../api/salvar-lote";
 import { enviarInscricao } from "../../api/inscricoes";
 import { enviarInscricaoTwo } from "../../api/enviar-inscricao";
 
-type RespostasState = Record<string, boolean | number | string | null | undefined>;
+type RespostasState = Record<
+  string,
+  boolean | number | string | null | undefined
+>;
 
 export function InscricaoPage() {
   const { id, id_inscricao } = useParams();
@@ -106,14 +109,14 @@ export function InscricaoPage() {
         const v = respostas[p.id_pergunta];
 
         if (p.tipo === "BOOLEAN") {
-          // ⚠️ importante: se não respondeu ainda, manda null (não força false)
           return {
             id_pergunta: p.id_pergunta,
             valor_boolean: typeof v === "boolean" ? v : null,
           };
         }
 
-        if (p.tipo === "NUMERO") {
+        // ✅ NUMERO e EXPERIENCIA_DIAS usam valor_numero
+        if (p.tipo === "NUMERO" || p.tipo === "EXPERIENCIA_DIAS") {
           return {
             id_pergunta: p.id_pergunta,
             valor_numero: typeof v === "number" ? v : null,
@@ -172,20 +175,6 @@ export function InscricaoPage() {
     }
   }
 
-  // ✅ auto-save debounce (só depois da hidratação)
-  useEffect(() => {
-    if (!idInscricao) return;
-    if (!hydratedRef.current) return;
-    if (!perguntas.length) return;
-
-    const t = setTimeout(() => {
-      salvarMut.mutate(buildPayload());
-    }, 700);
-
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [respostas, idInscricao, perguntas.length]);
-
   if (!idProcesso) return <S.Page>Processo inválido.</S.Page>;
   if (processoQuery.isLoading) return <S.Page>Carregando processo...</S.Page>;
   if (respostasQuery.isLoading) return <S.Page>Carregando respostas...</S.Page>;
@@ -211,7 +200,9 @@ export function InscricaoPage() {
       <S.Card>
         <S.CardHeader>
           <S.CardHeaderTitle>Formulário</S.CardHeaderTitle>
-          <S.CardHeaderText>Suas respostas são salvas automaticamente.</S.CardHeaderText>
+          <S.CardHeaderText>
+            Suas respostas são salvas automaticamente.
+          </S.CardHeaderText>
         </S.CardHeader>
 
         <S.Form onSubmit={(e) => e.preventDefault()}>
@@ -327,7 +318,8 @@ export function InscricaoPage() {
               onChange={(e: any) =>
                 setRespostas((prev) => ({
                   ...prev,
-                  [idPergunta]: e.target.value === "" ? null : Number(e.target.value),
+                  [idPergunta]:
+                    e.target.value === "" ? null : Number(e.target.value),
                 }))
               }
             />
@@ -345,6 +337,23 @@ export function InscricaoPage() {
               }
               rows={3}
               maxLength={500}
+            />
+          ) : null}
+
+          {p.tipo === "EXPERIENCIA_DIAS" ? (
+            <InputBase
+              id={`p_${idPergunta}`}
+              label={`Dias de experiência${obrigatorioMark}`}
+              type="number"
+              placeholder="Ex: 400"
+              value={typeof valor === "number" ? valor : ""}
+              onChange={(e: any) =>
+                setRespostas((prev) => ({
+                  ...prev,
+                  [idPergunta]:
+                    e.target.value === "" ? null : Number(e.target.value),
+                }))
+              }
             />
           ) : null}
 

@@ -15,7 +15,7 @@ export type PerguntaTipo =
   | "NUMERO"
   | "TEXTO"
   | "SELECT"
-  | "MULTISELECT"
+  | "EXPERIENCIA_DIAS"
   | "DATA";
 
 export type NivelVaga = "MEDIO" | "SUPERIOR";

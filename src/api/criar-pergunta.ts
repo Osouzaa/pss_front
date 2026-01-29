@@ -6,7 +6,8 @@ export type PerguntaTipo =
   | "TEXTO"
   | "SELECT"
   | "MULTISELECT"
-  | "DATA";
+  | "DATA"
+  | "EXPERIENCIA_DIAS"; // ✅ novo
 
 type Payload = {
   titulo: string;
@@ -16,14 +17,17 @@ type Payload = {
   ordem?: number;
   ativa?: boolean;
 
+  // ✅ pontuação simples (ex: BOOLEAN)
   pontuacao_fundamental?: number | null;
   pontuacao_medio?: number | null;
   pontuacao_superior?: number | null;
-  pontuacao_maxima?: number | null;
 
-  // ✅ comprovante/anexo (nomes corretos)
+  // ✅ comprovante/anexo
   exige_comprovante?: boolean;
   label_comprovante?: string | null;
+
+  // ✅ regra do tipo EXPERIENCIA_DIAS (JSON em string)
+  regra_json?: string | null;
 };
 
 export async function criarPergunta(input: {

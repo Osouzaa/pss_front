@@ -34,7 +34,8 @@ type PerguntaTipo =
   | "TEXTO"
   | "SELECT"
   | "MULTISELECT"
-  | "DATA";
+  | "DATA"
+  | "EXPERIENCIA_DIAS";
 
 type PerguntaToEdit = {
   id_pergunta: string;
@@ -45,15 +46,15 @@ type PerguntaToEdit = {
   ordem: number;
   ativa: boolean;
 
-  // ✅ pontuação (apenas pra casos simples, ex: BOOLEAN)
   pontuacao_fundamental?: number | null;
   pontuacao_medio?: number | null;
   pontuacao_superior?: number | null;
-  pontuacao_maxima?: number | null;
 
-  // ✅ comprovante/anexo (novos nomes)
   exige_comprovante?: boolean | null;
   label_comprovante?: string | null;
+
+  // ✅ novo (se seu backend retornar)
+  regra_json?: string | null;
 };
 
 interface IModalNovaPergunta {
@@ -61,6 +62,46 @@ interface IModalNovaPergunta {
   onOpenChange: (open: boolean) => void;
   id_processo_seletivo: string;
   perguntaToEdit?: PerguntaToEdit | null;
+}
+
+type FaixaForm = { ate: number; medio: number; superior: number };
+
+const DEFAULT_FAIXAS: FaixaForm[] = [
+  { ate: 365, medio: 0, superior: 0 }, // 0..365
+  { ate: 730, medio: 0, superior: 0 }, // 366..730
+  { ate: 1095, medio: 0, superior: 0 }, // 731..1095
+  { ate: 1460, medio: 0, superior: 0 }, // 1096..1460
+  { ate: 999999, medio: 0, superior: 0 }, // acima de 1460
+];
+
+function safeParseRegraJson(v?: string | null) {
+  if (!v) return null;
+  try {
+    return JSON.parse(v);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeFaixasFromEdit(regra: any): FaixaForm[] | null {
+  if (!regra || regra.tipo !== "FAIXAS_DIAS" || !Array.isArray(regra.faixas)) {
+    return null;
+  }
+
+  const incoming: FaixaForm[] = regra.faixas
+    .map((f: any) => ({
+      ate: Number(f?.ate ?? 0),
+      medio: Number(f?.medio ?? 0),
+      superior: Number(f?.superior ?? 0),
+    }))
+    .filter((f: FaixaForm) => Number.isFinite(f.ate) && f.ate > 0)
+    .sort((a: { ate: number }, b: { ate: number }) => a.ate - b.ate);
+
+  // completa/normaliza para exatamente os 5 "ate" fixos
+  const map = new Map<number, FaixaForm>();
+  for (const f of incoming) map.set(f.ate, f);
+
+  return DEFAULT_FAIXAS.map((d) => map.get(d.ate) ?? d);
 }
 
 export function ModalNovaPergunta({
@@ -96,9 +137,10 @@ export function ModalNovaPergunta({
       pontuacao_medio: null,
       pontuacao_superior: null,
 
-      // ✅ novos campos
       exige_comprovante: false,
       label_comprovante: "",
+
+      faixas: DEFAULT_FAIXAS,
     },
   });
 
@@ -109,10 +151,13 @@ export function ModalNovaPergunta({
     if (!open) return;
 
     if (perguntaToEdit) {
+      const regra = safeParseRegraJson(perguntaToEdit.regra_json);
+      const faixasFromEdit = normalizeFaixasFromEdit(regra);
+
       reset({
         titulo: perguntaToEdit.titulo ?? "",
         descricao: perguntaToEdit.descricao ?? "",
-        tipo: perguntaToEdit.tipo ?? "BOOLEAN",
+        tipo: (perguntaToEdit.tipo ?? "BOOLEAN") as any,
         obrigatoria: !!perguntaToEdit.obrigatoria,
         ordem: Number(perguntaToEdit.ordem ?? 0),
         ativa: !!perguntaToEdit.ativa,
@@ -121,10 +166,13 @@ export function ModalNovaPergunta({
         pontuacao_medio: perguntaToEdit.pontuacao_medio ?? null,
         pontuacao_superior: perguntaToEdit.pontuacao_superior ?? null,
 
-        // ✅ novos campos
         exige_comprovante: !!perguntaToEdit.exige_comprovante,
         label_comprovante: perguntaToEdit.label_comprovante ?? "",
+
+        // ✅ se tiver regra salva, carrega; senão default das 5 faixas
+        faixas: faixasFromEdit ?? DEFAULT_FAIXAS,
       });
+
       return;
     }
 
@@ -141,13 +189,14 @@ export function ModalNovaPergunta({
       pontuacao_medio: null,
       pontuacao_superior: null,
 
-      // ✅ novos campos
       exige_comprovante: false,
       label_comprovante: "",
+
+      faixas: DEFAULT_FAIXAS,
     });
   }, [open, perguntaToEdit, reset]);
 
-  // ✅ limpa campos de pontuação se não for BOOLEAN (evita enviar lixo)
+  // ✅ limpa pontuação se não for BOOLEAN
   useEffect(() => {
     if (!open) return;
 
@@ -205,9 +254,12 @@ export function ModalNovaPergunta({
     [isEdit],
   );
 
+  const showPontuacaoPorNivel = tipo === "BOOLEAN";
+  const showExperiencia = tipo === "EXPERIENCIA_DIAS";
+
   const onSubmit: SubmitHandler<CreateNovaPerguntaFormData> = async (data) => {
     try {
-      const payload = {
+      const payload: any = {
         titulo: data.titulo,
         descricao: data.descricao ? data.descricao : null,
         tipo: data.tipo,
@@ -215,17 +267,32 @@ export function ModalNovaPergunta({
         ordem: data.ordem,
         ativa: data.ativa,
 
-        // pontuação (somente p/ boolean no backend, mas pode enviar)
         pontuacao_fundamental: data.pontuacao_fundamental ?? null,
         pontuacao_medio: data.pontuacao_medio ?? null,
         pontuacao_superior: data.pontuacao_superior ?? null,
 
-        // ✅ comprovante/anexo (novos nomes)
         exige_comprovante: data.exige_comprovante,
         label_comprovante: data.exige_comprovante
           ? data.label_comprovante?.trim() || null
           : null,
       };
+
+      // ✅ regra_json para experiência
+      if (data.tipo === "EXPERIENCIA_DIAS") {
+        payload.regra_json = JSON.stringify({
+          tipo: "FAIXAS_DIAS",
+          faixas: (data.faixas ?? [])
+            .slice()
+            .sort((a, b) => Number(a.ate) - Number(b.ate)),
+        });
+
+        // não manda pontuação fixa nesse tipo
+        payload.pontuacao_fundamental = null;
+        payload.pontuacao_medio = null;
+        payload.pontuacao_superior = null;
+      } else {
+        payload.regra_json = null;
+      }
 
       if (isEdit && perguntaToEdit?.id_pergunta) {
         await editarPerguntaFn({
@@ -250,7 +317,7 @@ export function ModalNovaPergunta({
     }
   };
 
-  const showPontuacaoPorNivel = tipo === "BOOLEAN";
+  const faixasWatch = watch("faixas") ?? [];
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -271,14 +338,14 @@ export function ModalNovaPergunta({
           <FormStyles onSubmit={handleSubmit(onSubmit)}>
             <InputBase
               label="Título da pergunta"
-              placeholder="Ex: Possui ensino superior?"
+              placeholder="Ex: Quantos dias de experiência você tem?"
               {...register("titulo")}
               error={errors.titulo?.message}
             />
 
             <TextAreaBase
               label="Descrição (opcional)"
-              placeholder="Ex: Marque SIM se você concluiu o ensino superior."
+              placeholder="Ex: Informe o total de dias de experiência comprovável."
               {...register("descricao")}
             />
 
@@ -297,6 +364,7 @@ export function ModalNovaPergunta({
                   Múltipla Escolha (MULTISELECT)
                 </option>
                 <option value="DATA">Data (DATA)</option>
+                <option value="EXPERIENCIA_DIAS">Experiência (em dias)</option>
               </SelectBase>
 
               <InputBase
@@ -331,6 +399,7 @@ export function ModalNovaPergunta({
               </SelectBase>
             </Row>
 
+            {/* ✅ Pontuação por nível (BOOLEAN) */}
             {showPontuacaoPorNivel ? (
               <>
                 <Row className="row-grid">
@@ -366,6 +435,73 @@ export function ModalNovaPergunta({
                   Para perguntas SELECT/MULTISELECT, a pontuação deve ficar nas
                   opções.
                 </p>
+              </>
+            ) : null}
+
+            {/* ✅ Experiência (faixas) */}
+            {showExperiencia ? (
+              <>
+                <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600 }}>
+                  Faixas de experiência (dias)
+                </div>
+
+                <p style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
+                  A pontuação será calculada pelo nível da vaga (Médio/Superior)
+                  conforme a faixa:
+                  <br />
+                  0–365, 366–730, 731–1095, 1096–1460 e acima de 1460.
+                </p>
+
+                {faixasWatch.slice(0, 5).map((_, idx) => (
+                  <Row key={idx} className="row-grid">
+                    <InputBase
+                      label={
+                        idx === 0
+                          ? "Até 365 dias"
+                          : idx === 1
+                            ? "Até 730 dias"
+                            : idx === 2
+                              ? "Até 1095 dias"
+                              : idx === 3
+                                ? "Até 1460 dias"
+                                : "Acima de 1460 dias"
+                      }
+                      type="number"
+                      placeholder={idx === 4 ? "999999" : "Ex: 365"}
+                      {...register(`faixas.${idx}.ate` as const, {
+                        valueAsNumber: true,
+                      })}
+                      error={(errors.faixas as any)?.[idx]?.ate?.message}
+                      disabled // ✅ trava os limites (faixas fixas)
+                    />
+
+                    <InputBase
+                      label="Pontos (Médio)"
+                      type="number"
+                      placeholder="Ex: 10"
+                      {...register(`faixas.${idx}.medio` as const, {
+                        valueAsNumber: true,
+                      })}
+                      error={(errors.faixas as any)?.[idx]?.medio?.message}
+                    />
+
+                    <InputBase
+                      label="Pontos (Superior)"
+                      type="number"
+                      placeholder="Ex: 15"
+                      {...register(`faixas.${idx}.superior` as const, {
+                        valueAsNumber: true,
+                      })}
+                      error={(errors.faixas as any)?.[idx]?.superior?.message}
+                    />
+                  </Row>
+                ))}
+
+                {errors.faixas ? (
+                  <p style={{ marginTop: 8, fontSize: 12, color: "#DC2626" }}>
+                    {(errors.faixas as any)?.message}
+                  </p>
+                ) : null}
               </>
             ) : null}
 
@@ -409,6 +545,7 @@ export function ModalNovaPergunta({
                 title={
                   !isValid ? "Preencha os campos corretamente" : submitText
                 }
+                disabled={isSubmitting}
               >
                 {isSubmitting ? "Salvando..." : submitText}
               </button>
