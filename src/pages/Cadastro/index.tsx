@@ -11,10 +11,13 @@ import {
   createNovoUserSchema,
   type CreateNovoUserFormData,
 } from "../../schemas/create-novo-user";
+
 import { InputBase } from "../../components/InputBase";
 import { useMutation } from "@tanstack/react-query";
 import { novoUsuario } from "../../api/novo-usuario";
 import { toast } from "sonner";
+
+import { FiSun, FiMoon, FiEye, FiEyeOff } from "react-icons/fi";
 
 const THEME_KEY = "ps.theme";
 
@@ -41,7 +44,7 @@ export function Cadastro() {
 
   const currentTheme = useMemo(
     () => (mode === "dark" ? darkTheme : theme),
-    [mode]
+    [mode],
   );
 
   const {
@@ -55,7 +58,7 @@ export function Cadastro() {
     defaultValues: {
       email: "",
       senha: "",
-      role: "CANDIDATO", // ajuste se seu schema usar outro valor
+      role: "CANDIDATO",
     },
   });
 
@@ -69,8 +72,6 @@ export function Cadastro() {
   });
 
   const loading = isPending;
-
-  // mantém o botão coerente com as regras visuais da senha
   const canSubmit = isValid && pwd.ok && !loading;
 
   async function handleNovoUser(data: CreateNovoUserFormData) {
@@ -81,10 +82,14 @@ export function Cadastro() {
         role: data.role,
       });
 
-      toast.success("Sua conta foi criada com sucesso! Redirecionando para o login.");
+      toast.success(
+        "Sua conta foi criada com sucesso! Redirecionando para o login.",
+      );
       navigate("/login");
     } catch (err) {
-      toast.error("Não foi possível criar sua conta. Verifique os dados e tente novamente.");
+      toast.error(
+        "Não foi possível criar sua conta. Verifique os dados e tente novamente.",
+      );
     }
   }
 
@@ -93,24 +98,37 @@ export function Cadastro() {
       <S.Page>
         <S.Center>
           <S.Card>
-            <S.CardHeader>
+            {/* TopBar (mobile) */}
+            <S.TopBar>
               <S.BackButton type="button" onClick={() => navigate("/login")}>
                 Voltar
               </S.BackButton>
 
-              <S.SwitchWrap>
-                <S.SwitchText>{mode === "dark" ? "Escuro" : "Claro"}</S.SwitchText>
-                <S.SwitchButton
-                  type="button"
-                  $active={mode === "dark"}
-                  onClick={() => setMode((p) => (p === "dark" ? "light" : "dark"))}
-                  aria-label={mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-                  title={mode === "dark" ? "Modo claro" : "Modo escuro"}
-                >
-                  <span />
-                </S.SwitchButton>
-              </S.SwitchWrap>
-            </S.CardHeader>
+              <S.ThemeToggle
+                type="button"
+                $active={mode === "dark"}
+                onClick={() =>
+                  setMode((p) => (p === "dark" ? "light" : "dark"))
+                }
+                aria-label={
+                  mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"
+                }
+                title={mode === "dark" ? "Modo claro" : "Modo escuro"}
+              >
+                <S.ToggleTrack>
+                  <S.ToggleIconLeft aria-hidden="true">
+                    <FiSun />
+                  </S.ToggleIconLeft>
+                  <S.ToggleIconRight aria-hidden="true">
+                    <FiMoon />
+                  </S.ToggleIconRight>
+
+                  <S.ToggleThumb $active={mode === "dark"}>
+                    {mode === "dark" ? <FiMoon /> : <FiSun />}
+                  </S.ToggleThumb>
+                </S.ToggleTrack>
+              </S.ThemeToggle>
+            </S.TopBar>
 
             <S.ContentGrid>
               <S.LeftPane>
@@ -124,7 +142,8 @@ export function Cadastro() {
 
                 <S.MessageTitle>Crie sua conta</S.MessageTitle>
                 <S.MessageText>
-                  Cadastre-se para acompanhar editais, inscrições e resultados do processo seletivo.
+                  Cadastre-se para acompanhar editais, inscrições e resultados
+                  do processo seletivo.
                 </S.MessageText>
 
                 <S.InfoCard>
@@ -135,19 +154,36 @@ export function Cadastro() {
                   </S.Bullets>
                 </S.InfoCard>
 
+                {/* Toggle no desktop fica aqui (lado esquerdo) */}
                 <S.DesktopOnly>
                   <S.ThemeRow>
                     <S.ThemeLabel>Modo</S.ThemeLabel>
-                    <S.SwitchWrap>
-                      <S.SwitchText>{mode === "dark" ? "Escuro" : "Claro"}</S.SwitchText>
-                      <S.SwitchButton
-                        type="button"
-                        $active={mode === "dark"}
-                        onClick={() => setMode((p) => (p === "dark" ? "light" : "dark"))}
-                      >
-                        <span />
-                      </S.SwitchButton>
-                    </S.SwitchWrap>
+
+                    <S.ThemeToggle
+                      type="button"
+                      $active={mode === "dark"}
+                      onClick={() =>
+                        setMode((p) => (p === "dark" ? "light" : "dark"))
+                      }
+                      aria-label={
+                        mode === "dark"
+                          ? "Ativar modo claro"
+                          : "Ativar modo escuro"
+                      }
+                      title={mode === "dark" ? "Modo claro" : "Modo escuro"}
+                    >
+                      <S.ToggleTrack>
+                        <S.ToggleIconLeft aria-hidden="true">
+                          <FiSun />
+                        </S.ToggleIconLeft>
+                        <S.ToggleIconRight aria-hidden="true">
+                          <FiMoon />
+                        </S.ToggleIconRight>
+                        <S.ToggleThumb $active={mode === "dark"}>
+                          {mode === "dark" ? <FiMoon /> : <FiSun />}
+                        </S.ToggleThumb>
+                      </S.ToggleTrack>
+                    </S.ThemeToggle>
                   </S.ThemeRow>
                 </S.DesktopOnly>
               </S.LeftPane>
@@ -161,6 +197,7 @@ export function Cadastro() {
                     <InputBase
                       label="E-mail"
                       type="email"
+                      autoComplete="email"
                       error={errors.email?.message}
                       {...register("email")}
                     />
@@ -180,10 +217,12 @@ export function Cadastro() {
                       <S.IconButton
                         type="button"
                         onClick={() => setShowPass((v) => !v)}
-                        aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
+                        aria-label={
+                          showPass ? "Ocultar senha" : "Mostrar senha"
+                        }
                         title={showPass ? "Ocultar senha" : "Mostrar senha"}
                       >
-                        {showPass ? "Ocultar" : "Mostrar"}
+                        {showPass ? <FiEyeOff /> : <FiEye />}
                       </S.IconButton>
                     </S.PasswordWrap>
 
@@ -200,7 +239,10 @@ export function Cadastro() {
 
                   <S.FooterRow>
                     <S.FooterText>Já tem conta?</S.FooterText>
-                    <S.LinkButton type="button" onClick={() => navigate("/login")}>
+                    <S.LinkButton
+                      type="button"
+                      onClick={() => navigate("/login")}
+                    >
                       Entrar
                     </S.LinkButton>
                   </S.FooterRow>
