@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -16,9 +16,10 @@ import { InputBase } from "../../components/InputBase";
 import { SelectBase } from "../../components/SelectBase";
 import { TextAreaBase } from "../../components/TextAreaBase";
 
-import { getRespostasByInscricao } from "../../api/inscricao-respostas";
 import { salvarRespostasLote } from "../../api/salvar-lote";
 import { enviarInscricaoTwo } from "../../api/enviar-inscricao";
+import { iniciarInscricao } from "../../api/iniciar-inscricao";
+import { getInscricaoById } from "../../api/get-inscricao-by-id"; // ✅ CRIAR
 
 type RespostasState = Record<
   string,
@@ -26,15 +27,18 @@ type RespostasState = Record<
 >;
 
 export function InscricaoPage() {
+  const navigate = useNavigate();
   const { id, id_inscricao } = useParams();
+
   const idProcesso = id ?? "";
-  const idInscricao = id_inscricao ?? "";
-
+  const [idInscricao, setIdInscricao] = useState(id_inscricao ?? "");
   const [idVaga, setIdVaga] = useState("");
-  const [respostas, setRespostas] = useState<RespostasState>({});
+  const [readonly, setReadonly] = useState(false);
 
+  const [respostas, setRespostas] = useState<RespostasState>({});
   const hydratedRef = useRef(false);
 
+  // ✅ 1) Processo (vagas + perguntas)
   const processoQuery = useQuery<ProcessoSeletivoResponse>({
     queryKey: ["processo-id", idProcesso],
     queryFn: () => {
@@ -59,19 +63,33 @@ export function InscricaoPage() {
       .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
   }, [processo?.perguntas]);
 
-  const respostasQuery = useQuery({
-    queryKey: ["respostas-inscricao", idInscricao],
-    queryFn: () => getRespostasByInscricao(idInscricao),
-    enabled: !!idInscricao,
+  // ✅ 2) Quando existe inscrição, carregar inscrição + respostas + vaga
+  const inscricaoQuery = useQuery({
+    queryKey: ["inscricao", idProcesso, idInscricao],
+    queryFn: () => getInscricaoById(idProcesso, idInscricao),
+    enabled: !!idProcesso && !!idInscricao,
   });
 
-  // ✅ hidratar estado UMA vez
+  // ✅ reset por inscrição
   useEffect(() => {
-    if (!respostasQuery.data) return;
+    hydratedRef.current = false;
+    setRespostas({});
+    setReadonly(false);
+  }, [idInscricao]);
+
+  // ✅ hidrata a partir do endpoint da inscrição (melhor que buscar respostas separado)
+  useEffect(() => {
+    if (!inscricaoQuery.data) return;
     if (hydratedRef.current) return;
 
+    const { inscricao, respostas } = inscricaoQuery.data as any;
+
+    // seta vaga e readonly
+    setIdVaga(inscricao?.id_vaga ?? "");
+    setReadonly(!!inscricao?.readonly || inscricao?.status === "ENVIADA");
+
     const map: RespostasState = {};
-    for (const r of respostasQuery.data) {
+    for (const r of respostas ?? []) {
       if (r.opcao_id) map[r.id_pergunta] = r.opcao_id;
       else if (r.valor_boolean !== null && r.valor_boolean !== undefined)
         map[r.id_pergunta] = r.valor_boolean;
@@ -85,21 +103,46 @@ export function InscricaoPage() {
 
     setRespostas(map);
     hydratedRef.current = true;
-  }, [respostasQuery.data]);
+  }, [inscricaoQuery.data]);
 
-  // ✅ se a inscrição já tem vaga salva no backend, preencha o select automaticamente
-  // (só funciona se o endpoint do processo/inscrição retornar isso;
-  // se não retorna, ignore esta parte)
-  useEffect(() => {
-    // se você tiver um endpoint "getInscricao" com id_vaga, aqui seria ideal.
-    // por enquanto: se quiser, você pode deixar o usuário escolher sempre.
-  }, []);
+  // ✅ 3) Iniciar inscrição (cria/retorna a inscrição daquela vaga)
+  const iniciarMut = useMutation({
+    mutationFn: (body: { id_processo_seletivo: string; id_vaga: string }) =>
+      iniciarInscricao(body),
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message ?? "Erro ao iniciar inscrição.");
+    },
+  });
 
+  async function handleIniciar() {
+    if (!idVaga) return toast.error("Selecione uma vaga para iniciar.");
+
+    try {
+      const resp = await iniciarMut.mutateAsync({
+        id_processo_seletivo: idProcesso,
+        id_vaga: idVaga,
+      });
+
+      const newId = (resp as any)?.id_inscricao;
+      if (!newId) return toast.error("Backend não retornou id_inscricao.");
+
+      setIdInscricao(newId);
+
+      navigate(`/processos/${idProcesso}/inscricao/${newId}`, {
+        replace: true,
+      });
+
+      toast.success("Inscrição iniciada!");
+    } catch {
+      // erro já tratado
+    }
+  }
+
+  // ✅ 4) Salvar/Enviar
   const salvarMut = useMutation({
     mutationFn: (body: any) => salvarRespostasLote(idInscricao, body),
-    onError: (e: any) => {
-      toast.error(e?.response?.data?.message ?? "Erro ao salvar respostas.");
-    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? "Erro ao salvar respostas."),
   });
 
   function buildPayload() {
@@ -107,41 +150,35 @@ export function InscricaoPage() {
       respostas: perguntas.map((p) => {
         const v = respostas[p.id_pergunta];
 
-        if (p.tipo === "BOOLEAN") {
+        if (p.tipo === "BOOLEAN")
           return {
             id_pergunta: p.id_pergunta,
             valor_boolean: typeof v === "boolean" ? v : null,
           };
-        }
 
-        // ✅ NUMERO e EXPERIENCIA_DIAS usam valor_numero
-        if (p.tipo === "NUMERO" || p.tipo === "EXPERIENCIA_DIAS") {
+        if (p.tipo === "NUMERO" || p.tipo === "EXPERIENCIA_DIAS")
           return {
             id_pergunta: p.id_pergunta,
             valor_numero: typeof v === "number" ? v : null,
           };
-        }
 
-        if (p.tipo === "TEXTO") {
+        if (p.tipo === "TEXTO")
           return {
             id_pergunta: p.id_pergunta,
             valor_texto: typeof v === "string" ? v : "",
           };
-        }
 
-        if (p.tipo === "DATA") {
+        if (p.tipo === "DATA")
           return {
             id_pergunta: p.id_pergunta,
             valor_data: typeof v === "string" ? v : null,
           };
-        }
 
-        if (p.tipo === "SELECT") {
+        if (p.tipo === "SELECT")
           return {
             id_pergunta: p.id_pergunta,
             opcao_id: typeof v === "string" && v ? v : null,
           };
-        }
 
         return { id_pergunta: p.id_pergunta };
       }),
@@ -156,51 +193,48 @@ export function InscricaoPage() {
   });
 
   async function handleFinalizar() {
-    if (!idVaga) {
-      toast.error("Selecione uma vaga antes de finalizar.");
-      return;
-    }
-
-    if (!idInscricao) {
-      toast.error("Inscrição inválida.");
-      return;
-    }
+    if (!idVaga) return toast.error("Selecione uma vaga.");
+    if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
+    if (readonly)
+      return toast.error(
+        "Esta inscrição já foi enviada e não pode ser alterada.",
+      );
 
     try {
       await salvarMut.mutateAsync(buildPayload());
       await enviarMut.mutateAsync();
-    } catch {
-      // erros tratados no onError
-    }
+    } catch {}
   }
 
+  // ✅ Loading states
   if (!idProcesso) return <S.Page>Processo inválido.</S.Page>;
   if (processoQuery.isLoading) return <S.Page>Carregando processo...</S.Page>;
-  if (respostasQuery.isLoading) return <S.Page>Carregando respostas...</S.Page>;
+  if (processoQuery.isError || !processo)
+    return <S.Page>Não foi possível carregar o processo.</S.Page>;
 
-  if (processoQuery.isError || !processo) {
-    return (
-      <S.Page>
-        Não foi possível carregar o processo.{" "}
-        {(processoQuery.error as Error)?.message ?? ""}
-      </S.Page>
-    );
-  }
+  if (idInscricao && inscricaoQuery.isLoading)
+    return <S.Page>Carregando inscrição...</S.Page>;
+
+  const iniciou = !!idInscricao;
 
   return (
     <S.Page>
       <S.Header>
         <S.TitleWrap>
           <S.Title>{processo.titulo}</S.Title>
-          <S.Subtitle>Responda as perguntas do processo.</S.Subtitle>
+          <S.Subtitle>Escolha a vaga e preencha as perguntas.</S.Subtitle>
         </S.TitleWrap>
       </S.Header>
 
       <S.Card>
         <S.CardHeader>
-          <S.CardHeaderTitle>Formulário</S.CardHeaderTitle>
+          <S.CardHeaderTitle>Inscrição</S.CardHeaderTitle>
           <S.CardHeaderText>
-            Suas respostas são salvas automaticamente.
+            {iniciou
+              ? readonly
+                ? "Inscrição enviada (somente leitura)."
+                : "Você já pode responder e finalizar."
+              : "Selecione a vaga e clique em iniciar."}
           </S.CardHeaderText>
         </S.CardHeader>
 
@@ -212,6 +246,7 @@ export function InscricaoPage() {
                 id="id_vaga"
                 value={idVaga}
                 onChange={(e: any) => setIdVaga(e.target.value)}
+                disabled={iniciou} // ✅ depois que cria a inscrição, não deixa trocar
               >
                 <option value="" disabled>
                   Selecione uma vaga
@@ -223,32 +258,57 @@ export function InscricaoPage() {
                   </option>
                 ))}
               </SelectBase>
+
+              {!iniciou ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleIniciar}
+                    disabled={!idVaga || iniciarMut.isPending}
+                  >
+                    {iniciarMut.isPending
+                      ? "Iniciando..."
+                      : "Iniciar inscrição"}
+                  </button>
+                </div>
+              ) : null}
             </div>
 
-            <S.Section>
-              <S.SectionTitle>Perguntas</S.SectionTitle>
-            </S.Section>
+            {iniciou ? (
+              <>
+                <S.Section>
+                  <S.SectionTitle>Perguntas</S.SectionTitle>
+                </S.Section>
 
-            {perguntas.map((p) => renderPergunta(p))}
+                {perguntas.map((p) => renderPergunta(p))}
+              </>
+            ) : null}
           </S.Grid>
 
-          <div
-            style={{
-              marginTop: 16,
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 8,
-            }}
-          >
-            <button
-              type="button"
-              onClick={handleFinalizar}
-              disabled={!idVaga || salvarMut.isPending || enviarMut.isPending}
-              title={!idVaga ? "Selecione uma vaga" : "Finalizar inscrição"}
+          {iniciou && !readonly ? (
+            <div
+              style={{
+                marginTop: 16,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
             >
-              {enviarMut.isPending ? "Finalizando..." : "Finalizar inscrição"}
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={handleFinalizar}
+                disabled={salvarMut.isPending || enviarMut.isPending}
+              >
+                {enviarMut.isPending ? "Finalizando..." : "Finalizar inscrição"}
+              </button>
+            </div>
+          ) : null}
         </S.Form>
       </S.Card>
     </S.Page>
@@ -263,6 +323,8 @@ export function InscricaoPage() {
       .filter((o: PerguntaOpcaoResponse) => o.ativa)
       .slice()
       .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+
+    const disabled = readonly;
 
     return (
       <div key={idPergunta} style={{ gridColumn: "1 / -1" }}>
@@ -282,8 +344,16 @@ export function InscricaoPage() {
         <div style={{ marginTop: 10 }}>
           {p.tipo === "BOOLEAN" ? (
             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <label
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  alignItems: "center",
+                  opacity: disabled ? 0.6 : 1,
+                }}
+              >
                 <input
+                  disabled={disabled}
                   type="radio"
                   name={`p_${idPergunta}`}
                   checked={valor === true}
@@ -294,8 +364,16 @@ export function InscricaoPage() {
                 Sim
               </label>
 
-              <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <label
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  alignItems: "center",
+                  opacity: disabled ? 0.6 : 1,
+                }}
+              >
                 <input
+                  disabled={disabled}
                   type="radio"
                   name={`p_${idPergunta}`}
                   checked={valor === false}
@@ -314,6 +392,7 @@ export function InscricaoPage() {
               label={`Resposta${obrigatorioMark}`}
               type="number"
               value={typeof valor === "number" ? valor : ""}
+              disabled={disabled}
               onChange={(e: any) =>
                 setRespostas((prev) => ({
                   ...prev,
@@ -328,6 +407,7 @@ export function InscricaoPage() {
             <TextAreaBase
               label={`Resposta${obrigatorioMark}`}
               value={typeof valor === "string" ? valor : ""}
+              disabled={disabled}
               onChange={(e: any) =>
                 setRespostas((prev) => ({
                   ...prev,
@@ -346,6 +426,7 @@ export function InscricaoPage() {
               type="number"
               placeholder="Ex: 400"
               value={typeof valor === "number" ? valor : ""}
+              disabled={disabled}
               onChange={(e: any) =>
                 setRespostas((prev) => ({
                   ...prev,
@@ -361,6 +442,7 @@ export function InscricaoPage() {
               label={`Selecione${obrigatorioMark}`}
               id={`p_${idPergunta}`}
               value={typeof valor === "string" ? valor : ""}
+              disabled={disabled}
               onChange={(e: any) =>
                 setRespostas((prev) => ({
                   ...prev,
@@ -383,6 +465,7 @@ export function InscricaoPage() {
               label={`Data${obrigatorioMark}`}
               type="date"
               value={typeof valor === "string" ? valor : ""}
+              disabled={disabled}
               onChange={(e: any) =>
                 setRespostas((prev) => ({
                   ...prev,

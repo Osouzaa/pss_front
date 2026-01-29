@@ -13,16 +13,47 @@ type GetInscricoesMeParams = {
   q?: string;
   status?: InscricaoStatus;
 };
+/** ===== VAGA ===== */
+export interface VagaResponse {
+  id_vaga: string;
+  nome: string;
+  // se vier mais campos depois, você pode expandir aqui
+}
 
-export async function getInscricoesMe(params?: GetInscricoesMeParams) {
-  const response = await api.get("/processos-seletivos/inscricoes/me", {
-    params: {
-      page: params?.page ?? 1,
-      limit: params?.limit ?? 10,
-      q: params?.q,
-      status: params?.status,
-    },
-  });
+/** ===== INSCRIÇÃO ===== */
+export interface MinhaInscricaoResponse {
+  id_inscricao: string;
+  id_processo_seletivo: string;
+  id_vaga: string;
+  data_criacao: string; // ISO
+  data_envio: string | null; // ISO
+  pontuacao_total: number;
+  protocolo: string;
+  status: "RASCUNHO" | "ENVIADA" | "CANCELADA";
+  vaga: VagaResponse;
+}
+
+/** ===== PROCESSO SELETIVO ===== */
+export interface ProcessoSeletivoResponse {
+  id_processo_seletivo: string;
+  titulo: string;
+  secretaria: string;
+  ano: number;
+
+  status: "RASCUNHO" | "ABERTO" | "EM_ANALISE" | "ENCERRADO" | "CANCELADO";
+
+  data_criacao: string; // ISO
+  data_inicio_inscricoes: string | null;
+  data_fim_inscricoes: string | null;
+
+  minhas_inscricoes: MinhaInscricaoResponse[];
+}
+
+export async function getInscricoesMe() {
+  const response = await api.get<ProcessoSeletivoResponse[]>(
+    "/processo-seletivo/me",
+    {},
+  );
 
   return response.data;
 }

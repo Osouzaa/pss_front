@@ -2,11 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import * as S from "./styles";
 import { ModalNovoProcesso } from "./components/ModalNovoProcesso";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getAllProcessos } from "../../api/get-all-processos";
 import { formatDate } from "../../utils/fomartDate.utils";
-import { iniciarInscricao } from "../../api/iniciar-inscricao";
-import { toast } from "sonner";
 
 export function Processo() {
   const navigate = useNavigate();
@@ -34,24 +32,8 @@ export function Processo() {
     navigate(`/processos_detalhes/${id}`);
   }
 
-  const { mutateAsync: registerFn, isPending } = useMutation({
-    mutationFn: iniciarInscricao,
-  });
-
   async function handleSubscribe(id: string) {
-    try {
-      const response = await registerFn({ id_processo_seletivo: id });
-
-      const idInscricao = (response as any)?.id_inscricao;
-      if (!idInscricao) {
-        toast.error("Não foi possível iniciar a inscrição (sem id_inscricao).");
-        return;
-      }
-
-      navigate(`/processos/${id}/inscricao/${idInscricao}`);
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? "Erro ao iniciar inscrição.");
-    }
+    navigate(`/processos/${id}/inscricao/`);
   }
 
   const items = result?.items ?? [];
@@ -159,10 +141,10 @@ export function Processo() {
 
                   <S.PrimaryButton
                     type="button"
+                    disabled={p.status !== "ABERTO"}
                     onClick={() => handleSubscribe(p.id_processo_seletivo)}
-                    disabled={p.status !== "ABERTO" || isPending}
                   >
-                    {isPending ? "Iniciando..." : "Inscrever"}
+                    Inscrever
                   </S.PrimaryButton>
                 </S.CardFooter>
               </S.Card>

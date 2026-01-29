@@ -1,16 +1,15 @@
 // src/pages/MinhasInscricoes/index.tsx
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import * as S from "./styles";
 
-import {
-  getMinhasInscricoes,
-  type InscricaoStatus,
-  type MinhaInscricaoListItem,
-} from "../../api/inscricoes";
+import type { InscricaoStatus } from "../../api/inscricoes";
+import { getInscricoesMe } from "../../api/get-inscricoes-me";
 
-function fmtDateTimeBR(iso?: string) {
+/** ===== helpers ===== */
+
+function fmtDateTimeBR(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
@@ -22,57 +21,99 @@ function normalizeStatusLabel(s?: string) {
   return s.replaceAll("_", " ");
 }
 
-type MinhasInscricoesRaw = [MinhaInscricaoListItem[], number];
+/** ===== tipos do retorno ===== */
+
+type VagaResponse = {
+  id_vaga: string;
+  nome: string;
+};
+
+type ProcessoResponse = {
+  id_processo_seletivo: string;
+  titulo: string;
+  ano?: number;
+  status?: string;
+  secretaria?: string;
+};
+
+export type MinhaInscricaoListItem = {
+  id_inscricao: string;
+  id_processo_seletivo: string;
+  id_vaga?: string | null;
+
+  status: InscricaoStatus;
+  pontuacao_total: number;
+
+  protocolo?: string | null;
+
+  data_criacao: string;
+  data_envio?: string | null;
+
+  vaga?: VagaResponse | null;
+  processo?: ProcessoResponse | null;
+};
+
+type ProcessoComMinhasInscricoes = {
+  id_processo_seletivo: string;
+  titulo?: string;
+  ano?: number;
+  status?: string;
+  secretaria?: string;
+  data_criacao?: string;
+
+  data_inicio_inscricoes?: string | null;
+  data_fim_inscricoes?: string | null;
+
+  minhas_inscricoes: MinhaInscricaoListItem[];
+};
+
+type InscricoesMeResponse = ProcessoComMinhasInscricoes[];
 
 export function MinhasInscricoes() {
   const navigate = useNavigate();
 
-  const [q, setQ] = useState("");
-  const [status, setStatus] = useState<InscricaoStatus | "TODAS">("TODAS");
-  const [page, setPage] = useState(1);
-
-  const limit = 10;
-
   const { data, isLoading, isError, error, refetch } =
-    useQuery<MinhasInscricoesRaw>({
-      queryKey: ["minhas-inscricoes", page, q, status],
+    useQuery<InscricoesMeResponse>({
+      queryKey: ["minhas-inscricoes", "me"],
       queryFn: async () => {
-        const res = await getMinhasInscricoes({
-          page,
-          limit,
-          q,
-          status: status === "TODAS" ? undefined : status,
-        });
-
-        // backend está retornando findAndCount -> [items, total]
-        return res as any;
+        const res = await getInscricoesMe();
+        // se o TS reclamar por causa do tipo do getInscricoesMe, use unknown:
+        return res as unknown as InscricoesMeResponse;
       },
     });
 
-  const items = data?.[0] ?? [];
-  const total = data?.[1] ?? 0;
+  // ✅ achata todas as inscrições e injeta o processo (pra sempre ter titulo/ano)
+  const items = useMemo(() => {
+    const processos = data ?? [];
+    return processos.flatMap((p) =>
+      (p.minhas_inscricoes ?? []).map((ins) => ({
+        ...ins,
+        processo: ins.processo ?? {
+          id_processo_seletivo: p.id_processo_seletivo,
+          titulo: p.titulo ?? "Processo seletivo",
+          ano: p.ano,
+          status: p.status,
+          secretaria: p.secretaria,
+        },
+      })),
+    );
+  }, [data]);
 
-  const meta = useMemo(
-    () => ({
-      page,
-      limit,
-      total,
-      pages: Math.max(1, Math.ceil(total / limit)),
-    }),
-    [page, limit, total],
-  );
-
-  const hasData = items.length > 0;
+  const total = items.length;
 
   const counters = useMemo(() => {
-    return { total: meta.total ?? 0 };
-  }, [meta.total]);
+    return { total };
+  }, [total]);
 
   function handleOpen(item: MinhaInscricaoListItem) {
     const pid =
       item.id_processo_seletivo ?? item.processo?.id_processo_seletivo;
-    if (!pid) return;
-    navigate(`/processos/${pid}/inscricao`);
+
+    const iid = item.id_inscricao;
+
+    if (!pid || !iid) return;
+
+    navigate(`/processos/${pid}/inscricao/${iid}`);
   }
 
   return (
@@ -102,30 +143,20 @@ export function MinhasInscricoes() {
         </S.HeaderRight>
       </S.Header>
 
+      {/* ✅ só design dos filtros (sem lógica) */}
       <S.Toolbar>
         <S.SearchWrap>
           <S.SearchLabel htmlFor="q">Buscar</S.SearchLabel>
           <S.SearchInput
             id="q"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Buscar por título do processo..."
+            defaultValue=""
+            placeholder="Buscar por título do processo, vaga ou protocolo..."
           />
         </S.SearchWrap>
 
         <S.SelectWrap>
           <S.SelectLabel htmlFor="status">Status</S.SelectLabel>
-          <S.Select
-            id="status"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as any);
-              setPage(1);
-            }}
-          >
+          <S.Select id="status" defaultValue="TODAS">
             <option value="TODAS">Todas</option>
             <option value="RASCUNHO">Rascunho</option>
             <option value="ENVIADA">Enviada</option>
@@ -135,10 +166,10 @@ export function MinhasInscricoes() {
 
         <S.MetaRight>
           <S.MetaText>
-            Página <b>{meta.page}</b> de <b>{meta.pages}</b>
+            Total: <b>{total}</b>
           </S.MetaText>
           <S.MetaMuted>
-            Mostrando {items.length} de {meta.total}
+            Mostrando {items.length} de {total}
           </S.MetaMuted>
         </S.MetaRight>
       </S.Toolbar>
@@ -157,7 +188,7 @@ export function MinhasInscricoes() {
               "Tente novamente. Se persistir, verifique sua conexão."}
           </S.StateText>
         </S.State>
-      ) : !hasData ? (
+      ) : items.length === 0 ? (
         <S.State>
           <S.StateTitle>Nenhuma inscrição encontrada</S.StateTitle>
           <S.StateText>
@@ -165,110 +196,82 @@ export function MinhasInscricoes() {
           </S.StateText>
         </S.State>
       ) : (
-        <>
-          <S.Grid>
-            {items.map((i) => {
-              const pid =
-                i.id_processo_seletivo ?? i.processo?.id_processo_seletivo;
+        <S.Grid>
+          {items.map((i) => {
+            const pid =
+              i.id_processo_seletivo ?? i.processo?.id_processo_seletivo;
 
-              const processoTitulo = i.processo?.titulo ?? "Processo seletivo";
-              const processoAno = i.processo?.ano ? ` • ${i.processo.ano}` : "";
+            const processoTitulo = i.processo?.titulo ?? "Processo seletivo";
+            const processoAno = i.processo?.ano ? ` • ${i.processo.ano}` : "";
 
-              return (
-                <S.Card key={i.id_inscricao}>
-                  <S.CardTop>
-                    <S.CardTitle>
-                      {processoTitulo}
-                      {processoAno}
-                    </S.CardTitle>
+            return (
+              <S.Card key={i.id_inscricao}>
+                <S.CardTop>
+                  <S.CardTitle>
+                    {processoTitulo}
+                    {processoAno}
+                  </S.CardTitle>
 
-                    <S.StatusPill $status={i.status}>
-                      {normalizeStatusLabel(i.status)}
-                    </S.StatusPill>
-                  </S.CardTop>
+                  <S.StatusPill $status={i.status}>
+                    {normalizeStatusLabel(i.status)}
+                  </S.StatusPill>
+                </S.CardTop>
 
-                  <S.MetaRow>
-                    <S.MetaItem>
-                      <S.MetaLabel>Vaga</S.MetaLabel>
-                      <S.MetaValue>{i.vaga?.nome ?? "—"}</S.MetaValue>
-                    </S.MetaItem>
+                <S.MetaRow>
+                  <S.MetaItem>
+                    <S.MetaLabel>Vaga</S.MetaLabel>
+                    <S.MetaValue>{i.vaga?.nome ?? "—"}</S.MetaValue>
+                  </S.MetaItem>
 
-                    <S.MetaItem>
-                      <S.MetaLabel>Pontuação</S.MetaLabel>
-                      <S.MetaValue>{i.pontuacao_total ?? 0}</S.MetaValue>
-                    </S.MetaItem>
+                  <S.MetaItem>
+                    <S.MetaLabel>Pontuação</S.MetaLabel>
+                    <S.MetaValue>{i.pontuacao_total ?? 0}</S.MetaValue>
+                  </S.MetaItem>
 
-                    <S.MetaItem>
-                      <S.MetaLabel>Criada em</S.MetaLabel>
-                      <S.MetaValue>{fmtDateTimeBR(i.data_criacao)}</S.MetaValue>
-                    </S.MetaItem>
+                  <S.MetaItem>
+                    <S.MetaLabel>Criada em</S.MetaLabel>
+                    <S.MetaValue>{fmtDateTimeBR(i.data_criacao)}</S.MetaValue>
+                  </S.MetaItem>
 
-                    <S.MetaItem>
-                      <S.MetaLabel>Enviada em</S.MetaLabel>
-                      <S.MetaValue>
-                        {fmtDateTimeBR(i.data_envio ?? undefined)}
-                      </S.MetaValue>
-                    </S.MetaItem>
-                  </S.MetaRow>
+                  <S.MetaItem>
+                    <S.MetaLabel>Enviada em</S.MetaLabel>
+                    <S.MetaValue>{fmtDateTimeBR(i.data_envio)}</S.MetaValue>
+                  </S.MetaItem>
+                </S.MetaRow>
 
-                  <S.CardFooter>
-                    <S.SecondaryButton
-                      type="button"
-                      onClick={() =>
-                        pid && navigate(`/processos_detalhes/${pid}`)
-                      }
-                      disabled={!pid}
-                      title={
-                        !pid
-                          ? "Processo não encontrado na inscrição"
-                          : "Ver detalhes do processo"
-                      }
-                    >
-                      Ver processo
-                    </S.SecondaryButton>
+                <S.CardFooter>
+                  <S.SecondaryButton
+                    type="button"
+                    onClick={() =>
+                      pid && navigate(`/processos_detalhes/${pid}`)
+                    }
+                    disabled={!pid}
+                    title={
+                      !pid
+                        ? "Processo não encontrado na inscrição"
+                        : "Ver detalhes do processo"
+                    }
+                  >
+                    Ver processo
+                  </S.SecondaryButton>
 
-                    <S.PrimaryButton
-                      type="button"
-                      onClick={() => handleOpen(i)}
-                      disabled={!pid}
-                      title={
-                        !pid
-                          ? "Processo não encontrado na inscrição"
-                          : "Abrir inscrição"
-                      }
-                    >
-                      {i.status === "RASCUNHO" ? "Continuar" : "Abrir"}
-                    </S.PrimaryButton>
-                  </S.CardFooter>
-                </S.Card>
-              );
-            })}
-          </S.Grid>
-
-          {!!meta && meta.pages > 1 && (
-            <S.Pagination>
-              <S.PageButton
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={meta.page <= 1}
-              >
-                Anterior
-              </S.PageButton>
-
-              <S.PageInfo>
-                Página <b>{meta.page}</b> de <b>{meta.pages}</b>
-              </S.PageInfo>
-
-              <S.PageButton
-                type="button"
-                onClick={() => setPage((p) => Math.min(meta.pages, p + 1))}
-                disabled={meta.page >= meta.pages}
-              >
-                Próxima
-              </S.PageButton>
-            </S.Pagination>
-          )}
-        </>
+                  <S.PrimaryButton
+                    type="button"
+                    onClick={() => handleOpen(i)}
+                    disabled={!pid}
+                    title={
+                      !pid
+                        ? "Processo não encontrado na inscrição"
+                        : "Abrir inscrição"
+                    }
+                  >
+                    {i.status === "RASCUNHO" ? "Continuar" : "Ver inscrição"}
+                  </S.PrimaryButton>
+                </S.CardFooter>
+              </S.Card>
+            );
+          })}
+        </S.Grid>
       )}
     </S.Page>
   );
