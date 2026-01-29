@@ -1,4 +1,3 @@
-// src/pages/Cadastro/styles.ts
 import styled from "styled-components";
 
 const ui = {
@@ -48,11 +47,10 @@ export const TopBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: ${ui.space.md};
-
-  padding: ${ui.space.lg};
-  background: ${({ theme }) => theme.background};
+  gap: 16px;
+  padding: 18px 20px;
   border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
 `;
 
 export const BrandMini = styled.div`
@@ -67,14 +65,15 @@ export const LogoRow = styled.div`
 `;
 
 export const SystemLogoImg = styled.img`
-  height: 28px;
+  width: auto;
+  height: 50px;
   width: auto;
   object-fit: contain;
 `;
 
 export const LogoCircleImg = styled.img`
-  width: 38px;
-  height: 38px;
+  width: auto;
+  height: 50px;
   border-radius: ${ui.radius.pill};
   object-fit: cover;
 
@@ -88,7 +87,6 @@ export const LogoDivider = styled.div`
   background: ${({ theme }) => theme.border};
   opacity: 0.9;
 `;
-
 export const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -96,6 +94,10 @@ export const ContentGrid = styled.div`
 
   @media (min-width: 900px) {
     grid-template-columns: 1.05fr 1fr;
+  }
+
+  @media (max-width: 899px) {
+    min-height: auto; /* ✅ mobile: não força altura */
   }
 `;
 
@@ -108,6 +110,10 @@ export const LeftPane = styled.aside`
   @media (min-width: 900px) {
     border-bottom: none;
     border-right: 1px solid ${({ theme }) => theme.border};
+  }
+
+  @media (max-width: 899px) {
+    display: none; /* ✅ mobile: some tudo da coluna esquerda */
   }
 
   @media (max-width: 520px) {
@@ -185,6 +191,10 @@ export const RightPane = styled.main`
   display: flex;
   flex-direction: column;
   justify-content: center;
+
+  @media (max-width: 899px) {
+    justify-content: flex-start; /* ✅ mobile: começa de cima */
+  }
 
   @media (max-width: 520px) {
     padding: ${ui.space.xl};
@@ -337,10 +347,27 @@ export const Rules = styled.div`
   margin-top: 8px;
 `;
 
-export const Rule = styled.span<{ $ok: boolean }>`
+export const Rule = styled.div<{ $ok: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
   font-size: 12px;
   font-weight: 850;
+
   color: ${({ theme, $ok }) => ($ok ? theme.secondary : theme.description)};
+
+  transition: color 120ms ease;
+`;
+
+export const RuleIconWrap = styled.span<{ $ok: boolean }>`
+  display: grid;
+  place-items: center;
+
+  svg {
+    font-size: 14px;
+    color: ${({ theme, $ok }) => ($ok ? theme.secondary : theme.description)};
+  }
 `;
 
 export const PrimaryButton = styled.button`

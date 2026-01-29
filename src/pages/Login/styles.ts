@@ -1,25 +1,23 @@
-// src/pages/Login/styles.ts
 import styled from "styled-components";
 
 export const Page = styled.div`
-  min-height: 100vh;
-  background: ${({ theme }) => theme.bodyBg};
+  min-height: 80vh;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  padding: 24px;
+  padding: 1.25rem;
 
   @media (max-width: 960px) {
     align-items: center; /* ⬅️ NÃO centraliza vertical */
-    padding: 16px 12px; /* ⬅️ padding menor */
+    padding: 1rem 0.75rem; /* ⬅️ padding menor */
   }
 `;
 
 export const Center = styled.div`
   width: 100%;
-  max-width: 1140px;
+  max-width: 71.25rem;
 `;
 
 export const Card = styled.div`

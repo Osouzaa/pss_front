@@ -19,7 +19,16 @@ import { novoUsuario } from "../../api/novo-usuario";
 // ✅ mesma lógica da tela de login (tema global)
 import { useTheme } from "../../contexts/ThemeContext";
 
-import { FiSun, FiMoon, FiEye, FiEyeOff, FiLock, FiUser } from "react-icons/fi";
+import {
+  FiSun,
+  FiMoon,
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiUser,
+  FiCheckCircle,
+  FiXCircle,
+} from "react-icons/fi";
 
 import Logo from "../../assets/logo.png";
 import logo_pmi from "../../assets/logo-pmi-positiva.png";
@@ -160,21 +169,6 @@ export function Cadastro() {
               </S.LeftPane>
 
               <S.RightPane>
-                <S.Brand>
-                  <S.LogoRow>
-                    <S.SystemLogoImg
-                      src={mode === "dark" ? logo_pmi_negativa : logo_pmi}
-                      alt="Logo do Sistema"
-                    />
-                    <S.LogoDivider aria-hidden="true" />
-                    <S.LogoCircleImg src={Logo} alt="Logo do PSS" />
-                  </S.LogoRow>
-                  <div>
-                    <S.BrandTitle>Prefeitura</S.BrandTitle>
-                    <S.BrandSub>Processo Seletivo</S.BrandSub>
-                  </div>
-                </S.Brand>
-
                 <S.FormTitle>Dados de acesso</S.FormTitle>
                 <S.FormSub>Preencha para criar sua conta.</S.FormSub>
 
@@ -226,9 +220,26 @@ export function Cadastro() {
                     </S.PasswordWrap>
 
                     <S.Rules>
-                      <S.Rule $ok={pwd.okLen}>• mínimo 8 caracteres</S.Rule>
-                      <S.Rule $ok={pwd.hasLetter}>• pelo menos 1 letra</S.Rule>
-                      <S.Rule $ok={pwd.hasNumber}>• pelo menos 1 número</S.Rule>
+                      <S.Rule $ok={pwd.okLen}>
+                        <S.RuleIconWrap $ok={pwd.okLen}>
+                          {pwd.okLen ? <FiCheckCircle /> : <FiXCircle />}
+                        </S.RuleIconWrap>
+                        Mínimo de 8 caracteres
+                      </S.Rule>
+
+                      <S.Rule $ok={pwd.hasLetter}>
+                        <S.RuleIconWrap $ok={pwd.hasLetter}>
+                          {pwd.hasLetter ? <FiCheckCircle /> : <FiXCircle />}
+                        </S.RuleIconWrap>
+                        Pelo menos 1 letra
+                      </S.Rule>
+
+                      <S.Rule $ok={pwd.hasNumber}>
+                        <S.RuleIconWrap $ok={pwd.hasNumber}>
+                          {pwd.hasNumber ? <FiCheckCircle /> : <FiXCircle />}
+                        </S.RuleIconWrap>
+                        Pelo menos 1 número
+                      </S.Rule>
                     </S.Rules>
                   </S.Field>
 
