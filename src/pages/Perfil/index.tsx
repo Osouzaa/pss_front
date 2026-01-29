@@ -41,7 +41,6 @@ function toDateInputValue(value?: string | null) {
   const d = new Date(value); // ISO
   if (Number.isNaN(d.getTime())) return "";
 
-  // força UTC para não "voltar um dia"
   const yyyy = d.getUTCFullYear();
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
