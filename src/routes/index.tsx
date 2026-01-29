@@ -1,6 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router";
-import { Home } from "../pages/Home";
+// src/routes/index.tsx
+import { BrowserRouter, Routes, Route, useLocation } from "react-router";
+import { AnimatePresence } from "framer-motion";
+
 import { DefaultLayout } from "../_layout/defaultLayout";
+import { Home } from "../pages/Home";
 import { Processo } from "../pages/Processo";
 import { ProcessoSeletivosDetalhes } from "../pages/ProcessoDetalhes";
 import { Login } from "../pages/Login";
@@ -9,12 +12,18 @@ import { Perfil } from "../pages/Perfil";
 import { InscricaoPage } from "../pages/Inscricao";
 import { MinhasInscricoes } from "../pages/MinhasInscricoes";
 
-const Router = () => {
+function AnimatedRoutes() {
+  const location = useLocation();
+
   return (
-    <BrowserRouter>
-      <Routes>
+    <AnimatePresence mode="wait" initial={false}>
+      {/* ✅ Routes é quem recebe location + key */}
+      <Routes location={location} key={location.pathname}>
+        {/* Rotas SEM layout (login/cadastro) */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
+
+        {/* Rotas COM layout */}
         <Route element={<DefaultLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/processos" element={<Processo />} />
@@ -31,6 +40,14 @@ const Router = () => {
           <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
         </Route>
       </Routes>
+    </AnimatePresence>
+  );
+}
+
+const Router = () => {
+  return (
+    <BrowserRouter>
+      <AnimatedRoutes />
     </BrowserRouter>
   );
 };

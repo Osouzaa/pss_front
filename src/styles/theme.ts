@@ -49,4 +49,8 @@ export const theme = {
   priorityLowText: "#ffffff",
   priorityNoneBg: "#03a9f4",
   priorityNoneText: "#ffffff",
+
+  warning: "#FFC300",
+  warningBg: "#FFF7D6",
+  warningText: "#7A5C00",
 };

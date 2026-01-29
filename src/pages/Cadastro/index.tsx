@@ -1,25 +1,30 @@
+// src/pages/Cadastro/index.tsx
 import { useEffect, useMemo, useState } from "react";
-import { ThemeProvider } from "styled-components";
 import { useNavigate } from "react-router";
-import * as S from "./styles";
-
-import { theme } from "../../styles/theme";
-import { darkTheme } from "../../styles/darkTheme";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import * as S from "./styles";
+
 import {
   createNovoUserSchema,
   type CreateNovoUserFormData,
 } from "../../schemas/create-novo-user";
 
-import { InputBase } from "../../components/InputBase";
-import { useMutation } from "@tanstack/react-query";
+import { FormMessage } from "../../components/FormMessage";
 import { novoUsuario } from "../../api/novo-usuario";
-import { toast } from "sonner";
 
-import { FiSun, FiMoon, FiEye, FiEyeOff } from "react-icons/fi";
+// ✅ mesma lógica da tela de login (tema global)
+import { useTheme } from "../../contexts/ThemeContext";
 
-const THEME_KEY = "ps.theme";
+import { FiSun, FiMoon, FiEye, FiEyeOff, FiLock, FiUser } from "react-icons/fi";
+
+import Logo from "../../assets/logo.png";
+import logo_pmi from "../../assets/logo-pmi-positiva.png";
+import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
+import { PageTransition } from "../../components/PageTransition";
 
 function passwordScore(pwd: string) {
   const okLen = pwd.length >= 8;
@@ -28,24 +33,12 @@ function passwordScore(pwd: string) {
   return { okLen, hasLetter, hasNumber, ok: okLen && hasLetter && hasNumber };
 }
 
-function getStoredTheme(): "light" | "dark" {
-  const v = localStorage.getItem(THEME_KEY);
-  return v === "dark" ? "dark" : "light";
-}
-
 export function Cadastro() {
   const navigate = useNavigate();
+  const { mode, toggleTheme } = useTheme();
 
-  const [mode, setMode] = useState<"light" | "dark">(getStoredTheme());
-  useEffect(() => {
-    localStorage.setItem(THEME_KEY, mode);
-    document.documentElement.setAttribute("data-theme", mode);
-  }, [mode]);
-
-  const currentTheme = useMemo(
-    () => (mode === "dark" ? darkTheme : theme),
-    [mode],
-  );
+  const [showPass, setShowPass] = useState(false);
+  const [formError, setFormError] = useState<string | undefined>(undefined);
 
   const {
     register,
@@ -62,7 +55,10 @@ export function Cadastro() {
     },
   });
 
-  const [showPass, setShowPass] = useState(false);
+  useEffect(() => {
+    const sub = watch(() => setFormError(undefined));
+    return () => sub.unsubscribe();
+  }, [watch]);
 
   const senhaValue = watch("senha") ?? "";
   const pwd = useMemo(() => passwordScore(senhaValue), [senhaValue]);
@@ -71,58 +67,64 @@ export function Cadastro() {
     mutationFn: novoUsuario,
   });
 
-  const loading = isPending;
-  const canSubmit = isValid && pwd.ok && !loading;
+  const canSubmit = isValid && pwd.ok && !isPending;
 
-  async function handleNovoUser(data: CreateNovoUserFormData) {
+  async function onSubmit(data: CreateNovoUserFormData) {
     try {
+      setFormError(undefined);
+
       await novoUsuarioFn({
         email: data.email,
         senha: data.senha,
         role: data.role,
       });
 
-      toast.success(
-        "Sua conta foi criada com sucesso! Redirecionando para o login.",
-      );
-      navigate("/login");
+      toast.success("Conta criada com sucesso! Faça login para continuar.");
+      navigate("/login", { replace: true });
     } catch (err) {
-      toast.error(
+      // mantém o padrão do login: erro inline + opcional toast
+      setFormError(
         "Não foi possível criar sua conta. Verifique os dados e tente novamente.",
       );
     }
   }
 
+  const formErrorMsg =
+    formError || errors.email?.message || errors.senha?.message || undefined;
+
   return (
-    <ThemeProvider theme={currentTheme}>
+    <PageTransition>
       <S.Page>
         <S.Center>
           <S.Card>
-            {/* TopBar (mobile) */}
             <S.TopBar>
-              <S.BackButton type="button" onClick={() => navigate("/login")}>
-                Voltar
-              </S.BackButton>
+              <S.BrandMini>
+                <S.LogoRow>
+                  <S.SystemLogoImg
+                    src={mode === "dark" ? logo_pmi_negativa : logo_pmi}
+                    alt="Logo do Sistema"
+                  />
+                  <S.LogoDivider aria-hidden="true" />
+                  <S.LogoCircleImg src={Logo} alt="Logo do sistema PSS" />
+                </S.LogoRow>
+              </S.BrandMini>
 
               <S.ThemeToggle
                 type="button"
                 $active={mode === "dark"}
-                onClick={() =>
-                  setMode((p) => (p === "dark" ? "light" : "dark"))
-                }
+                onClick={toggleTheme}
                 aria-label={
                   mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"
                 }
                 title={mode === "dark" ? "Modo claro" : "Modo escuro"}
               >
-                <S.ToggleTrack>
+                <S.ToggleTrack $active={mode === "dark"}>
                   <S.ToggleIconLeft aria-hidden="true">
                     <FiSun />
                   </S.ToggleIconLeft>
                   <S.ToggleIconRight aria-hidden="true">
                     <FiMoon />
                   </S.ToggleIconRight>
-
                   <S.ToggleThumb $active={mode === "dark"}>
                     {mode === "dark" ? <FiMoon /> : <FiSun />}
                   </S.ToggleThumb>
@@ -132,85 +134,82 @@ export function Cadastro() {
 
             <S.ContentGrid>
               <S.LeftPane>
+                <S.MessageTitle>Crie sua conta ✨</S.MessageTitle>
+                <S.MessageText>
+                  Cadastre-se para acompanhar editais, inscrições, convocações e
+                  resultados.
+                </S.MessageText>
+
+                <S.InfoCard>
+                  <S.InfoTitle>Requisitos de senha</S.InfoTitle>
+                  <S.InfoText>
+                    Use uma senha com <b>mínimo de 8 caracteres</b>, contendo{" "}
+                    <b>letras</b> e <b>números</b>.
+                  </S.InfoText>
+                </S.InfoCard>
+
+                <S.BottomNote>
+                  Já tem conta?{" "}
+                  <S.LinkInline
+                    type="button"
+                    onClick={() => navigate("/login")}
+                  >
+                    Entrar
+                  </S.LinkInline>
+                </S.BottomNote>
+              </S.LeftPane>
+
+              <S.RightPane>
                 <S.Brand>
-                  <S.LogoCircle aria-hidden="true">PMI</S.LogoCircle>
+                  <S.LogoRow>
+                    <S.SystemLogoImg
+                      src={mode === "dark" ? logo_pmi_negativa : logo_pmi}
+                      alt="Logo do Sistema"
+                    />
+                    <S.LogoDivider aria-hidden="true" />
+                    <S.LogoCircleImg src={Logo} alt="Logo do PSS" />
+                  </S.LogoRow>
                   <div>
                     <S.BrandTitle>Prefeitura</S.BrandTitle>
                     <S.BrandSub>Processo Seletivo</S.BrandSub>
                   </div>
                 </S.Brand>
 
-                <S.MessageTitle>Crie sua conta</S.MessageTitle>
-                <S.MessageText>
-                  Cadastre-se para acompanhar editais, inscrições e resultados
-                  do processo seletivo.
-                </S.MessageText>
-
-                <S.InfoCard>
-                  <S.InfoTitle>Você vai precisar de:</S.InfoTitle>
-                  <S.Bullets>
-                    <li>Um e-mail válido</li>
-                    <li>Uma senha segura</li>
-                  </S.Bullets>
-                </S.InfoCard>
-
-                {/* Toggle no desktop fica aqui (lado esquerdo) */}
-                <S.DesktopOnly>
-                  <S.ThemeRow>
-                    <S.ThemeLabel>Modo</S.ThemeLabel>
-
-                    <S.ThemeToggle
-                      type="button"
-                      $active={mode === "dark"}
-                      onClick={() =>
-                        setMode((p) => (p === "dark" ? "light" : "dark"))
-                      }
-                      aria-label={
-                        mode === "dark"
-                          ? "Ativar modo claro"
-                          : "Ativar modo escuro"
-                      }
-                      title={mode === "dark" ? "Modo claro" : "Modo escuro"}
-                    >
-                      <S.ToggleTrack>
-                        <S.ToggleIconLeft aria-hidden="true">
-                          <FiSun />
-                        </S.ToggleIconLeft>
-                        <S.ToggleIconRight aria-hidden="true">
-                          <FiMoon />
-                        </S.ToggleIconRight>
-                        <S.ToggleThumb $active={mode === "dark"}>
-                          {mode === "dark" ? <FiMoon /> : <FiSun />}
-                        </S.ToggleThumb>
-                      </S.ToggleTrack>
-                    </S.ThemeToggle>
-                  </S.ThemeRow>
-                </S.DesktopOnly>
-              </S.LeftPane>
-
-              <S.RightPane>
                 <S.FormTitle>Dados de acesso</S.FormTitle>
                 <S.FormSub>Preencha para criar sua conta.</S.FormSub>
 
-                <S.Form onSubmit={handleSubmit(handleNovoUser)}>
+                <S.Form onSubmit={handleSubmit(onSubmit)}>
                   <S.Field>
-                    <InputBase
-                      label="E-mail"
-                      type="email"
-                      autoComplete="email"
-                      error={errors.email?.message}
-                      {...register("email")}
-                    />
+                    <S.Label htmlFor="email">E-mail</S.Label>
+                    <S.InputWrap>
+                      <S.InputIcon aria-hidden="true">
+                        <FiUser />
+                      </S.InputIcon>
+
+                      <S.Input
+                        id="email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        placeholder="seuemail@exemplo.com"
+                        {...register("email")}
+                      />
+                    </S.InputWrap>
                   </S.Field>
 
                   <S.Field>
+                    <S.Label htmlFor="senha">Senha</S.Label>
+
                     <S.PasswordWrap>
-                      <InputBase
-                        label="Senha"
+                      <S.InputIcon aria-hidden="true">
+                        <FiLock />
+                      </S.InputIcon>
+
+                      <S.Input
+                        id="senha"
                         type={showPass ? "text" : "password"}
                         autoComplete="new-password"
                         placeholder="Crie uma senha"
-                        error={errors.senha?.message}
                         {...register("senha")}
                       />
 
@@ -233,25 +232,34 @@ export function Cadastro() {
                     </S.Rules>
                   </S.Field>
 
+                  <FormMessage message={formErrorMsg} />
+
                   <S.PrimaryButton disabled={!canSubmit}>
-                    {loading ? "Cadastrando..." : "Criar conta"}
+                    {isPending ? "Cadastrando..." : "Criar conta"}
                   </S.PrimaryButton>
 
-                  <S.FooterRow>
-                    <S.FooterText>Já tem conta?</S.FooterText>
-                    <S.LinkButton
-                      type="button"
-                      onClick={() => navigate("/login")}
-                    >
-                      Entrar
-                    </S.LinkButton>
-                  </S.FooterRow>
+                  <S.Divider>
+                    <span>ou</span>
+                  </S.Divider>
+
+                  <S.SecondaryButton
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    disabled={isPending}
+                  >
+                    Voltar para o login
+                  </S.SecondaryButton>
+
+                  <S.FooterHint>
+                    Ao continuar, você concorda com os termos e a política de
+                    privacidade.
+                  </S.FooterHint>
                 </S.Form>
               </S.RightPane>
             </S.ContentGrid>
           </S.Card>
         </S.Center>
       </S.Page>
-    </ThemeProvider>
+    </PageTransition>
   );
 }

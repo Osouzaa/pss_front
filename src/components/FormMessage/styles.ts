@@ -11,8 +11,7 @@ export const ErrorMessage = styled.span`
   border-left: 3px solid ${({ theme }) => theme.danger};
 
   padding: 8px 12px;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin: 0.5rem 0;
   border-radius: 6px;
 
   animation: fadeIn 0.25s ease-in-out;
@@ -29,6 +28,33 @@ export const ErrorMessage = styled.span`
   }
 `;
 
+export const WarningMessage = styled.span`
+  width: 100%;
+  display: block;
+
+  color: ${({ theme }) => theme.warningText ?? "#8a6d3b"};
+  font-size: 0.85rem;
+
+  background-color: ${({ theme }) => theme.warningBg};
+  border-left: 3px solid ${({ theme }) => theme.warning};
+
+  padding: 8px 12px;
+  margin: 0.5rem 0;
+  border-radius: 6px;
+
+  animation: fadeIn 0.25s ease-in-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
 
 export const SuccessMessage = styled.div`
   width: 100%;
@@ -63,4 +89,3 @@ export const SuccessMessage = styled.div`
     }
   }
 `;
-

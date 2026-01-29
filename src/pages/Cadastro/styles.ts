@@ -1,3 +1,4 @@
+// src/pages/Cadastro/styles.ts
 import styled from "styled-components";
 
 const ui = {
@@ -43,7 +44,6 @@ export const Card = styled.div`
   }
 `;
 
-/* TopBar só no mobile */
 export const TopBar = styled.div`
   display: flex;
   align-items: center;
@@ -53,25 +53,53 @@ export const TopBar = styled.div`
   padding: ${ui.space.lg};
   background: ${({ theme }) => theme.background};
   border-bottom: 1px solid ${({ theme }) => theme.border};
+`;
 
-  @media (min-width: 900px) {
-    display: none;
-  }
+export const BrandMini = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const LogoRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${ui.space.sm};
+`;
+
+export const SystemLogoImg = styled.img`
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+`;
+
+export const LogoCircleImg = styled.img`
+  width: 38px;
+  height: 38px;
+  border-radius: ${ui.radius.pill};
+  object-fit: cover;
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+`;
+
+export const LogoDivider = styled.div`
+  width: 1px;
+  height: 28px;
+  background: ${({ theme }) => theme.border};
+  opacity: 0.9;
 `;
 
 export const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  min-height: 520px;
+  min-height: 560px;
 
   @media (min-width: 900px) {
     grid-template-columns: 1.05fr 1fr;
   }
 `;
 
-/* =========================
-   LEFT PANE
-========================= */
+/* LEFT */
 export const LeftPane = styled.aside`
   padding: ${ui.space.xxl};
   background: ${({ theme }) => theme.lightDefault};
@@ -85,39 +113,6 @@ export const LeftPane = styled.aside`
   @media (max-width: 520px) {
     padding: ${ui.space.xl};
   }
-`;
-
-export const Brand = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${ui.space.md};
-  margin-bottom: ${ui.space.lg};
-`;
-
-export const LogoCircle = styled.div`
-  width: 52px;
-  height: 52px;
-  border-radius: ${ui.radius.pill};
-  display: grid;
-  place-items: center;
-
-  background: ${({ theme }) => theme.lightPrimary};
-  color: ${({ theme }) => theme.primary};
-
-  font-weight: 950;
-  letter-spacing: 0.4px;
-`;
-
-export const BrandTitle = styled.div`
-  font-weight: 950;
-  font-size: 14px;
-  line-height: 1.1;
-`;
-
-export const BrandSub = styled.div`
-  font-size: 12px;
-  color: ${({ theme }) => theme.description};
-  font-weight: 850;
 `;
 
 export const MessageTitle = styled.h2`
@@ -150,40 +145,41 @@ export const InfoTitle = styled.div`
   font-size: 13px;
 `;
 
-export const Bullets = styled.ul`
+export const InfoText = styled.p`
   margin: 10px 0 0;
-  padding-left: 18px;
   color: ${({ theme }) => theme.description};
   font-size: 13px;
-  line-height: 1.6;
-`;
+  line-height: 1.55;
 
-export const DesktopOnly = styled.div`
-  display: none;
-
-  @media (min-width: 900px) {
-    display: block;
-    margin-top: ${ui.space.xl};
-    padding-top: ${ui.space.md};
-    border-top: 1px solid ${({ theme }) => theme.border};
+  b {
+    color: ${({ theme }) => theme.text};
+    font-weight: 950;
   }
 `;
 
-export const ThemeRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${ui.space.md};
+export const BottomNote = styled.div`
+  margin-top: ${ui.space.xl};
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  font-weight: 850;
 `;
 
-export const ThemeLabel = styled.div`
-  font-size: 13px;
+export const LinkInline = styled.button`
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+
+  font-size: 12px;
   font-weight: 950;
+  color: ${({ theme }) => theme.link};
+
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
-/* =========================
-   RIGHT PANE
-========================= */
+/* RIGHT */
 export const RightPane = styled.main`
   padding: ${ui.space.xxl};
   display: flex;
@@ -193,6 +189,25 @@ export const RightPane = styled.main`
   @media (max-width: 520px) {
     padding: ${ui.space.xl};
   }
+`;
+
+export const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${ui.space.md};
+  margin-bottom: ${ui.space.lg};
+`;
+
+export const BrandTitle = styled.div`
+  font-weight: 950;
+  font-size: 14px;
+  line-height: 1.1;
+`;
+
+export const BrandSub = styled.div`
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  font-weight: 850;
 `;
 
 export const FormTitle = styled.h3`
@@ -207,9 +222,6 @@ export const FormSub = styled.p`
   color: ${({ theme }) => theme.description};
 `;
 
-/* =========================
-   FORM
-========================= */
 export const Form = styled.form`
   margin-top: ${ui.space.lg};
   display: flex;
@@ -223,15 +235,68 @@ export const Field = styled.div`
   gap: ${ui.space.xs};
 `;
 
+export const Label = styled.label`
+  font-size: 12px;
+  font-weight: 950;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const InputWrap = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
 export const PasswordWrap = styled.div`
   position: relative;
   width: 100%;
 `;
 
+export const InputIcon = styled.div`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  color: ${({ theme }) => theme.description};
+  opacity: 0.9;
+
+  svg {
+    font-size: 16px;
+  }
+`;
+
+export const Input = styled.input`
+  height: ${ui.controlH};
+  width: 100%;
+  border-radius: ${ui.radius.md};
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+  color: ${({ theme }) => theme.text};
+
+  padding: 0 44px 0 40px;
+  outline: none;
+
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.description};
+    opacity: 0.85;
+  }
+
+  &:focus {
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0 0 0 4px ${({ theme }) => theme.lightPrimary};
+  }
+`;
+
 export const IconButton = styled.button`
   position: absolute;
   right: 10px;
-  top: 70%;
+  top: 50%;
   transform: translateY(-50%);
 
   width: 38px;
@@ -246,6 +311,7 @@ export const IconButton = styled.button`
   color: ${({ theme }) => theme.primary};
 
   cursor: pointer;
+
   transition:
     transform 120ms ease,
     background 120ms ease,
@@ -311,69 +377,71 @@ export const PrimaryButton = styled.button`
   }
 `;
 
-export const FooterRow = styled.div`
+export const Divider = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 2px;
-`;
+  gap: ${ui.space.sm};
+  margin: 6px 0;
 
-export const FooterText = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.description};
-  font-weight: 850;
-`;
+  &:before,
+  &:after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: ${({ theme }) => theme.border};
+    opacity: 0.9;
+  }
 
-export const LinkButton = styled.button`
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-
-  font-size: 12px;
-  font-weight: 950;
-  color: ${({ theme }) => theme.link};
-
-  &:hover {
-    text-decoration: underline;
+  span {
+    font-size: 12px;
+    font-weight: 950;
+    color: ${({ theme }) => theme.description};
   }
 `;
 
-/* =========================
-   BACK
-========================= */
-export const BackButton = styled.button`
-  height: 36px;
-  padding: 0 12px;
-  border-radius: ${ui.radius.pill};
+export const SecondaryButton = styled.button`
+  height: ${ui.controlH};
+  width: 100%;
+  border-radius: ${ui.radius.md};
 
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
   color: ${({ theme }) => theme.text};
 
-  font-size: 12px;
   font-weight: 950;
   cursor: pointer;
 
   transition:
     transform 120ms ease,
     background 120ms ease,
-    border-color 120ms ease;
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 
   &:hover {
     border-color: ${({ theme }) => theme.primary};
     background: ${({ theme }) => theme.lightPrimary};
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
   }
 
   &:active {
-    transform: scale(0.98);
+    transform: scale(0.99);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
   }
 `;
 
-/* =========================
-   THEME TOGGLE (sol → lua)
-========================= */
+export const FooterHint = styled.p`
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  line-height: 1.45;
+`;
+
+/* THEME TOGGLE (igual login) */
 export const ThemeToggle = styled.button<{ $active: boolean }>`
   border: none;
   background: transparent;
@@ -386,7 +454,7 @@ export const ThemeToggle = styled.button<{ $active: boolean }>`
   }
 `;
 
-export const ToggleTrack = styled.div`
+export const ToggleTrack = styled.div<{ $active: boolean }>`
   width: 66px;
   height: 36px;
   border-radius: ${ui.radius.pill};

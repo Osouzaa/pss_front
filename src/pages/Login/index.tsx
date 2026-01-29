@@ -26,6 +26,7 @@ import Logo from "../../assets/logo_pss_ok.png";
 
 // ✅ novo: consome o tema global
 import { useTheme } from "../../contexts/ThemeContext";
+import { PageTransition } from "../../components/PageTransition";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -82,147 +83,158 @@ export function Login() {
     }
   }
 
-  const formErrorMsg =
-    formError || errors.email?.message || errors.senha?.message || undefined;
+  const rhfMsg = errors.email?.message || errors.senha?.message;
+  const apiMsg = formError;
+
+  const message = apiMsg || rhfMsg || undefined;
+  const messageType: "error" | "warning" | "success" = apiMsg
+    ? "error"
+    : rhfMsg
+      ? "warning"
+      : "success";
 
   return (
-    <S.Page>
-      <S.Center>
-        <S.Card>
-          <S.TopBar>
-            <S.BrandMini>
-              <S.LogoRow>
-                <S.SystemLogoImg
-                  src={mode === "dark" ? logo_pmi_negativa : logo_pmi}
-                  alt="Logo do Sistema"
-                />
-                <S.LogoDivider aria-hidden="true" />
-                <S.LogoCircleImg src={Logo} alt="Logo do sistema PSS" />
-              </S.LogoRow>
-            </S.BrandMini>
+    <PageTransition>
+      <S.Page>
+        <S.Center>
+          <S.Card>
+            <S.TopBar>
+              <S.BrandMini>
+                <S.LogoRow>
+                  <S.SystemLogoImg
+                    src={mode === "dark" ? logo_pmi_negativa : logo_pmi}
+                    alt="Logo do Sistema"
+                  />
+                  <S.LogoDivider aria-hidden="true" />
+                  <S.LogoCircleImg src={Logo} alt="Logo do sistema PSS" />
+                </S.LogoRow>
+              </S.BrandMini>
 
-            <S.ThemeToggle
-              type="button"
-              $active={mode === "dark"}
-              onClick={toggleTheme}
-              aria-label={
-                mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"
-              }
-              title={mode === "dark" ? "Modo claro" : "Modo escuro"}
-            >
-              <S.ToggleTrack $active={mode === "dark"}>
-                <S.ToggleIconLeft aria-hidden="true">
-                  <FiSun />
-                </S.ToggleIconLeft>
-                <S.ToggleIconRight aria-hidden="true">
-                  <FiMoon />
-                </S.ToggleIconRight>
-                <S.ToggleThumb $active={mode === "dark"}>
-                  {mode === "dark" ? <FiMoon /> : <FiSun />}
-                </S.ToggleThumb>
-              </S.ToggleTrack>
-            </S.ThemeToggle>
-          </S.TopBar>
+              <S.ThemeToggle
+                type="button"
+                $active={mode === "dark"}
+                onClick={toggleTheme}
+                aria-label={
+                  mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"
+                }
+                title={mode === "dark" ? "Modo claro" : "Modo escuro"}
+              >
+                <S.ToggleTrack $active={mode === "dark"}>
+                  <S.ToggleIconLeft aria-hidden="true">
+                    <FiSun />
+                  </S.ToggleIconLeft>
+                  <S.ToggleIconRight aria-hidden="true">
+                    <FiMoon />
+                  </S.ToggleIconRight>
+                  <S.ToggleThumb $active={mode === "dark"}>
+                    {mode === "dark" ? <FiMoon /> : <FiSun />}
+                  </S.ToggleThumb>
+                </S.ToggleTrack>
+              </S.ThemeToggle>
+            </S.TopBar>
 
-          <S.ContentGrid>
-            <S.LeftPane>
-              <S.FormTitle>Processo Seletivo Simplificado</S.FormTitle>
-              <S.FormSub>Acesse sua conta para continuar.</S.FormSub>
+            <S.ContentGrid>
+              <S.LeftPane>
+                <S.FormTitle>Processo Seletivo Simplificado</S.FormTitle>
+                <S.FormSub>Acesse sua conta para continuar.</S.FormSub>
 
-              <S.Form onSubmit={handleSubmit(onSubmit)}>
-                <S.Field>
-                  <S.Label htmlFor="email">E-mail</S.Label>
+                <S.Form onSubmit={handleSubmit(onSubmit)}>
+                  <S.Field>
+                    <S.Label htmlFor="email">E-mail</S.Label>
 
-                  <S.InputWrap>
-                    <S.InputIcon aria-hidden="true">
-                      <FiUser />
-                    </S.InputIcon>
+                    <S.InputWrap>
+                      <S.InputIcon aria-hidden="true">
+                        <FiUser />
+                      </S.InputIcon>
 
-                    <S.Input
-                      id="email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="seuemail@exemplo.com"
-                      {...register("email")}
-                    />
-                  </S.InputWrap>
-                </S.Field>
+                      <S.Input
+                        id="email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        placeholder="seuemail@exemplo.com"
+                        {...register("email")}
+                      />
+                    </S.InputWrap>
+                  </S.Field>
 
-                <S.Field>
-                  <S.Label htmlFor="senha">Senha</S.Label>
+                  <S.Field>
+                    <S.Label htmlFor="senha">Senha</S.Label>
 
-                  <S.PasswordWrap>
-                    <S.InputIcon aria-hidden="true">
-                      <FiLock />
-                    </S.InputIcon>
+                    <S.PasswordWrap>
+                      <S.InputIcon aria-hidden="true">
+                        <FiLock />
+                      </S.InputIcon>
 
-                    <S.Input
-                      id="senha"
-                      type={showPass ? "text" : "password"}
-                      autoComplete="current-password"
-                      placeholder="Sua senha"
-                      {...register("senha")}
-                    />
+                      <S.Input
+                        id="senha"
+                        type={showPass ? "text" : "password"}
+                        autoComplete="current-password"
+                        placeholder="Sua senha"
+                        {...register("senha")}
+                      />
 
-                    <S.IconButton
-                      type="button"
-                      onClick={() => setShowPass((v) => !v)}
-                      aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
-                      title={showPass ? "Ocultar senha" : "Mostrar senha"}
-                    >
-                      {showPass ? <FiEyeOff /> : <FiEye />}
-                    </S.IconButton>
-                  </S.PasswordWrap>
-                </S.Field>
+                      <S.IconButton
+                        type="button"
+                        onClick={() => setShowPass((v) => !v)}
+                        aria-label={
+                          showPass ? "Ocultar senha" : "Mostrar senha"
+                        }
+                        title={showPass ? "Ocultar senha" : "Mostrar senha"}
+                      >
+                        {showPass ? <FiEyeOff /> : <FiEye />}
+                      </S.IconButton>
+                    </S.PasswordWrap>
+                  </S.Field>
 
-                <FormMessage message={formErrorMsg} />
+                  <FormMessage message={message} type={messageType} />
 
-                <S.PrimaryButton disabled={isPending}>
-                  {isPending ? "Entrando..." : "Entrar"}
-                </S.PrimaryButton>
+                  <S.PrimaryButton disabled={isPending}>
+                    {isPending ? "Entrando..." : "Entrar"}
+                  </S.PrimaryButton>
 
-                <S.Divider>
-                  <span>ou</span>
-                </S.Divider>
+                  <S.Divider>
+                    <span>ou</span>
+                  </S.Divider>
 
-                <S.SecondaryButton
-                  type="button"
-                  onClick={() => navigate("/cadastro")}
-                  disabled={isPending}
-                >
-                  Criar conta
-                </S.SecondaryButton>
+                  <S.SecondaryButton
+                    type="button"
+                    onClick={() => navigate("/cadastro")}
+                    disabled={isPending}
+                  >
+                    Criar conta
+                  </S.SecondaryButton>
 
-                <S.FooterHint>
-                  Ao continuar, você concorda com os termos e a política de
-                  privacidade.
-                </S.FooterHint>
-              </S.Form>
-            </S.LeftPane>
+                  <S.FooterHint>
+                    Ao continuar, você concorda com os termos e a política de
+                    privacidade.
+                  </S.FooterHint>
+                </S.Form>
+              </S.LeftPane>
 
-            <S.RightPane>
-              <S.MessageTitle>Bem-vindo(a) 👋</S.MessageTitle>
-              <S.MessageText>
-                Faça login para acompanhar editais, inscrições, convocações e
-                resultados.
-              </S.MessageText>
+              <S.RightPane>
+                <S.MessageTitle>Bem-vindo(a) 👋</S.MessageTitle>
+                <S.MessageText>
+                  Faça login para acompanhar editais, inscrições, convocações e
+                  resultados.
+                </S.MessageText>
 
-              <S.InfoCard>
-                <S.InfoTitle>Dica rápida</S.InfoTitle>
-                <S.InfoText>
-                  Se você ainda não tem conta, clique em <b>Criar conta</b> para
-                  se cadastrar.
-                </S.InfoText>
-              </S.InfoCard>
+                <S.InfoCard>
+                  <S.InfoTitle>Dica rápida</S.InfoTitle>
+                  <S.InfoText>
+                    Se você ainda não tem conta, clique em <b>Criar conta</b>{" "}
+                    para se cadastrar.
+                  </S.InfoText>
+                </S.InfoCard>
 
-              <S.BottomNote>
-                © {new Date().getFullYear()} — Sistema
-              </S.BottomNote>
-            </S.RightPane>
-          </S.ContentGrid>
-        </S.Card>
-      </S.Center>
-    </S.Page>
+                <S.BottomNote>
+                  © {new Date().getFullYear()} — Sistema
+                </S.BottomNote>
+              </S.RightPane>
+            </S.ContentGrid>
+          </S.Card>
+        </S.Center>
+      </S.Page>
+    </PageTransition>
   );
 }

@@ -1,16 +1,22 @@
-import { ErrorMessage, SuccessMessage } from "./styles";
+import { ErrorMessage, SuccessMessage, WarningMessage } from "./styles";
 
 interface FormMessageProps {
   message?: string;
-  type?: 'success' | 'error';
+  type?: "success" | "error" | "warning";
 }
 
 export const FormMessage = ({ message, type }: FormMessageProps) => {
   if (!message) return null;
 
-  return type === 'error' ? (
-    <ErrorMessage>{message}</ErrorMessage>
-  ) : (
-    <SuccessMessage>{message}</SuccessMessage>
-  );
+  switch (type) {
+    case "error":
+      return <ErrorMessage>{message}</ErrorMessage>;
+
+    case "warning":
+      return <WarningMessage>{message}</WarningMessage>;
+
+    case "success":
+    default:
+      return <SuccessMessage>{message}</SuccessMessage>;
+  }
 };

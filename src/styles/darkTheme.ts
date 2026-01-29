@@ -62,4 +62,8 @@ export const darkTheme = {
 
   priorityNoneBg: "#38BDF8",
   priorityNoneText: "#0B1220",
+
+  warning: "#FFD54A",
+  warningBg: "rgba(255, 213, 74, 0.16)",
+  warningText: "#FDE68A",
 };
