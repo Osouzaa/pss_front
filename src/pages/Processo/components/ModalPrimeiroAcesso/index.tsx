@@ -21,7 +21,7 @@ interface ModalPrimeiroAcessoProps {
   // ação principal (ex: navigate("/perfil"))
   onGoProfile: () => void;
 
-  // se quiser bloquear fechar no overlay/ESC
+  // se true: não fecha por overlay/ESC, não mostra X, não mostra "Agora não"
   lockClose?: boolean;
 }
 
@@ -35,6 +35,12 @@ export function ModalPrimeiroAcesso({
 
   function handleClose() {
     onOpenChange(false);
+  }
+
+  function handleGoProfile() {
+    // quando lockClose = true, não dá pra ficar na tela atual
+    if (!lockClose) handleClose();
+    onGoProfile();
   }
 
   return (
@@ -57,14 +63,16 @@ export function ModalPrimeiroAcesso({
             <div>
               <Title>{titleText}</Title>
               <div className="subtitle">
-                Antes de continuar, complete seu perfil com suas informações e
-                documentos.
+                Antes de continuar, complete seu perfil com suas informações e documentos.
               </div>
             </div>
 
-            <button type="button" onClick={handleClose} aria-label="Fechar">
-              <X size={16} />
-            </button>
+            {/* X só aparece se NÃO estiver travado */}
+            {!lockClose && (
+              <button type="button" onClick={handleClose} aria-label="Fechar">
+                <X size={16} />
+              </button>
+            )}
           </HeaderContent>
 
           <Body>
@@ -73,9 +81,8 @@ export function ModalPrimeiroAcesso({
 
               <div style={{ display: "grid", gap: 10 }}>
                 <div style={{ lineHeight: 1.5, opacity: 0.9 }}>
-                  Identificamos que este é seu primeiro acesso. Para validar sua
-                  inscrição e facilitar análises, é importante preencher seu
-                  perfil com os dados pessoais e anexar os documentos
+                  Identificamos que este é seu primeiro acesso. Para validar sua inscrição e facilitar
+                  análises, é importante preencher seu perfil com os dados pessoais e anexar os documentos
                   necessários.
                 </div>
 
@@ -93,18 +100,14 @@ export function ModalPrimeiroAcesso({
             </Section>
 
             <Footer>
-              <button type="button" className="secondary" onClick={handleClose}>
-                Agora não
-              </button>
+              {/* "Agora não" só aparece se NÃO estiver travado */}
+              {!lockClose && (
+                <button type="button" className="secondary" onClick={handleClose}>
+                  Agora não
+                </button>
+              )}
 
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  handleClose();
-                  onGoProfile();
-                }}
-              >
+              <button type="button" className="primary" onClick={handleGoProfile}>
                 Ir para meu perfil
               </button>
             </Footer>
