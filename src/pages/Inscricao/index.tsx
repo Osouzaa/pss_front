@@ -250,17 +250,22 @@ export function InscricaoPage() {
   async function handleIniciar() {
     if (!idVaga) return toast.error("Selecione uma vaga para iniciar.");
 
-    const resp = await iniciarMut.mutateAsync({
+    const response = await iniciarMut.mutateAsync({
       id_processo_seletivo: idProcesso,
       id_vaga: idVaga,
     });
 
-    const newId = (resp as any)?.id_inscricao as string | undefined;
+    if (response.readonly) {
+      toast.warning(
+        "Voce já tem uma inscrição nessa vaga! Vamos levar você para atualizar informações.",
+      );
+    }
+
+    const newId = response?.id_inscricao as string | undefined;
     if (!newId) return toast.error("Backend não retornou id_inscricao.");
 
     setIdInscricao(newId);
     navigate(`/processos/${idProcesso}/inscricao/${newId}`, { replace: true });
-    toast.success("Inscrição iniciada!");
   }
 
   /** =========================

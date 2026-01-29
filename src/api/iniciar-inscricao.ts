@@ -2,6 +2,9 @@ import { api } from "../lib/axios";
 
 interface IniciarInscricaoProps {
   id_inscricao: string;
+  status: string;
+  protocolo: string;
+  readonly: true;
 }
 interface IniciarInscricaoBody {
   id_processo_seletivo: string;
