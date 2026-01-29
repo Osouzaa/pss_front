@@ -75,7 +75,7 @@ export function Login() {
       queryClient.clear();
 
       toast.success("Login realizado com sucesso!");
-      navigate("/home", { replace: true });
+      navigate("/processos", { replace: true });
     } catch (error) {
       setFormError(handleLoginError(error));
     }

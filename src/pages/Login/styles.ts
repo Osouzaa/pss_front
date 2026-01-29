@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export const Page = styled.div`
-  min-height: 80vh;
+  min-height: 100vh;
 
   display: flex;
   align-items: center;
@@ -10,6 +10,7 @@ export const Page = styled.div`
   padding: 1.25rem;
 
   @media (max-width: 960px) {
+    min-height: 80vh;
     align-items: center; /* ⬅️ NÃO centraliza vertical */
     padding: 1rem 0.75rem; /* ⬅️ padding menor */
   }

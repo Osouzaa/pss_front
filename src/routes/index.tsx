@@ -1,9 +1,7 @@
-// src/routes/index.tsx
 import { BrowserRouter, Routes, Route, useLocation } from "react-router";
 import { AnimatePresence } from "framer-motion";
 
 import { DefaultLayout } from "../_layout/defaultLayout";
-import { Home } from "../pages/Home";
 import { Processo } from "../pages/Processo";
 import { ProcessoSeletivosDetalhes } from "../pages/ProcessoDetalhes";
 import { Login } from "../pages/Login";
@@ -17,15 +15,11 @@ function AnimatedRoutes() {
 
   return (
     <AnimatePresence mode="wait" initial={false}>
-      {/* ✅ Routes é quem recebe location + key */}
       <Routes location={location} key={location.pathname}>
-        {/* Rotas SEM layout (login/cadastro) */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
 
-        {/* Rotas COM layout */}
         <Route element={<DefaultLayout />}>
-          <Route path="/home" element={<Home />} />
           <Route path="/processos" element={<Processo />} />
           <Route
             path="/processos_detalhes/:id"

@@ -3,12 +3,12 @@ import { NavLink, useLocation, useNavigate } from "react-router";
 import * as S from "./styles";
 
 import {
-  FiHome,
   FiClipboard,
   FiUsers,
   FiUser,
   FiSun,
   FiMoon,
+  FiLogOut,
 } from "react-icons/fi";
 import { toast } from "sonner";
 import { TokenSistems } from "../../constants/env.constantes";
@@ -35,7 +35,6 @@ export function ProcessoSidebar({
 
   const nav = useMemo(
     () => [
-      { to: "/home", label: "Home", icon: <FiHome size={18} /> },
       { to: "/processos", label: "Processo", icon: <FiClipboard size={18} /> },
       {
         to: "/minhas-inscricoes",
@@ -109,6 +108,17 @@ export function ProcessoSidebar({
             <S.BottomLabel>{item.label}</S.BottomLabel>
           </S.BottomItem>
         ))}
+        <S.BottomAction
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sair do sistema"
+          title="Sair"
+        >
+          <S.BottomIcon>
+            <FiLogOut size={18} />
+          </S.BottomIcon>
+          <S.BottomLabel>Sair</S.BottomLabel>
+        </S.BottomAction>
 
         <S.BottomAction
           type="button"

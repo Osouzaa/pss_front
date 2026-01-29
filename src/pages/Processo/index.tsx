@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import * as S from "./styles";
 import { ModalNovoProcesso } from "./components/ModalNovoProcesso";
 import { useQuery } from "@tanstack/react-query";
 import { getAllProcessos } from "../../api/get-all-processos";
 import { formatDate } from "../../utils/fomartDate.utils";
+import { getMe } from "../../api/get-me";
+import { ModalPrimeiroAcesso } from "./components/ModalPrimeiroAcesso";
 
 export function Processo() {
   const navigate = useNavigate();
@@ -38,6 +40,25 @@ export function Processo() {
 
   const items = result?.items ?? [];
   const hasData = items.length > 0;
+
+  const { data: resultMe } = useQuery({
+    queryKey: ["get-me"],
+    queryFn: getMe,
+  });
+
+  const [openFirstAccess, setOpenFirstAccess] = useState(false);
+
+  useEffect(() => {
+    if (!resultMe) return;
+
+    if (resultMe.fl_primeiro_acesso === true) {
+      setOpenFirstAccess(true);
+    }
+  }, [result]);
+
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <S.ContainerProcesso>
@@ -178,6 +199,12 @@ export function Processo() {
       )}
 
       <ModalNovoProcesso open={openModal} onOpenChange={setOpenModal} />
+      <ModalPrimeiroAcesso
+        open={openFirstAccess}
+        onOpenChange={setOpenFirstAccess}
+        lockClose={true}
+        onGoProfile={() => navigate("/perfil")}
+      />
     </S.ContainerProcesso>
   );
 }
