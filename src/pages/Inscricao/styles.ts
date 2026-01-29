@@ -28,7 +28,6 @@ const fluid = {
 
 export const Page = styled.div`
   margin: 0 auto;
-  padding: ${ui.space.xxl};
 `;
 
 export const Header = styled.header`
@@ -606,4 +605,71 @@ export const BooleanOption = styled.label<{
 
 export const HeaderPerguntas = styled.div`
   margin: 0;
+`;
+
+export const ContainerTwoColumns = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+`;
+
+export const Layout = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 500px;
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const Main = styled.div`
+  min-width: 0;
+`;
+
+export const Side = styled.aside`
+  min-width: 0;
+
+  @media (min-width: 981px) {
+    position: sticky;
+    top: 16px; /* ajusta conforme seu header/topbar */
+  }
+`;
+
+export const SideCard = styled.div`
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+`;
+
+export const SideHeader = styled.div`
+  padding: 16px;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: linear-gradient(
+    180deg,
+    ${({ theme }) => theme.background} 0%,
+    ${({ theme }) => theme.bodyBg} 100%
+  );
+`;
+
+export const SideBody = styled.div`
+  padding: 14px;
+`;
+
+export const SideTitle = styled.h3`
+  margin: 0;
+  color: ${({ theme }) => theme.text};
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+`;
+
+export const SideText = styled.p`
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.description};
+  font-size: 13px;
+  line-height: 1.5;
 `;

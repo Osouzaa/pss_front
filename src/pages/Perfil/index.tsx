@@ -31,6 +31,7 @@ import {
 } from "../../api/remove-documento-me";
 import { formatTelefone, unformatTelefone } from "../../utils/formart-phone";
 import { formatCPF } from "../../utils/formart-cpf";
+import { AnexosUser } from "../../components/AnexosUser";
 
 type ViaCepResponse = {
   cep?: string;
@@ -118,7 +119,6 @@ export function Perfil() {
       uf: (cand.uf ?? "MG").toUpperCase(),
     });
   }, [result, reset]);
-  
 
   const updateMutation = useMutation({
     mutationFn: atualizarInfoCandidate,
@@ -507,83 +507,7 @@ export function Perfil() {
           </S.FooterActions>
         </S.Card>
         <S.Card>
-          <S.CardHeader>
-            <S.CardIcon $variant="success">
-              <FiFileText />
-            </S.CardIcon>
-
-            <S.CardHeaderText>
-              <S.CardTitle>Documentos</S.CardTitle>
-              <S.CardDesc>
-                Envie arquivos e mantenha tudo organizado.
-              </S.CardDesc>
-            </S.CardHeaderText>
-          </S.CardHeader>
-
-          <S.DocActions>
-            <S.UploadButton type="button" onClick={() => setOpenModal(true)}>
-              <FiUploadCloud />
-              Adicionar arquivo
-            </S.UploadButton>
-          </S.DocActions>
-
-          {docsBusy ? (
-            <S.Empty>
-              <S.EmptyTitle>Carregando documentos...</S.EmptyTitle>
-            </S.Empty>
-          ) : docs.length === 0 ? (
-            <S.Empty>
-              <S.EmptyIcon>
-                <FiShield />
-              </S.EmptyIcon>
-              <S.EmptyTitle>Nenhum documento enviado</S.EmptyTitle>
-              <S.EmptyDesc>
-                Clique em <strong>Adicionar arquivo</strong> para enviar seus
-                documentos.
-              </S.EmptyDesc>
-            </S.Empty>
-          ) : (
-            <S.DocList>
-              {docs.map((d: CandidatoDocumentoDTO) => (
-                <S.DocItem key={d.id_candidato_documento}>
-                  <S.DocLeft>
-                    <S.DocBadge>{d.tipo}</S.DocBadge>
-                    <S.DocInfo>
-                      <S.DocName title={d.arquivo.nome_original}>
-                        {d.arquivo.nome_original}
-                      </S.DocName>
-                      <S.DocMeta>
-                        {formatBytes(d.arquivo.tamanho_bytes)} •{" "}
-                        {new Date(d.data_criacao).toLocaleDateString("pt-BR")}
-                      </S.DocMeta>
-                    </S.DocInfo>
-                  </S.DocLeft>
-
-                  <S.DocRight>
-                    <S.DangerIconButton
-                      type="button"
-                      title="Remover"
-                      disabled={
-                        !isEditing || isSaving || removeDocMutation.isPending
-                      }
-                      onClick={() =>
-                        removeDocMutation.mutate(d.id_candidato_documento)
-                      }
-                    >
-                      <FiTrash2 />
-                    </S.DangerIconButton>
-                  </S.DocRight>
-                </S.DocItem>
-              ))}
-            </S.DocList>
-          )}
-
-          <S.FooterActions>
-            <S.SecondaryButton type="button" disabled={!isEditing || isSaving}>
-              <FiSave />
-              Salvar alterações
-            </S.SecondaryButton>
-          </S.FooterActions>
+          <AnexosUser />
         </S.Card>
       </S.Content>
 

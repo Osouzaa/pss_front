@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ import { VagaSelect } from "./components/VagaSelect";
 import { PerguntasSection } from "./components/PerguntasSection";
 import { ActionsBar } from "./components/ActionsBar";
 import { toDateInputValue } from "./components/PerguntaField";
+import { AnexosUser } from "../../components/AnexosUser";
 
 export function InscricaoPage() {
   const navigate = useNavigate();
@@ -134,49 +135,67 @@ export function InscricaoPage() {
         </S.CardHeader>
 
         <S.Form onSubmit={(e) => e.preventDefault()}>
-          <S.Grid>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <VagaSelect
-                vagas={vagas}
-                value={idVaga}
-                onChange={setIdVaga}
-                disabled={iniciou}
-              />
+          <S.Layout>
+            <S.Main>
+              <S.Grid>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <VagaSelect
+                    vagas={vagas}
+                    value={idVaga}
+                    onChange={setIdVaga}
+                    disabled={iniciou}
+                  />
 
-              {!iniciou ? (
+                  {!iniciou ? (
+                    <ActionsBar
+                      hideBorderTop
+                      secondaryLabel="Voltar"
+                      onSecondary={() => navigate(-1)}
+                      primaryLabel={
+                        iniciarMut.isPending
+                          ? "Iniciando..."
+                          : "Iniciar inscrição"
+                      }
+                      onPrimary={handleIniciar}
+                      primaryDisabled={!idVaga || iniciarMut.isPending}
+                    />
+                  ) : null}
+                </div>
+
+                {iniciou ? (
+                  <PerguntasSection
+                    perguntas={perguntas}
+                    respostas={respostas}
+                    onChangeResposta={(idPergunta, next) =>
+                      setRespostas((prev) => ({ ...prev, [idPergunta]: next }))
+                    }
+                  />
+                ) : null}
+              </S.Grid>
+
+              {iniciou ? (
                 <ActionsBar
-                  hideBorderTop
-                  secondaryLabel="Voltar"
-                  onSecondary={() => navigate(-1)}
                   primaryLabel={
-                    iniciarMut.isPending ? "Iniciando..." : "Iniciar inscrição"
+                    enviarMut.isPending ? "Finalizando..." : "Finalizar edição"
                   }
-                  onPrimary={handleIniciar}
-                  primaryDisabled={!idVaga || iniciarMut.isPending}
+                  onPrimary={handleFinalizar}
+                  primaryDisabled={salvarMut.isPending || enviarMut.isPending}
                 />
               ) : null}
-            </div>
+            </S.Main>
 
-            {iniciou ? (
-              <PerguntasSection
-                perguntas={perguntas}
-                respostas={respostas}
-                onChangeResposta={(idPergunta, next) =>
-                  setRespostas((prev) => ({ ...prev, [idPergunta]: next }))
-                }
-              />
-            ) : null}
-          </S.Grid>
+            <S.Side>
+              <S.SideCard>
+                <S.SideHeader>
+                  <S.SideTitle>Anexos</S.SideTitle>
+                </S.SideHeader>
 
-          {iniciou ? (
-            <ActionsBar
-              primaryLabel={
-                enviarMut.isPending ? "Finalizando..." : "Finalizar edição"
-              }
-              onPrimary={handleFinalizar}
-              primaryDisabled={salvarMut.isPending || enviarMut.isPending}
-            />
-          ) : null}
+                <S.SideBody>
+                  <AnexosUser />
+                </S.SideBody>
+              </S.SideCard>
+            </S.Side>
+          </S.Layout>
         </S.Form>
       </S.Card>
     </S.Page>
