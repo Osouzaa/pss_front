@@ -1,56 +1,67 @@
 export const theme = {
-  background: "#FFFFFF",
+  // BRAND (oficial)
   primary: "#00009B",
-  primaryHover: "#00007A", // NOVO: Cor para hover do botão primário
+  primaryHover: "#00007A",
   secondary: "#33CC99",
-  "text-white": "#FFFFFF",
   highlight: "#FFC300",
   link: "#6699FF",
-  active: "#E0E0FF",
-  border: "#ddd",
-  danger: "#E53E3E",
-  hoverDanger: "#DC2626",
+  "text-white": "#FFFFFF",
 
-  bodyBg: "#F5F5F5",
-  text: "#1f2937",
-  textSmall: "#f1f5f9",
-  BGlink: "#c6d9ff9d",
-  backgroundInput: "#F0F2F5",
-  description: "#6b7280",
-  logoutBg: "#d32f2f",
-  logoutBgHover: "#b71c1c",
+  // SURFACES
+  background: "#FFFFFF",
+  bodyBg: "#F6F7FB", // cards/boxes
+  backgroundInput: "#F0F2F7", // inputs
 
-  // CORES PARA FUNDO DE ÍCONES (NOVAS)
-  lightPrimary: "#E0E0FF", // Reutilizando 'active'
-  lightSuccess: "#D1FAE5", // Reutilizando 'statusDoneBg'
-  lightDanger: "#FEE2E2", // Reutilizando 'statusCancelBg'
-  lightDefault: "#F0F2F5", // Reutilizando 'backgroundInput'
+  // TEXT
+  text: "#0F172A",
+  description: "#64748B",
+  textSmall: "#E2E8F0",
 
-  // STATUS COLORS
-  statusOpenBg: "#ff9100", // laranja médio
-  statusOpenText: "#000000", // corrigido!
-  statusAnalyzeBg: "#ffc400",
-  statusAnalyzeText: "#000000",
-  statusExecutionBg: "#bdcad1b3", // aumentei opacidade (70%)
-  statusExecutionText: "#0369A1",
-  statusDoneBg: "#D1FAE5",
-  statusDoneText: "#065F46",
-  statusCancelBg: "#FEE2E2",
-  statusCancelText: "#B91C1C",
+  // UI STATES
+  border: "#E4E8F1",
+  BGlink: "rgba(102, 153, 255, 0.14)", // hover suave com azul claro
+  active: "rgba(0, 0, 155, 0.10)", // ativo com primary
 
-  // PRIORITY COLORS
-  priorityCriticalBg: "#f44336",
-  priorityCriticalText: "#ffffff",
-  priorityHighBg: "#fb8c00", // cor mais vibrante
-  priorityHighText: "#ffffff",
-  priorityMediumBg: "#fdd835", // amarelo mais legível
-  priorityMediumText: "#000000",
-  priorityLowBg: "#4caf50",
-  priorityLowText: "#ffffff",
-  priorityNoneBg: "#03a9f4",
-  priorityNoneText: "#ffffff",
+  // FEEDBACK
+  danger: "#DC2626",
+  hoverDanger: "#B91C1C",
 
+  // LOGOUT
+  logoutBg: "#DC2626",
+  logoutBgHover: "#B91C1C",
+
+  // ICON BACKGROUNDS (derivados da paleta)
+  lightPrimary: "rgba(0, 0, 155, 0.12)",
+  lightSuccess: "rgba(51, 204, 153, 0.14)",
+  lightDanger: "rgba(220, 38, 38, 0.12)",
+  lightDefault: "#F0F2F7",
+
+  // STATUS (mantive compatível e bem legível)
+  statusOpenBg: "#FFC300",
+  statusOpenText: "#111827",
+  statusAnalyzeBg: "#FFE082",
+  statusAnalyzeText: "#111827",
+  statusExecutionBg: "rgba(102, 153, 255, 0.20)",
+  statusExecutionText: "#00009B",
+  statusDoneBg: "rgba(51, 204, 153, 0.16)",
+  statusDoneText: "#0B4A3A",
+  statusCancelBg: "rgba(220, 38, 38, 0.12)",
+  statusCancelText: "#991B1B",
+
+  // PRIORITY (ok manter como estava, mas coerente)
+  priorityCriticalBg: "#DC2626",
+  priorityCriticalText: "#FFFFFF",
+  priorityHighBg: "#FF6B35",
+  priorityHighText: "#FFFFFF",
+  priorityMediumBg: "#FFC300",
+  priorityMediumText: "#111827",
+  priorityLowBg: "#33CC99",
+  priorityLowText: "#0B1220",
+  priorityNoneBg: "#6699FF",
+  priorityNoneText: "#0B1220",
+
+  // WARNING (usa o amarelo oficial)
   warning: "#FFC300",
-  warningBg: "#FFF7D6",
+  warningBg: "rgba(255, 195, 0, 0.16)",
   warningText: "#7A5C00",
 };

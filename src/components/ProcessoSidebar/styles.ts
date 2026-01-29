@@ -33,17 +33,41 @@ export const Brand = styled.div`
   border: 1px solid ${({ theme }) => theme.border};
 `;
 
-export const BrandTitle = styled.div`
+export const BrandLogoWrap = styled.div`
+  max-width: 50rem;
+  width: 100%;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  margin-bottom: 10px;
+
+  img {
+    width: 90%;
+    height: 100px;
+    object-fit: contain;
+  }
+
+  /* opcional: não mostrar no mobile */
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+export const BrandTitle = styled.h3`
   font-weight: 600;
   font-size: clamp(0.95rem, 0.8rem + 0.4vw, 1.05rem);
   letter-spacing: -0.01em;
+  white-space: nowrap;
   color: ${({ theme }) => theme.text};
+  font-size: 1rem;
 `;
 
-export const BrandSubtitle = styled.div`
+export const BrandSubtitle = styled.span`
   margin-top: 0.25rem;
   font-size: 0.8rem;
   color: ${({ theme }) => theme.description};
+  font-weight: 500;
 `;
 
 export const Nav = styled.nav`
@@ -69,7 +93,10 @@ export const NavLinkStyled = styled.a`
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
 
-  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
 
   &:hover {
     background: ${({ theme }) => theme.BGlink};
@@ -229,7 +256,10 @@ export const BottomItem = styled.a`
   padding: 0.5rem 0.375rem;
   border-radius: 0.875rem;
 
-  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
 
   &:active {
     transform: translateY(0.0625rem);
@@ -253,7 +283,10 @@ export const BottomAction = styled.button`
   padding: 0.5rem 0.375rem;
   border-radius: 0.875rem;
 
-  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
 
   &:active {
     transform: translateY(0.0625rem);

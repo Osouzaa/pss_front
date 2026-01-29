@@ -12,20 +12,14 @@ import {
 } from "react-icons/fi";
 import { toast } from "sonner";
 import { TokenSistems } from "../../constants/env.constantes";
-
+import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
+import logo_pmi_positiva from "../../assets/logo-pmi-positiva.png";
 type Props = {
-  brandTitle?: string;
-  brandSubtitle?: string;
   isDark: boolean;
   onToggleTheme: () => void;
 };
 
-export function ProcessoSidebar({
-  brandTitle = "Processo Seletivo",
-  brandSubtitle = "Painel",
-  isDark,
-  onToggleTheme,
-}: Props) {
+export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -56,11 +50,13 @@ export function ProcessoSidebar({
 
   return (
     <>
-      {/* ===== Desktop sidebar ===== */}
       <S.Sidebar data-open={open}>
+        <S.BrandLogoWrap aria-hidden>
+          <img src={isDark ? logo_pmi_negativa : logo_pmi_positiva} />
+        </S.BrandLogoWrap>
         <S.Brand>
-          <S.BrandTitle>{brandTitle}</S.BrandTitle>
-          <S.BrandSubtitle>{brandSubtitle}</S.BrandSubtitle>
+          <S.BrandTitle>Processo Seletivo Simplificado</S.BrandTitle>
+          <S.BrandSubtitle>Painel Candidato</S.BrandSubtitle>
         </S.Brand>
 
         <S.Nav>
