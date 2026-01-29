@@ -87,6 +87,10 @@ export const Input = styled.input<{ $hasIcon?: boolean }>`
   &[type="datetime-local"]::-webkit-calendar-picker-indicator {
     opacity: 0;
   }
+
+  @media (max-width: 520px) {
+    font-size: 16px;
+  }
 `;
 
 export const ErrorText = styled.span`
