@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   FiUser,
-  FiMapPin,
-  FiFileText,
-  FiUploadCloud,
-  FiTrash2,
-  FiSave,
-  FiShield,
+  FiMapPin, FiSave
 } from "react-icons/fi";
 
 import * as S from "./styles";
@@ -24,11 +19,6 @@ import { toast } from "sonner";
 import { getMe } from "../../api/get-me";
 
 import { ModalAddAnexo } from "./components/ModalAddAnexo";
-import { getDocumentosMe } from "../../api/get-documentos-me";
-import {
-  removeDocumentoMe,
-  type CandidatoDocumentoDTO,
-} from "../../api/remove-documento-me";
 import { formatTelefone, unformatTelefone } from "../../utils/formart-phone";
 import { formatCPF } from "../../utils/formart-cpf";
 import { AnexosUser } from "../../components/AnexosUser";
@@ -56,16 +46,6 @@ function toDateInputValue(value?: string | null) {
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatBytes(bytes: number) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(0)} KB`;
-  const mb = kb / 1024;
-  if (mb < 1024) return `${mb.toFixed(2)} MB`;
-  const gb = mb / 1024;
-  return `${gb.toFixed(2)} GB`;
 }
 
 export function Perfil() {
@@ -134,26 +114,6 @@ export function Perfil() {
 
   const isSaving = updateMutation.isPending;
   const locked = !isEditing || isSaving;
-
-  // ===== Documentos (lista real) =====
-  const {
-    data: docs = [],
-    isLoading: isLoadingDocs,
-    isFetching: isFetchingDocs,
-  } = useQuery({
-    queryKey: ["me-documentos"],
-    queryFn: getDocumentosMe,
-    enabled: !!result?.candidato,
-  });
-
-  const removeDocMutation = useMutation({
-    mutationFn: removeDocumentoMe,
-    onSuccess: () => {
-      toast.success("Documento removido!");
-      queryClient.invalidateQueries({ queryKey: ["me-documentos"] });
-    },
-    onError: () => toast.error("Erro ao remover documento."),
-  });
 
   const cepValue = watch("cep");
 
@@ -247,8 +207,6 @@ export function Perfil() {
 
     setIsEditing(true);
   }
-
-  const docsBusy = isLoadingDocs || isFetchingDocs;
 
   return (
     <S.Page>
@@ -451,49 +409,15 @@ export function Perfil() {
               {...register("cidade")}
             />
 
-            <S.SelectField>
-              <S.SelectLabel htmlFor="uf">UF</S.SelectLabel>
-              <S.Select
-                id="uf"
-                defaultValue="MG"
-                disabled={locked}
-                {...register("uf")}
-              >
-                {[
-                  "AC",
-                  "AL",
-                  "AP",
-                  "AM",
-                  "BA",
-                  "CE",
-                  "DF",
-                  "ES",
-                  "GO",
-                  "MA",
-                  "MT",
-                  "MS",
-                  "MG",
-                  "PA",
-                  "PB",
-                  "PR",
-                  "PE",
-                  "PI",
-                  "RJ",
-                  "RN",
-                  "RS",
-                  "RO",
-                  "RR",
-                  "SC",
-                  "SP",
-                  "SE",
-                  "TO",
-                ].map((uf) => (
-                  <option key={uf} value={uf}>
-                    {uf}
-                  </option>
-                ))}
-              </S.Select>
-            </S.SelectField>
+            <InputBase
+              id="uf"
+              label="Uf"
+              placeholder="Ex: MG"
+              error={errors.uf?.message}
+              disabled={locked}
+              {...register("uf")}
+            />
+
           </S.FormGrid>
           <S.FooterActions>
             <S.SecondaryButton

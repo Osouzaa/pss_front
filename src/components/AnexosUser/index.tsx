@@ -28,13 +28,8 @@ function formatBytes(bytes: number) {
   return `${gb.toFixed(2)} GB`;
 }
 
-type AnexosUserProps = {
-  enabled: boolean;
-  canEdit: boolean; // equivale ao isEditing
-  isSaving: boolean; // pra travar botões quando salvar perfil
-};
 
-export function AnexosUser({ enabled, canEdit, isSaving }: AnexosUserProps) {
+export function AnexosUser() {
   const queryClient = useQueryClient();
   const [openModal, setOpenModal] = useState(false);
 
@@ -45,7 +40,6 @@ export function AnexosUser({ enabled, canEdit, isSaving }: AnexosUserProps) {
   } = useQuery({
     queryKey: ["me-documentos"],
     queryFn: getDocumentosMe,
-    enabled,
   });
 
   const removeDocMutation = useMutation({
@@ -115,7 +109,7 @@ export function AnexosUser({ enabled, canEdit, isSaving }: AnexosUserProps) {
                 <S.DangerIconButton
                   type="button"
                   title="Remover"
-                  disabled={!canEdit || isSaving || removeDocMutation.isPending}
+                  disabled={removeDocMutation.isPending}
                   onClick={() =>
                     removeDocMutation.mutate(d.id_candidato_documento)
                   }
@@ -129,7 +123,7 @@ export function AnexosUser({ enabled, canEdit, isSaving }: AnexosUserProps) {
       )}
 
       <S.FooterActions>
-        <S.SecondaryButton type="button" disabled={!canEdit || isSaving}>
+        <S.SecondaryButton type="button">
           <FiSave />
           Salvar alterações
         </S.SecondaryButton>
