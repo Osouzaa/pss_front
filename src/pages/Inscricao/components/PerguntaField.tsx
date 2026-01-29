@@ -1,12 +1,12 @@
 import React from "react";
-import { InputBase } from "../../../../components/InputBase";
-import { SelectBase } from "../../../../components/SelectBase";
+import { InputBase } from "../../../components/InputBase";
+import { SelectBase } from "../../../components/SelectBase";
 import type {
   PerguntaOpcaoResponse,
   PerguntaProcessoResponse,
-} from "../../../../api/get-processo-id";
+} from "../../../api/get-processo-id";
 
-import * as S from "./styles"; // <-- novo
+import * as S from "../styles"; // <-- novo
 
 type AnswerValue = boolean | number | string | null;
 
@@ -53,14 +53,14 @@ export function PerguntaField({
 
   return (
     <S.FieldCard>
-      <S.Header>
+      <S.HeaderPerguntas>
         <S.TitleRow>
-          <S.Title>{p.titulo}</S.Title>
+          <S.TitleInput>{p.titulo}</S.TitleInput>
           {p.obrigatoria ? <S.Required>*</S.Required> : null}
         </S.TitleRow>
 
         {p.descricao ? <S.Description>{p.descricao}</S.Description> : null}
-      </S.Header>
+      </S.HeaderPerguntas>
 
       <S.Body>
         {p.tipo === "BOOLEAN" ? (
@@ -98,7 +98,6 @@ export function PerguntaField({
         {p.tipo === "NUMERO" ? (
           <InputBase
             id={`p_${idPergunta}`}
-            label="Resposta"
             type="number"
             value={valueAsNumber ?? ""}
             disabled={disabled}
@@ -112,7 +111,6 @@ export function PerguntaField({
         {p.tipo === "EXPERIENCIA_DIAS" ? (
           <InputBase
             id={`p_${idPergunta}`}
-            label="Dias de experiência"
             type="number"
             placeholder="Ex: 400"
             value={valueAsNumber ?? ""}
@@ -126,7 +124,6 @@ export function PerguntaField({
 
         {p.tipo === "TEXTO" ? (
           <InputBase
-            label="Resposta"
             value={valueAsString}
             disabled={disabled}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -138,7 +135,6 @@ export function PerguntaField({
 
         {p.tipo === "SELECT" ? (
           <SelectBase
-            label="Selecione"
             id={`p_${idPergunta}`}
             value={typeof value === "string" ? value : ""}
             disabled={disabled}

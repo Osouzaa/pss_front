@@ -5,7 +5,7 @@ import type { InputHTMLAttributes } from "react";
 import { FormMessage } from "../FormMessage";
 
 interface InputBaseProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label?: string;
   error?: string;
 }
 
@@ -16,7 +16,7 @@ export const InputBase = forwardRef<HTMLInputElement, InputBaseProps>(
 
     return (
       <Field>
-        <Label htmlFor={id}>{label}</Label>
+        {label && <Label htmlFor={id}>{label}</Label>}
 
         <InputWrap>
           <Input
