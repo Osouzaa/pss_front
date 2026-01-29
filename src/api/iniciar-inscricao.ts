@@ -9,7 +9,7 @@ interface IniciarInscricaoBody {
 export async function iniciarInscricao({
   id_processo_seletivo
 }: IniciarInscricaoBody) {
-  const response = await api.post<IniciarInscricaoProps>('processos_seletivos_inscricoes', {
+  const response = await api.post<IniciarInscricaoProps>('processos-seletivos-inscricoes', {
     id_processo_seletivo
   })
   return response.data
