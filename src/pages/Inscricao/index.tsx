@@ -8,14 +8,10 @@ import * as S from "./styles";
 import { getProcessoId } from "../../api/get-processo-id";
 import type {
   ProcessoSeletivoResponse,
-  PerguntaProcessoResponse,
-  PerguntaOpcaoResponse,
   VagaProcessoSeletivoResponse,
 } from "../../api/get-processo-id";
 
-import { InputBase } from "../../components/InputBase";
 import { SelectBase } from "../../components/SelectBase";
-import { TextAreaBase } from "../../components/TextAreaBase";
 
 import {
   salvarRespostasLote,
@@ -24,6 +20,7 @@ import {
 import { enviarInscricaoTwo } from "../../api/enviar-inscricao";
 import { iniciarInscricao } from "../../api/iniciar-inscricao";
 import { getInscricaoById } from "../../api/get-inscricao-by-id";
+import { PerguntaField, toDateInputValue } from "./components/PerguntaField";
 
 /** =========================
  * Types
@@ -60,13 +57,6 @@ type GetInscricaoByIdResponse = {
  * Helpers
  * ========================= */
 
-function toDateInputValue(v?: string | null): string | null {
-  if (!v) return null;
-  // ISO -> YYYY-MM-DD
-  if (v.includes("T")) return v.slice(0, 10);
-  return v;
-}
-
 function safeString(v: unknown): string {
   return typeof v === "string" ? v : "";
 }
@@ -78,14 +68,6 @@ function safeNumber(v: unknown): number | null {
   return null;
 }
 
-/**
- * Normaliza o retorno do getInscricaoById para o formato {inscricao, respostas}.
- *
- * Suporta:
- *  A) { inscricao: {..., respostas:[...] }, ... }   ✅ seu caso real
- *  B) { inscricao: {...}, respostas:[...] }
- *  C) { ...inscricao, respostas:[...] }
- */
 function normalizeInscricaoResponse(input: unknown): GetInscricaoByIdResponse {
   const raw = input as Record<string, any>;
 
@@ -319,15 +301,6 @@ export function InscricaoPage() {
     };
   }
 
-  async function handleSalvarEdicao() {
-    if (!idVaga) return toast.error("Selecione uma vaga.");
-    if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
-
-    try {
-      await salvarMut.mutateAsync(buildPayload());
-    } catch {}
-  }
-
   const enviarMut = useMutation({
     mutationFn: () => enviarInscricaoTwo(idInscricao),
     onSuccess: () => toast.success("Inscrição enviada com sucesso!"),
@@ -452,7 +425,20 @@ export function InscricaoPage() {
                   <S.SectionTitle>Perguntas</S.SectionTitle>
                 </S.Section>
 
-                {perguntas.map((p) => renderPergunta(p))}
+                {perguntas.map((p) => (
+                  <PerguntaField
+                    key={p.id_pergunta}
+                    p={p}
+                    value={respostas[p.id_pergunta] ?? null}
+                    disabled={false}
+                    onChangeValue={(next) =>
+                      setRespostas((prev) => ({
+                        ...prev,
+                        [p.id_pergunta]: next,
+                      }))
+                    }
+                  />
+                ))}
               </>
             ) : null}
           </S.Grid>
@@ -466,22 +452,6 @@ export function InscricaoPage() {
                 gap: 10,
               }}
             >
-              <button
-                type="button"
-                onClick={handleSalvarEdicao}
-                disabled={salvarMut.isPending}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(0,0,0,.12)",
-                  background: "transparent",
-                  cursor: salvarMut.isPending ? "not-allowed" : "pointer",
-                  opacity: salvarMut.isPending ? 0.6 : 1,
-                }}
-              >
-                {salvarMut.isPending ? "Salvando..." : "Salvar edição"}
-              </button>
-
               <button
                 type="button"
                 onClick={handleFinalizar}
@@ -499,7 +469,7 @@ export function InscricaoPage() {
                   opacity: salvarMut.isPending || enviarMut.isPending ? 0.6 : 1,
                 }}
               >
-                {enviarMut.isPending ? "Finalizando..." : "Finalizar inscrição"}
+                {enviarMut.isPending ? "Finalizando..." : "Finalizar edição"}
               </button>
             </div>
           ) : null}
@@ -511,169 +481,4 @@ export function InscricaoPage() {
   /** =========================
    * Render pergunta
    * ========================= */
-  function renderPergunta(p: PerguntaProcessoResponse) {
-    const idPergunta = p.id_pergunta;
-
-    const valor = respostas[idPergunta]; // boolean | number | string | null
-
-    const opcoesAtivasOrdenadas = (p.opcoes ?? [])
-      .filter((o: PerguntaOpcaoResponse) => o.ativa)
-      .slice()
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
-
-    // edição sempre liberada
-    const disabled = false;
-
-    const valueAsString = typeof valor === "string" ? valor : "";
-    const valueAsNumber = typeof valor === "number" ? valor : null;
-    const valueAsBoolean = typeof valor === "boolean" ? valor : null;
-
-    return (
-      <div key={idPergunta} style={{ gridColumn: "1 / -1" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <b>{p.titulo}</b>
-            {p.obrigatoria ? (
-              <span style={{ fontSize: 12, color: "#DC2626" }}>*</span>
-            ) : null}
-          </div>
-
-          {p.descricao ? (
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{p.descricao}</div>
-          ) : null}
-        </div>
-
-        <div style={{ marginTop: 10 }}>
-          {p.tipo === "BOOLEAN" ? (
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <label
-                style={{
-                  display: "flex",
-                  gap: 6,
-                  alignItems: "center",
-                  opacity: disabled ? 0.6 : 1,
-                }}
-              >
-                <input
-                  disabled={disabled}
-                  type="radio"
-                  name={`p_${idPergunta}`}
-                  checked={valueAsBoolean === true}
-                  onChange={() =>
-                    setRespostas((prev) => ({ ...prev, [idPergunta]: true }))
-                  }
-                />
-                Sim
-              </label>
-
-              <label
-                style={{
-                  display: "flex",
-                  gap: 6,
-                  alignItems: "center",
-                  opacity: disabled ? 0.6 : 1,
-                }}
-              >
-                <input
-                  disabled={disabled}
-                  type="radio"
-                  name={`p_${idPergunta}`}
-                  checked={valueAsBoolean === false}
-                  onChange={() =>
-                    setRespostas((prev) => ({ ...prev, [idPergunta]: false }))
-                  }
-                />
-                Não
-              </label>
-            </div>
-          ) : null}
-
-          {p.tipo === "NUMERO" ? (
-            <InputBase
-              id={`p_${idPergunta}`}
-              label="Resposta"
-              type="number"
-              value={valueAsNumber ?? ""}
-              disabled={disabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const n = safeNumber(e.target.value);
-                setRespostas((prev) => ({ ...prev, [idPergunta]: n }));
-              }}
-            />
-          ) : null}
-
-          {p.tipo === "EXPERIENCIA_DIAS" ? (
-            <InputBase
-              id={`p_${idPergunta}`}
-              label="Dias de experiência"
-              type="number"
-              placeholder="Ex: 400"
-              value={valueAsNumber ?? ""}
-              disabled={disabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const n = safeNumber(e.target.value);
-                setRespostas((prev) => ({ ...prev, [idPergunta]: n }));
-              }}
-            />
-          ) : null}
-
-          {p.tipo === "TEXTO" ? (
-            <TextAreaBase
-              label="Resposta"
-              value={valueAsString}
-              disabled={disabled}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setRespostas((prev) => ({
-                  ...prev,
-                  [idPergunta]: e.target.value,
-                }))
-              }
-              rows={3}
-              maxLength={500}
-            />
-          ) : null}
-
-          {p.tipo === "SELECT" ? (
-            <SelectBase
-              label="Selecione"
-              id={`p_${idPergunta}`}
-              value={typeof valor === "string" ? valor : ""}
-              disabled={disabled}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setRespostas((prev) => ({
-                  ...prev,
-                  [idPergunta]: e.target.value,
-                }))
-              }
-            >
-              <option value="">Selecione</option>
-              {opcoesAtivasOrdenadas.map((o) => (
-                <option key={o.id_opcao} value={o.id_opcao}>
-                  {o.label}
-                </option>
-              ))}
-            </SelectBase>
-          ) : null}
-
-          {p.tipo === "DATA" ? (
-            <InputBase
-              id={`p_${idPergunta}`}
-              label="Data"
-              type="date"
-              value={
-                typeof valor === "string" ? (toDateInputValue(valor) ?? "") : ""
-              }
-              disabled={disabled}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setRespostas((prev) => ({
-                  ...prev,
-                  [idPergunta]: safeString(e.target.value) || null,
-                }))
-              }
-            />
-          ) : null}
-        </div>
-      </div>
-    );
-  }
 }
