@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  FiUser,
-  FiMapPin, FiSave
-} from "react-icons/fi";
+import { FiUser, FiMapPin, FiSave } from "react-icons/fi";
 
 import * as S from "./styles";
 import { InputBase } from "../../components/InputBase";
@@ -18,10 +15,10 @@ import { atualizarInfoCandidate } from "../../api/atualiza-info-candidates";
 import { toast } from "sonner";
 import { getMe } from "../../api/get-me";
 
-import { ModalAddAnexo } from "./components/ModalAddAnexo";
 import { formatTelefone, unformatTelefone } from "../../utils/formart-phone";
 import { formatCPF } from "../../utils/formart-cpf";
 import { AnexosUser } from "../../components/AnexosUser";
+import { atualizacaoPerfilError } from "../../errs/atualizacao.perfil.erro";
 
 type ViaCepResponse = {
   cep?: string;
@@ -51,7 +48,6 @@ export function Perfil() {
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
 
   const { data: result, isLoading: isLoadingMe } = useQuery({
     queryFn: getMe,
@@ -106,19 +102,16 @@ export function Perfil() {
       setIsEditing(false);
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
-    onError: () => {
-      toast.error("Erro ao atualizar o perfil. Tente novamente.");
+    onError: (err) => {
+      toast.error(atualizacaoPerfilError(err));
     },
   });
-
   const isSaving = updateMutation.isPending;
   const locked = !isEditing || isSaving;
 
   const cepValue = watch("cep");
 
-  // Busca ViaCEP quando tiver 8 dígitos
   useEffect(() => {
-    // só auto-preenche quando estiver editando
     if (!isEditing) return;
 
     const cepDigits = (cepValue ?? "").replace(/\D/g, "");
@@ -416,7 +409,6 @@ export function Perfil() {
               disabled={locked}
               {...register("uf")}
             />
-
           </S.FormGrid>
           <S.FooterActions>
             <S.SecondaryButton
@@ -433,8 +425,6 @@ export function Perfil() {
           <AnexosUser />
         </S.Card>
       </S.Content>
-
-      <ModalAddAnexo open={openModal} onOpenChange={setOpenModal} />
     </S.Page>
   );
 }

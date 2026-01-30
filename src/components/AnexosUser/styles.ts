@@ -139,11 +139,11 @@ export const CardIcon = styled.div<{
 
   svg {
     color: ${({ theme, $variant }) => {
-      if ($variant === "primary") return theme.primary;
-      if ($variant === "success") return theme.secondary;
-      if ($variant === "danger") return theme.danger;
-      return theme.description;
-    }};
+    if ($variant === "primary") return theme.primary;
+    if ($variant === "success") return theme.secondary;
+    if ($variant === "danger") return theme.danger;
+    return theme.description;
+  }};
     font-size: 18px;
   }
 `;
@@ -487,5 +487,36 @@ export const SecondaryButton = styled.button`
 
   @media (min-width: 520px) {
     width: auto;
+  }
+`;
+export const IconButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+
+  color: ${({ theme }) => theme.primary};
+  cursor: pointer;
+
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.lightPrimary};
+    border-color: ${({ theme }) => theme.primary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;

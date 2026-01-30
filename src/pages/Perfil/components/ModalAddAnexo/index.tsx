@@ -205,7 +205,6 @@ export function ModalAddAnexo({
 
           <Body>
             <FormStyles onSubmit={handleSubmit(onSubmit)}>
-              {/* ===== Seção: Tipo e Detalhes ===== */}
               <Section>
                 <SectionTitle>Detalhes do documento</SectionTitle>
 
@@ -244,7 +243,7 @@ export function ModalAddAnexo({
                   />
                 </FieldGrid>
 
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "10px"}}>
                   <Chip>
                     <FileText size={14} />
                     {labelTipo(tipo)}
