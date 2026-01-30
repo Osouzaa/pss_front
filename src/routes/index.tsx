@@ -15,6 +15,7 @@ import { Cadastro } from "../pages/Cadastro";
 import { Perfil } from "../pages/Perfil";
 import { InscricaoPage } from "../pages/Inscricao";
 import { MinhasInscricoes } from "../pages/MinhasInscricoes";
+import { AuthenticacaoEmail } from "../pages/AuthenticacaoEmail";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -26,6 +27,7 @@ function AnimatedRoutes() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/confirmar-email" element={<AuthenticacaoEmail />} />
 
         <Route element={<DefaultLayout />}>
           <Route path="/processos" element={<Processo />} />

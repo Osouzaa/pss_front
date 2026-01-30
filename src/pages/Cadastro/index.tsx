@@ -14,8 +14,8 @@ import {
 
 import { FormMessage } from "../../components/FormMessage";
 import { novoUsuario } from "../../api/novo-usuario";
+import { handleCadastroError } from "../../errs/handle.cadastro.erro"; // 👈 use o handler
 
-// ✅ mesma lógica da tela de login (tema global)
 import { useTheme } from "../../contexts/ThemeContext";
 
 import {
@@ -41,12 +41,17 @@ function passwordScore(pwd: string) {
   return { okLen, hasLetter, hasNumber, ok: okLen && hasLetter && hasNumber };
 }
 
+type InlineMsg = {
+  message?: string;
+  type?: "success" | "error" | "warning";
+};
+
 export function Cadastro() {
   const navigate = useNavigate();
   const { mode, toggleTheme } = useTheme();
 
   const [showPass, setShowPass] = useState(false);
-  const [formError, setFormError] = useState<string | undefined>(undefined);
+  const [inlineMsg, setInlineMsg] = useState<InlineMsg>({});
 
   const {
     register,
@@ -63,8 +68,13 @@ export function Cadastro() {
     },
   });
 
+  // limpa mensagem da API/sucesso quando o usuário altera qualquer campo
   useEffect(() => {
-    const sub = watch(() => setFormError(undefined));
+    const sub = watch(() => {
+      setInlineMsg((prev) =>
+        prev.type === "error" || prev.type === "success" ? {} : prev,
+      );
+    });
     return () => sub.unsubscribe();
   }, [watch]);
 
@@ -79,7 +89,7 @@ export function Cadastro() {
 
   async function onSubmit(data: CreateNovoUserFormData) {
     try {
-      setFormError(undefined);
+      setInlineMsg({});
 
       await novoUsuarioFn({
         email: data.email,
@@ -87,18 +97,30 @@ export function Cadastro() {
         role: data.role,
       });
 
+      setInlineMsg({
+        type: "success",
+        message: "Conta criada com sucesso! Redirecionando para o login…",
+      });
+
       toast.success("Conta criada com sucesso! Faça login para continuar.");
       navigate("/login", { replace: true });
     } catch (err) {
-      // mantém o padrão do login: erro inline + opcional toast
-      setFormError(
-        "Não foi possível criar sua conta. Verifique os dados e tente novamente.",
-      );
+      // ✅ erro da API
+      setInlineMsg({
+        type: "error",
+        message: handleCadastroError(err),
+      });
     }
   }
 
-  const formErrorMsg =
-    formError || errors.email?.message || errors.senha?.message || undefined;
+  const zodMsg =
+    errors.email?.message ||
+    errors.senha?.message ||
+    (pwd.ok ? undefined : "A senha precisa cumprir os requisitos acima.");
+
+  const message = inlineMsg.message ?? zodMsg;
+  const type: "success" | "error" | "warning" | undefined =
+    inlineMsg.type ?? (zodMsg ? "warning" : undefined);
 
   return (
     <PageTransition>
@@ -242,7 +264,7 @@ export function Cadastro() {
                     </S.Rules>
                   </S.Field>
 
-                  <FormMessage message={formErrorMsg} />
+                  <FormMessage message={message} type={type} />
 
                   <S.PrimaryButton disabled={!canSubmit}>
                     {isPending ? "Cadastrando..." : "Criar conta"}

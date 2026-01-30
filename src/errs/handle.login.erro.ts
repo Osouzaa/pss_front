@@ -20,7 +20,7 @@ export function handleLoginError(error: unknown): string {
         return "Credenciais inválidas. Verifique seu e-mail e senha.";
 
       case 403:
-        return "Seu acesso está bloqueado. Entre em contato com o suporte.";
+        return "Confirme seu e-mail para acessar. Verifique sua caixa de entrada.";
 
       case 500:
         return "Erro interno no servidor. Tente novamente mais tarde.";
