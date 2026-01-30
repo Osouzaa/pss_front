@@ -26,6 +26,8 @@ import {
 import { criarNovoProcesso } from "../../../../api/criar-novo-processo";
 import { editarProcesso } from "../../../../api/editar-processo";
 import type { ProcessoSeletivoResponse } from "../../../../api/get-processo-id";
+import { creatProcessoError } from "../../../../errs/create-processo.erro copy";
+import { editProcessoError } from "../../../../errs/edit-processo.error";
 
 interface IModalNovoProcesso {
   open: boolean;
@@ -160,8 +162,20 @@ export function ModalNovoProcesso({
 
       toast.success("Processo criado com sucesso!");
       handleClose();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Não foi possível salvar o processo");
+    } catch (error) {
+      // ✅ aqui entra o tratamento correto
+      if (isEdit) {
+        // se não tiver editProcessoError ainda, pode trocar por creatProcessoError
+        const msg =
+          typeof editProcessoError === "function"
+            ? editProcessoError(error)
+            : creatProcessoError(error);
+
+        toast.error(msg);
+        return;
+      }
+
+      toast.error(creatProcessoError(error));
     }
   };
 
