@@ -26,9 +26,7 @@ const fluid = {
   cardPad: "clamp(14px, 2.2vw, 18px)",
 };
 
-export const Page = styled.div`
-  margin: 0 auto;
-`;
+export const Page = styled.div``;
 
 export const Header = styled.header`
   display: flex;
@@ -168,7 +166,6 @@ export const CardHeader = styled.div`
   border-bottom: 1px solid ${({ theme }) => theme.border};
 
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
   gap: 18px;
   align-items: center;
 
@@ -196,7 +193,7 @@ export const HeaderLeft = styled.div`
 `;
 
 export const HeaderRight = styled.div`
-  min-width: 0;
+  min-width: 100%;
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid ${({ theme }) => `${theme.primary}22`};
@@ -236,6 +233,7 @@ export const ProcessoSubtitle = styled.p`
 `;
 
 export const CardHeaderTitle = styled.h3`
+  width: 100%;
   margin: 0;
   color: ${({ theme }) => theme.text};
   font-size: 16px;

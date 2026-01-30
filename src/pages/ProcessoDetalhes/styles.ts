@@ -28,22 +28,21 @@ const ui = {
 };
 
 export const Container = styled.div`
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: ${({ theme }) => theme.bodyBg};
+
+  overflow-x: hidden;
 `;
 
-/* =========================
-   BREADCRUMBS
-========================= */
 export const Breadcrumbs = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
   font-size: 12px;
   color: ${({ theme }) => theme.description};
+  max-width: 100%;
 `;
 
 export const BreadcrumbLink = styled.a`
@@ -82,15 +81,22 @@ export const Header = styled.header`
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
 
+  max-width: 100%;
+
   @media (max-width: 820px) {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
   }
 `;
 
 export const HeaderLeft = styled.div`
   display: grid;
   gap: 6px;
+  min-width: 0; /* importante para truncar textos dentro */
 `;
 
 export const Title = styled.h1`
@@ -100,8 +106,21 @@ export const Title = styled.h1`
   font-weight: 700;
   color: ${({ theme }) => theme.text};
 
+  /* não deixar estourar em telas estreitas */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
   @media (min-width: 768px) {
     font-size: 20px;
+  }
+
+  @media (max-width: 520px) {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 `;
 
@@ -109,6 +128,14 @@ export const Subtitle = styled.p`
   margin: 0;
   font-size: 13px;
   color: ${({ theme }) => theme.description};
+
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 520px) {
+    white-space: normal;
+  }
 `;
 
 export const BadgesRow = styled.div`
@@ -116,16 +143,24 @@ export const BadgesRow = styled.div`
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  max-width: 100%;
 `;
 
 export const HeaderRight = styled.div`
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
+  max-width: 100%;
 
   @media (max-width: 420px) {
     flex-direction: column;
     align-items: stretch;
+
+    & > button {
+      width: 100%;
+    }
   }
 `;
 
@@ -225,6 +260,8 @@ export const Tabs = styled.div`
   border-radius: ${ui.radius.xl};
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
+
+  max-width: 100%;
 `;
 
 export const TabButton = styled.button<{ $active: boolean }>`
@@ -252,6 +289,11 @@ export const TabButton = styled.button<{ $active: boolean }>`
   &:active {
     transform: translateY(0px);
   }
+
+  @media (max-width: 420px) {
+    flex: 1;
+    min-width: 140px;
+  }
 `;
 
 /* =========================
@@ -262,12 +304,18 @@ export const Section = styled.section`
   border-radius: ${ui.radius.xl};
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
+  max-width: 100%;
+
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 export const SectionHeader = styled.div`
   display: grid;
   gap: 4px;
   margin-bottom: 12px;
+  min-width: 0;
 `;
 
 export const SectionTitle = styled.h2`
@@ -310,6 +358,7 @@ export const Card = styled.article`
   gap: 8px;
 
   box-shadow: ${ui.shadow.sm};
+  min-width: 0;
 `;
 
 export const CardTitle = styled.h3`
@@ -345,6 +394,7 @@ export const KVRow = styled.div`
   display: grid;
   grid-template-columns: 150px 1fr;
   gap: 10px;
+  min-width: 0;
 
   @media (max-width: 520px) {
     grid-template-columns: 1fr;
@@ -360,16 +410,17 @@ export const K = styled.span`
 export const V = styled.span`
   font-size: 13px;
   color: ${({ theme }) => theme.description};
+  min-width: 0;
 `;
 
 /* =========================
-   INPUT (para buscar vaga)
+   INPUT (buscar vaga)
 ========================= */
 export const SearchWrap = styled.div`
   display: grid;
   gap: 6px;
   flex: 1;
-  min-width: 240px;
+  min-width: 0; /* deixa o input encolher sem estourar */
 `;
 
 export const SearchLabel = styled.label`
@@ -386,6 +437,7 @@ export const SearchInput = styled.input`
   color: ${({ theme }) => theme.text};
   padding: 0 12px;
   outline: none;
+  min-width: 0;
 
   transition:
     border-color 0.14s ease,
@@ -401,125 +453,6 @@ export const SearchInput = styled.input`
   }
 `;
 
-/* =========================
-   EDITAL
-========================= */
-export const EditalCard = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
-  border-radius: ${ui.radius.xl};
-  padding: 12px;
-  box-shadow: ${ui.shadow.sm};
-
-  display: grid;
-  gap: 10px;
-`;
-
-export const EditalTop = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-
-  @media (max-width: 520px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-`;
-
-export const EditalInfo = styled.div`
-  display: grid;
-  gap: 3px;
-`;
-
-export const EditalTitle = styled.h3`
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.text};
-`;
-
-export const EditalMeta = styled.p`
-  margin: 0;
-  font-size: 13px;
-  color: ${({ theme }) => theme.description};
-`;
-
-export const FileRow = styled.div`
-  display: grid;
-  grid-template-columns: 52px 1fr auto;
-  align-items: center;
-  gap: 10px;
-
-  padding: 10px;
-  border-radius: ${ui.radius.lg};
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-
-  @media (max-width: 620px) {
-    grid-template-columns: 52px 1fr;
-  }
-`;
-
-export const FileBadge = styled.span`
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: ${ui.radius.pill};
-  background: ${({ theme }) => theme.lightPrimary};
-  color: ${({ theme }) => theme.primary};
-  font-weight: 700;
-  font-size: 12px;
-`;
-
-export const FileName = styled.span`
-  font-size: 13px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.text};
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-export const FileLink = styled.a`
-  font-size: 12px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.link};
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  @media (max-width: 620px) {
-    display: none;
-  }
-`;
-
-export const Notes = styled.div`
-  padding: 10px;
-  border-radius: ${ui.radius.lg};
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-`;
-
-export const NotesTitle = styled.h4`
-  margin: 0 0 6px 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.text};
-`;
-
-export const NotesText = styled.p`
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: ${({ theme }) => theme.description};
-`;
-
 export const VagasToolbar = styled.div`
   display: flex;
   gap: 12px;
@@ -527,6 +460,7 @@ export const VagasToolbar = styled.div`
   justify-content: space-between;
 
   margin-bottom: 12px;
+  max-width: 100%;
 
   @media (max-width: 720px) {
     flex-direction: column;
@@ -534,9 +468,12 @@ export const VagasToolbar = styled.div`
   }
 `;
 
-/* wrapper para permitir scroll horizontal quando faltar espaço */
+/* =========================
+   TABLE WRAPPERS
+========================= */
 export const VagasTableWrap = styled.div`
   width: 100%;
+  max-width: 100%;
   border-radius: ${ui.radius.xl};
   overflow: hidden;
 
@@ -545,13 +482,18 @@ export const VagasTableWrap = styled.div`
 
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+
+  /* melhora a leitura no mobile */
+  scrollbar-gutter: stable both-edges;
 `;
 
 export const VagasTable = styled.table`
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  min-width: 760px; /* força tabela a não "quebrar" feio no mobile */
+
+  /* era 760px fixo — agora fica mais flexível e não “estoura” tanto */
+  min-width: 640px;
 
   thead tr {
     background: ${({ theme }) => theme.lightDefault};
@@ -559,6 +501,49 @@ export const VagasTable = styled.table`
 
   tbody tr + tr td {
     border-top: 1px solid ${({ theme }) => theme.border};
+  }
+
+  @media (max-width: 420px) {
+    min-width: 560px;
+  }
+`;
+
+export const PerguntasTableWrap = styled.div`
+  width: 100%;
+  max-width: 100%;
+  border-radius: ${ui.radius.xl};
+  overflow: hidden;
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
+`;
+
+export const PerguntasTable = styled.table`
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  /* era 980px fixo — agora mais responsivo */
+  min-width: 780px;
+
+  thead tr {
+    background: ${({ theme }) => theme.lightDefault};
+  }
+
+  tbody tr + tr td {
+    border-top: 1px solid ${({ theme }) => theme.border};
+  }
+
+  @media (max-width: 520px) {
+    min-width: 720px;
+  }
+
+  @media (max-width: 420px) {
+    min-width: 680px;
   }
 `;
 
@@ -570,12 +555,21 @@ export const Th = styled.th`
   color: ${({ theme }) => theme.text};
   border-bottom: 1px solid ${({ theme }) => theme.border};
   white-space: nowrap;
+
+  @media (max-width: 520px) {
+    padding: 10px;
+  }
 `;
 
 export const Td = styled.td`
   padding: 12px;
   vertical-align: middle;
   color: ${({ theme }) => theme.description};
+  min-width: 0;
+
+  @media (max-width: 520px) {
+    padding: 10px;
+  }
 `;
 
 export const Tr = styled.tr`
@@ -586,6 +580,22 @@ export const Tr = styled.tr`
   }
 `;
 
+export const RowActions = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-width: 100%;
+
+  @media (max-width: 520px) {
+    gap: 8px;
+  }
+`;
+
+/* =========================
+   TEXT CELLS (anti overflow)
+========================= */
 export const VagaName = styled.div`
   font-size: 13px;
   font-weight: 700;
@@ -595,7 +605,9 @@ export const VagaName = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 520px;
+
+  /* antes era max-width: 520px fixo */
+  max-width: clamp(180px, 40vw, 520px);
 `;
 
 export const VagaSubText = styled.div`
@@ -606,17 +618,42 @@ export const VagaSubText = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 520px;
+
+  max-width: clamp(180px, 40vw, 520px);
 `;
 
-export const RowActions = styled.div`
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
+export const PerguntaTitleCell = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+  line-height: 1.25;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  max-width: clamp(180px, 46vw, 520px);
 `;
 
+export const PerguntaDescCell = styled.div`
+  margin-top: 4px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  line-height: 1.35;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  max-width: clamp(180px, 46vw, 520px);
+`;
+
+/* =========================
+   STATUS / PILLS
+========================= */
 const processoStatusTokens = (status: string, theme: any) => {
   switch (status) {
     case "ABERTO":
@@ -658,7 +695,6 @@ export const StatusPill = styled.span<{ $status: string }>`
   }}
 `;
 
-/* chips de info */
 export const InfoChip = styled.span`
   display: inline-flex;
   align-items: center;
@@ -669,11 +705,17 @@ export const InfoChip = styled.span`
   color: ${({ theme }) => theme.text};
   font-size: 12px;
   font-weight: 700;
+
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 520px) {
+    white-space: normal;
+  }
 `;
 
-/* =========================
-   STATUS PILL (vaga)
-========================= */
 const vagaStatusTokens = (status: string, theme: any) => {
   switch (status) {
     case "ATIVA":
@@ -717,38 +759,125 @@ export const CountPill = styled.span`
   color: ${({ theme }) => theme.primary};
   font-size: 11px;
   font-weight: 700;
-`;
-
-/* =========================
-   META ITEM (reuso)
-========================= */
-export const MetaItem = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
-  border-radius: ${ui.radius.lg};
-  padding: 10px;
-
-  display: grid;
-  gap: 4px;
-`;
-
-export const MetaLabel = styled.span`
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.description};
-`;
-
-export const MetaValue = styled.span`
-  font-size: 13px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.text};
-
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
+export const PerguntaOrderPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 10px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.lightPrimary};
+  color: ${({ theme }) => theme.primary};
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+export const YesPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.statusDoneBg};
+  color: ${({ theme }) => theme.statusDoneText};
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+export const NoPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.statusCancelBg};
+  color: ${({ theme }) => theme.statusCancelText};
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+`;
+
+export const OpcoesCountPill = styled.span<{ "data-has"?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 44px;
+  padding: 6px 10px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+
+  background: ${({ theme }) => theme.lightDefault};
+  color: ${({ theme }) => theme.text};
+  font-size: 11px;
+  font-weight: 900;
+
+  &[data-has="true"] {
+    background: ${({ theme }) => theme.lightPrimary};
+    color: ${({ theme }) => theme.primary};
+  }
+`;
+
+export const Muted = styled.span`
+  color: ${({ theme }) => theme.description};
+  font-size: 12px;
+`;
+
+/* =========================
+   ICON BUTTON (ações)
+========================= */
+export const IconButton = styled.button`
+  height: ${ui.h.btn};
+  width: ${ui.h.btn};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: ${ui.radius.md};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.lightDefault};
+  color: ${({ theme }) => theme.text};
+
+  cursor: pointer;
+  transition: 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.active};
+    border-color: ${({ theme }) => theme.primary};
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &.danger {
+    color: ${({ theme }) => theme.danger};
+  }
+
+  &.danger:hover:not(:disabled) {
+    background: ${({ theme }) => theme.hoverDanger};
+    border-color: ${({ theme }) => theme.hoverDanger};
+    color: ${({ theme }) => theme["text-white"]};
+  }
+`;
+
+/* =========================
+   EMPTY STATE
+========================= */
 export const EmptyState = styled.div`
   border: 1px dashed ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
@@ -757,6 +886,11 @@ export const EmptyState = styled.div`
 
   display: grid;
   gap: 6px;
+  max-width: 100%;
+
+  @media (max-width: 480px) {
+    padding: 14px;
+  }
 `;
 
 export const EmptyTitle = styled.h3`
@@ -773,7 +907,9 @@ export const EmptyText = styled.p`
 `;
 
 /* =========================
-   PERGUNTAS GRID & CARD
+   (mantive seus estilos extras
+   de grid/card de perguntas
+   caso você use depois)
 ========================= */
 export const PerguntasGrid = styled.div`
   display: grid;
@@ -846,7 +982,6 @@ export const PerguntaBadgesRow = styled.div`
 
 const perguntaTipoTokens = (tipo: string, theme: any) => {
   const tipoUpper = tipo?.toUpperCase() || "";
-
   switch (tipoUpper) {
     case "BOOLEAN":
       return { bg: "#E3F2FD", fg: "#1976D2", label: "Booleano" };
@@ -883,10 +1018,7 @@ export const PerguntaTipoPill = styled.span<{ $tipo: string }>`
     return `
       background: ${c.bg};
       color: ${c.fg};
-      
-      &::after {
-        content: "${c.label}";
-      }
+      &::after { content: "${c.label}"; }
     `;
   }}
 `;
@@ -992,167 +1124,4 @@ export const PerguntaActions = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-`;
-export const PerguntasTableWrap = styled.div`
-  width: 100%;
-  border-radius: ${ui.radius.xl};
-  overflow: hidden;
-
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-`;
-
-export const PerguntasTable = styled.table`
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  min-width: 980px;
-
-  thead tr {
-    background: ${({ theme }) => theme.lightDefault};
-  }
-
-  tbody tr + tr td {
-    border-top: 1px solid ${({ theme }) => theme.border};
-  }
-`;
-
-export const PerguntaOrderPill = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 6px 10px;
-  border-radius: ${ui.radius.pill};
-  border: 1px solid ${({ theme }) => theme.border};
-
-  background: ${({ theme }) => theme.lightPrimary};
-  color: ${({ theme }) => theme.primary};
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-`;
-
-export const PerguntaTitleCell = styled.div`
-  font-size: 13px;
-  font-weight: 800;
-  color: ${({ theme }) => theme.text};
-  line-height: 1.25;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 520px;
-`;
-
-export const PerguntaDescCell = styled.div`
-  margin-top: 4px;
-  font-size: 12px;
-  color: ${({ theme }) => theme.description};
-  line-height: 1.35;
-
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 520px;
-`;
-
-export const YesPill = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-
-  border-radius: ${ui.radius.pill};
-  border: 1px solid ${({ theme }) => theme.border};
-
-  background: ${({ theme }) => theme.statusDoneBg};
-  color: ${({ theme }) => theme.statusDoneText};
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-`;
-
-export const NoPill = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-
-  border-radius: ${ui.radius.pill};
-  border: 1px solid ${({ theme }) => theme.border};
-
-  background: ${({ theme }) => theme.statusCancelBg};
-  color: ${({ theme }) => theme.statusCancelText};
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-`;
-
-export const OpcoesCountPill = styled.span<{ "data-has"?: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  min-width: 44px;
-  padding: 6px 10px;
-  border-radius: ${ui.radius.pill};
-  border: 1px solid ${({ theme }) => theme.border};
-
-  background: ${({ theme }) => theme.lightDefault};
-  color: ${({ theme }) => theme.text};
-  font-size: 11px;
-  font-weight: 900;
-
-  &[data-has="true"] {
-    background: ${({ theme }) => theme.lightPrimary};
-    color: ${({ theme }) => theme.primary};
-  }
-`;
-
-export const Muted = styled.span`
-  color: ${({ theme }) => theme.description};
-  font-size: 12px;
-`;
-
-export const IconButton = styled.button`
-  height: ${ui.h.btn};
-  width: ${ui.h.btn};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: ${ui.radius.md};
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
-  color: ${({ theme }) => theme.text};
-
-  cursor: pointer;
-  transition: 0.12s ease;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.active};
-    border-color: ${({ theme }) => theme.primary};
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  &.danger {
-    color: ${({ theme }) => theme.danger};
-  }
-
-  &.danger:hover:not(:disabled) {
-    background: ${({ theme }) => theme.hoverDanger};
-    border-color: ${({ theme }) => theme.hoverDanger};
-    color: ${({ theme }) => theme["text-white"]};
-  }
 `;

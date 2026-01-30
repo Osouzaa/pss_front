@@ -1,26 +1,35 @@
 import styled from "styled-components";
-import { MOBILE_BOTTOM_BAR_HEIGHT } from "../components/ProcessoSidebar/styles";
 
 const bp = {
-  md: "48rem",
+  md: "48rem", // 768px (tablet)
+  xl: "81.25rem", // 1300px (desktop grande)
 };
-
-const sidebarW = "17.5rem";
 
 export const Layout = styled.div`
   min-height: 100dvh;
-  background: ${({ theme }) => theme.bodyBg};
 
-  @media (min-width: ${bp.md}) {
+  @media (min-width: ${bp.md}) and (orientation: portrait) {
     display: grid;
-    grid-template-columns: ${sidebarW} 1fr;
+    grid-template-columns: 30% 70%;
+  }
+
+  /* Tablet em paisagem */
+  @media (min-width: ${bp.md}) and (orientation: landscape) {
+    display: grid;
+    grid-template-columns: 30% 70%;
+  }
+
+  /* Desktop grande */
+  @media (min-width: ${bp.xl}) {
+    grid-template-columns: 20% 80%;
   }
 `;
 
 export const Content = styled.main`
-  padding: 0.875rem 0.75rem calc(${MOBILE_BOTTOM_BAR_HEIGHT} + 0.75rem);
+  padding: 1rem;
+  min-width: 0; /* evita overflow em grids */
 
-  @media (min-width: ${bp.md}) {
-    padding: 1.25rem 1.5rem 2rem;
+  @media (min-width: ${bp.xl}) {
+    padding: 1.25rem 1.5rem;
   }
 `;

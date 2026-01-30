@@ -17,15 +17,7 @@ const ui = {
   shadow: "0 10px 24px rgba(0,0,0,0.06)",
 };
 
-export const Page = styled.div`
-  width: 100%;
-  padding: ${ui.space.lg};
-  color: ${({ theme }) => theme.text};
-
-  @media (min-width: 768px) {
-    padding: 22px;
-  }
-`;
+export const Page = styled.div``;
 
 export const Header = styled.header`
   display: flex;

@@ -34,9 +34,7 @@ export const ContainerProcesso = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: .75rem;
-  background: ${({ theme }) => theme.bodyBg};
-
+  gap: 0.75rem;
 `;
 
 export const PageHeader = styled.header`
@@ -92,7 +90,10 @@ export const CreateButton = styled.button`
   font-weight: 900;
   cursor: pointer;
 
-  transition: transform 0.14s ease, background 0.14s ease, opacity 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    opacity 0.14s ease;
 
   &:hover {
     background: ${({ theme }) => theme.primaryHover};
@@ -147,7 +148,9 @@ export const SearchInput = styled.input`
   padding: 0 12px;
   outline: none;
 
-  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
@@ -187,7 +190,7 @@ export const Grid = styled.div`
   grid-template-columns: 1fr;
 
   @media (min-width: 740px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 
   @media (min-width: 1100px) {
@@ -209,7 +212,9 @@ export const Card = styled.article`
   gap: 12px;
 
   box-shadow: ${ui.shadow.sm};
-  transition: transform 0.18s ease, box-shadow 0.18s ease,
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
     border-color 0.18s ease;
 
   /* brilho suave usando cor do tema */
@@ -270,7 +275,7 @@ export const CardDesc = styled.p`
 ========================= */
 export const MetaRow = styled.div`
   display: grid;
-  gap: .75rem;
+  gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 
   @media (max-width: 680px) {
@@ -334,7 +339,9 @@ export const SecondaryButton = styled.button`
   font-weight: 900;
 
   cursor: pointer;
-  transition: transform 0.14s ease, background 0.14s ease,
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
     border-color 0.14s ease;
 
   &:hover {
@@ -363,8 +370,11 @@ export const PrimaryButton = styled.button`
 
   /* sombra “premium” sem inventar cor fora do tema (usa active) */
   box-shadow: 0 14px 28px ${({ theme }) => theme.active};
-  transition: transform 0.14s ease, background 0.14s ease,
-    opacity 0.14s ease, box-shadow 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    opacity 0.14s ease,
+    box-shadow 0.14s ease;
 
   &:hover {
     transform: translateY(-1px);
@@ -485,7 +495,9 @@ export const PageButton = styled.button`
   font-weight: 900;
 
   cursor: pointer;
-  transition: transform 0.14s ease, background 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease;
 
   &:hover {
     background: ${({ theme }) => theme.active};

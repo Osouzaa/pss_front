@@ -14,7 +14,7 @@ export function useInscricaoActions(params: {
   perguntas: Array<{ id_pergunta: string; tipo: string }>;
   respostas: RespostasState;
 }) {
-  const { idProcesso, idInscricao, perguntas, respostas } = params;
+  const { idInscricao, perguntas, respostas } = params;
 
   const iniciarMut = useMutation({
     mutationFn: (body: { id_processo_seletivo: string; id_vaga: string }) =>

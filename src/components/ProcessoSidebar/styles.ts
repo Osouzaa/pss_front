@@ -4,7 +4,6 @@ const bp = {
   md: "48rem", // 768px
 };
 
-const sidebarW = "17.5rem"; // 280px
 const bottomBarH = "5.75rem"; // ~92px
 
 export const Sidebar = styled.aside`
@@ -15,7 +14,7 @@ export const Sidebar = styled.aside`
     position: sticky;
     top: 0;
     height: 100vh;
-    width: ${sidebarW};
+    width: 100%;
 
     background: ${({ theme }) => theme.background};
     border-right: 1px solid ${({ theme }) => theme.border};
