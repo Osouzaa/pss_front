@@ -64,14 +64,17 @@ interface IModalNovaPergunta {
   perguntaToEdit?: PerguntaToEdit | null;
 }
 
-type FaixaForm = { ate: number; medio: number; superior: number };
+/**
+ * ✅ Ajuste: medio/superior podem ser null para iniciar vazio no input
+ */
+type FaixaForm = { ate: number; medio: number | null; superior: number | null };
 
 const DEFAULT_FAIXAS: FaixaForm[] = [
-  { ate: 365, medio: 0, superior: 0 }, // 0..365
-  { ate: 730, medio: 0, superior: 0 }, // 366..730
-  { ate: 1095, medio: 0, superior: 0 }, // 731..1095
-  { ate: 1460, medio: 0, superior: 0 }, // 1096..1460
-  { ate: 999999, medio: 0, superior: 0 }, // acima de 1460
+  { ate: 365, medio: null, superior: null }, // 0..365
+  { ate: 730, medio: null, superior: null }, // 366..730
+  { ate: 1095, medio: null, superior: null }, // 731..1095
+  { ate: 1460, medio: null, superior: null }, // 1096..1460
+  { ate: 999999, medio: null, superior: null }, // acima de 1460
 ];
 
 function safeParseRegraJson(v?: string | null) {
@@ -91,8 +94,15 @@ function normalizeFaixasFromEdit(regra: any): FaixaForm[] | null {
   const incoming: FaixaForm[] = regra.faixas
     .map((f: any) => ({
       ate: Number(f?.ate ?? 0),
-      medio: Number(f?.medio ?? 0),
-      superior: Number(f?.superior ?? 0),
+
+      // ✅ se vier undefined/null, mantém null (não vira 0)
+      medio:
+        f?.medio === null || f?.medio === undefined ? null : Number(f.medio),
+
+      superior:
+        f?.superior === null || f?.superior === undefined
+          ? null
+          : Number(f.superior),
     }))
     .filter((f: FaixaForm) => Number.isFinite(f.ate) && f.ate > 0)
     .sort((a: { ate: number }, b: { ate: number }) => a.ate - b.ate);
@@ -137,15 +147,12 @@ export function ModalNovaPergunta({
       pontuacao_medio: null,
       pontuacao_superior: null,
 
-      exige_comprovante: false,
-      label_comprovante: "",
-
+      // ✅ agora começa com null nos campos de pontos
       faixas: DEFAULT_FAIXAS,
     },
   });
 
   const tipo = watch("tipo");
-  const exigeComprovante = watch("exige_comprovante");
 
   useEffect(() => {
     if (!open) return;
@@ -166,10 +173,6 @@ export function ModalNovaPergunta({
         pontuacao_medio: perguntaToEdit.pontuacao_medio ?? null,
         pontuacao_superior: perguntaToEdit.pontuacao_superior ?? null,
 
-        exige_comprovante: !!perguntaToEdit.exige_comprovante,
-        label_comprovante: perguntaToEdit.label_comprovante ?? "",
-
-        // ✅ se tiver regra salva, carrega; senão default das 5 faixas
         faixas: faixasFromEdit ?? DEFAULT_FAIXAS,
       });
 
@@ -189,9 +192,6 @@ export function ModalNovaPergunta({
       pontuacao_medio: null,
       pontuacao_superior: null,
 
-      exige_comprovante: false,
-      label_comprovante: "",
-
       faixas: DEFAULT_FAIXAS,
     });
   }, [open, perguntaToEdit, reset]);
@@ -206,15 +206,6 @@ export function ModalNovaPergunta({
       setValue("pontuacao_superior", null, { shouldValidate: true });
     }
   }, [tipo, open, setValue]);
-
-  // ✅ se desmarcar comprovante, limpa label
-  useEffect(() => {
-    if (!open) return;
-
-    if (!exigeComprovante) {
-      setValue("label_comprovante", "", { shouldValidate: true });
-    }
-  }, [exigeComprovante, open, setValue]);
 
   function handleClose() {
     onOpenChange(false);
@@ -270,11 +261,6 @@ export function ModalNovaPergunta({
         pontuacao_fundamental: data.pontuacao_fundamental ?? null,
         pontuacao_medio: data.pontuacao_medio ?? null,
         pontuacao_superior: data.pontuacao_superior ?? null,
-
-        exige_comprovante: data.exige_comprovante,
-        label_comprovante: data.exige_comprovante
-          ? data.label_comprovante?.trim() || null
-          : null,
       };
 
       // ✅ regra_json para experiência
@@ -283,7 +269,13 @@ export function ModalNovaPergunta({
           tipo: "FAIXAS_DIAS",
           faixas: (data.faixas ?? [])
             .slice()
-            .sort((a, b) => Number(a.ate) - Number(b.ate)),
+            .sort((a, b) => Number(a.ate) - Number(b.ate))
+            .map((f) => ({
+              ate: Number(f.ate),
+              // ✅ garante número no JSON (se preferir null, remova o ?? 0)
+              medio: f.medio ?? 0,
+              superior: f.superior ?? 0,
+            })),
         });
 
         // não manda pontuação fixa nesse tipo
@@ -360,9 +352,6 @@ export function ModalNovaPergunta({
                 <option value="NUMERO">Número (NUMERO)</option>
                 <option value="TEXTO">Texto (TEXTO)</option>
                 <option value="SELECT">Seleção Única (SELECT)</option>
-                <option value="MULTISELECT">
-                  Múltipla Escolha (MULTISELECT)
-                </option>
                 <option value="DATA">Data (DATA)</option>
                 <option value="EXPERIENCIA_DIAS">Experiência (em dias)</option>
               </SelectBase>
@@ -472,15 +461,19 @@ export function ModalNovaPergunta({
                         valueAsNumber: true,
                       })}
                       error={(errors.faixas as any)?.[idx]?.ate?.message}
-                      disabled // ✅ trava os limites (faixas fixas)
+                      disabled
                     />
 
                     <InputBase
                       label="Pontos (Médio)"
                       type="number"
                       placeholder="Ex: 10"
+                      // ✅ aqui: vazio vira null (campo começa em branco)
                       {...register(`faixas.${idx}.medio` as const, {
-                        valueAsNumber: true,
+                        setValueAs: (v) =>
+                          v === "" || v === null || v === undefined
+                            ? null
+                            : Number(v),
                       })}
                       error={(errors.faixas as any)?.[idx]?.medio?.message}
                     />
@@ -489,8 +482,12 @@ export function ModalNovaPergunta({
                       label="Pontos (Superior)"
                       type="number"
                       placeholder="Ex: 15"
+                      // ✅ aqui: vazio vira null (campo começa em branco)
                       {...register(`faixas.${idx}.superior` as const, {
-                        valueAsNumber: true,
+                        setValueAs: (v) =>
+                          v === "" || v === null || v === undefined
+                            ? null
+                            : Number(v),
                       })}
                       error={(errors.faixas as any)?.[idx]?.superior?.message}
                     />
@@ -504,35 +501,6 @@ export function ModalNovaPergunta({
                 ) : null}
               </>
             ) : null}
-
-            {/* ✅ Comprovante / Anexo */}
-            <Row>
-              <SelectBase
-                label="Exige comprovante?"
-                {...register("exige_comprovante", {
-                  setValueAs: (v) => v === true || v === "true",
-                })}
-              >
-                <option value="false">Não</option>
-                <option value="true">Sim</option>
-              </SelectBase>
-
-              {exigeComprovante ? (
-                <>
-                  <InputBase
-                    label="Texto do comprovante"
-                    placeholder="Ex: Anexar certificado / carteira de trabalho"
-                    {...register("label_comprovante")}
-                    error={errors.label_comprovante?.message}
-                  />
-
-                  <p style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
-                    Dica: use PDF e imagens (JPG/PNG). O backend deve validar
-                    isso no envio da inscrição.
-                  </p>
-                </>
-              ) : null}
-            </Row>
 
             <Footer>
               <button type="button" className="secondary" onClick={handleClose}>

@@ -1,5 +1,8 @@
 import * as z from "zod";
 
+/**
+ * Tipos de pergunta
+ */
 export const PerguntaTipoEnum = z.enum([
   "BOOLEAN",
   "NUMERO",
@@ -10,34 +13,66 @@ export const PerguntaTipoEnum = z.enum([
   "EXPERIENCIA_DIAS",
 ]);
 
+/**
+ * Helper:
+ * - input vazio ("") → null
+ * - número válido → number
+ * - mantém validação de >= 0
+ */
+const numberOrNullFromInput = z.preprocess((v) => {
+  if (v === "" || v === undefined || v === null) return null;
+
+  if (typeof v === "string") {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : v;
+  }
+
+  return v;
+}, z.number().int().min(0, "Não pode ser negativo").nullable());
+
+/**
+ * Schema da faixa de experiência
+ */
 const FaixaExperienciaSchema = z.object({
   ate: z.coerce.number().int().positive("Informe um número válido de dias"),
-  medio: z.coerce.number().int().min(0, "Não pode ser negativo"),
-  superior: z.coerce.number().int().min(0, "Não pode ser negativo"),
+
+  // ✅ agora podem ser null (campo vazio no formulário)
+  medio: numberOrNullFromInput,
+  superior: numberOrNullFromInput,
 });
 
+/**
+ * Faixas fixas obrigatórias
+ */
 const FAIXAS_FIXAS = [365, 730, 1095, 1460, 999999];
 
+/**
+ * Schema principal
+ */
 export const createNovaPerguntaSchema = z
   .object({
     titulo: z.string().min(3).max(220),
     descricao: z.string().max(800).optional().default(""),
+
     tipo: PerguntaTipoEnum,
+
     obrigatoria: z.boolean().default(false),
     ordem: z.coerce.number().int().min(0).default(0),
     ativa: z.boolean().default(true),
 
     pontuacao_fundamental: z.coerce.number().int().min(0).optional().nullable(),
+
     pontuacao_medio: z.coerce.number().int().min(0).optional().nullable(),
+
     pontuacao_superior: z.coerce.number().int().min(0).optional().nullable(),
 
-    exige_comprovante: z.boolean().default(false),
-    label_comprovante: z.string().max(255).optional().default(""),
-
+    // ✅ faixas com medio/superior nullable
     faixas: z.array(FaixaExperienciaSchema).optional(),
   })
   .superRefine((data, ctx) => {
-    // REGRA 1: BOOLEAN precisa ter pelo menos uma pontuação
+    /**
+     * REGRA 1: BOOLEAN precisa ter pelo menos uma pontuação
+     */
     if (data.tipo === "BOOLEAN") {
       const temPontuacao =
         data.pontuacao_fundamental != null ||
@@ -48,13 +83,15 @@ export const createNovaPerguntaSchema = z
         ctx.addIssue({
           path: ["pontuacao_medio"],
           message:
-            "Informe ao menos uma pontuação por nível (fundamental, médio ou superior)",
+            "Informe ao menos uma pontuação por nível (fundamental, médio ou superior).",
           code: z.ZodIssueCode.custom,
         });
       }
     }
 
-    // REGRA 2: EXPERIENCIA_DIAS precisa ter faixas válidas e fixas
+    /**
+     * REGRA 2: EXPERIENCIA_DIAS precisa ter exatamente 5 faixas fixas
+     */
     if (data.tipo === "EXPERIENCIA_DIAS") {
       if (!data.faixas || data.faixas.length !== 5) {
         ctx.addIssue({
@@ -62,30 +99,41 @@ export const createNovaPerguntaSchema = z
           message: "Informe exatamente 5 faixas de experiência.",
           code: z.ZodIssueCode.custom,
         });
-      } else {
-        const ates = data.faixas.map((f) => Number(f.ate));
-
-        // deve ser exatamente [365, 730, 1095, 1460, 999999] (ordem)
-        const ok =
-          ates.length === FAIXAS_FIXAS.length &&
-          ates.every((v, i) => v === FAIXAS_FIXAS[i]);
-
-        if (!ok) {
-          ctx.addIssue({
-            path: ["faixas"],
-            message:
-              "As faixas devem ser: 365, 730, 1095, 1460 e 999999 (acima de 1460).",
-            code: z.ZodIssueCode.custom,
-          });
-        }
+        return;
       }
 
-      // pontuação fixa não é usada nesse tipo (não precisa dar erro, mas se quiser bloquear:)
-      // if (data.pontuacao_medio != null || data.pontuacao_superior != null || data.pontuacao_fundamental != null) { ... }
-    }
+      const ates = data.faixas.map((f) => Number(f.ate));
 
-    // REGRA 3/4: comprovante
-    if (!data.exige_comprovante) return;
+      const ok =
+        ates.length === FAIXAS_FIXAS.length &&
+        ates.every((v, i) => v === FAIXAS_FIXAS[i]);
+
+      if (!ok) {
+        ctx.addIssue({
+          path: ["faixas"],
+          message:
+            "As faixas devem ser: 365, 730, 1095, 1460 e 999999 (acima de 1460).",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+
+      /**
+       * REGRA EXTRA (opcional mas recomendada):
+       * pelo menos uma pontuação em alguma faixa
+       */
+      const temAlgumPonto = data.faixas.some(
+        (f) => f.medio != null || f.superior != null,
+      );
+
+      if (!temAlgumPonto) {
+        ctx.addIssue({
+          path: ["faixas"],
+          message:
+            "Informe ao menos uma pontuação (Médio ou Superior) em alguma faixa.",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+    }
   });
 
 export type CreateNovaPerguntaFormData = z.infer<
