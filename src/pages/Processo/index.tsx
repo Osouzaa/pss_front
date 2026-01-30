@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import * as S from "./styles";
-import { ModalNovoProcesso } from "./components/ModalNovoProcesso";
+
 import { useQuery } from "@tanstack/react-query";
+
 import { getAllProcessos } from "../../api/get-all-processos";
 import { formatDate } from "../../utils/fomartDate.utils";
-import { getMe } from "../../api/get-me";
+
+import { ModalNovoProcesso } from "./components/ModalNovoProcesso";
 import { ModalPrimeiroAcesso } from "./components/ModalPrimeiroAcesso";
+
+import { useAuth } from "../../contexts/auth-context";
 
 export function Processo() {
   const navigate = useNavigate();
 
+  const { user, isAdmin, isPrimeiroAcesso, isLoading: loadingMe } = useAuth();
+
   const [q, setQ] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [page, setPage] = useState(1);
+  const [openFirstAccess, setOpenFirstAccess] = useState(false);
 
   const {
     data: result,
@@ -22,11 +29,15 @@ export function Processo() {
   } = useQuery({
     queryKey: ["all-processos", page, q],
     queryFn: () => getAllProcessos({ page, limit: 10, q }),
+    enabled: !loadingMe, // opcional: espera auth carregar
   });
 
   const meta = result?.meta;
+  const items = result?.items ?? [];
+  const hasData = items.length > 0;
 
   function handleCreate() {
+    if (!isAdmin) return;
     setOpenModal(true);
   }
 
@@ -34,27 +45,18 @@ export function Processo() {
     navigate(`/processos_detalhes/${id}`);
   }
 
-  async function handleSubscribe(id: string) {
+  function handleSubscribe(id: string) {
     navigate(`/processos/${id}/inscricao/`);
   }
 
-  const items = result?.items ?? [];
-  const hasData = items.length > 0;
-
-  const { data: resultMe } = useQuery({
-    queryKey: ["get-me"],
-    queryFn: getMe,
-  });
-
-  const [openFirstAccess, setOpenFirstAccess] = useState(false);
-
   useEffect(() => {
-    if (!resultMe) return;
+    if (loadingMe) return;
+    if (!user) return;
 
-    if (resultMe.fl_primeiro_acesso === true) {
+    if (isPrimeiroAcesso) {
       setOpenFirstAccess(true);
     }
-  }, [result]);
+  }, [loadingMe, user, isPrimeiroAcesso]);
 
   if (isLoading) {
     return <div>Carregando...</div>;
@@ -71,9 +73,12 @@ export function Processo() {
         </S.TitleArea>
 
         <S.HeaderActions>
-          <S.CreateButton type="button" onClick={handleCreate}>
-            Criar processo
-          </S.CreateButton>
+          {/* ✅ só mostra para ADMIN */}
+          {isAdmin && (
+            <S.CreateButton type="button" onClick={handleCreate}>
+              Criar processo
+            </S.CreateButton>
+          )}
         </S.HeaderActions>
       </S.PageHeader>
 
@@ -103,12 +108,7 @@ export function Processo() {
         </S.Counter>
       </S.Toolbar>
 
-      {isLoading ? (
-        <S.LoadingState>
-          <S.LoadingTitle>Carregando processos...</S.LoadingTitle>
-          <S.LoadingText>Isso pode levar alguns segundos.</S.LoadingText>
-        </S.LoadingState>
-      ) : isError ? (
+      {isError ? (
         <S.EmptyState>
           <S.EmptyTitle>Não foi possível carregar</S.EmptyTitle>
           <S.EmptyText>
@@ -119,7 +119,9 @@ export function Processo() {
         <S.EmptyState>
           <S.EmptyTitle>Nenhum processo encontrado</S.EmptyTitle>
           <S.EmptyText>
-            Tente outro termo de busca ou crie um novo processo.
+            Tente outro termo de busca.
+            {/* ✅ só admin vê esse texto */}
+            {isAdmin ? " Ou crie um novo processo." : ""}
           </S.EmptyText>
         </S.EmptyState>
       ) : (
@@ -198,7 +200,10 @@ export function Processo() {
         </>
       )}
 
-      <ModalNovoProcesso open={openModal} onOpenChange={setOpenModal} />
+      {isAdmin && (
+        <ModalNovoProcesso open={openModal} onOpenChange={setOpenModal} />
+      )}
+
       <ModalPrimeiroAcesso
         open={openFirstAccess}
         onOpenChange={setOpenFirstAccess}
