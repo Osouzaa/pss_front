@@ -29,17 +29,49 @@ import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
 import { uploadDocumentoMe } from "../../../../api/upload-documento-me";
 
-const DocumentoTipoEnum = z.enum([
-  "COMPROVANTE_ENDERECO",
-  "CPF",
-  "DIPLOMA",
-  "ENSINO_SUPERIOR",
-  "MESTRADO",
-  "DOUTORADO",
-  "CURSO",
-  "EXPERIENCIA_PROFISSIONAL",
-  "OUTROS",
-]);
+const DocumentoTipoEnum = z.enum(
+  [
+    // Identificação
+    "CPF",
+    "RG",
+    "CNH",
+    "CERTIDAO_NASCIMENTO",
+    "CERTIDAO_CASAMENTO",
+
+    // Endereço
+    "COMPROVANTE_ENDERECO",
+
+    // Obrigações civis
+    "CERTIFICADO_RESERVISTA",
+    "TITULO_ELEITOR",
+
+    // Formação
+    "DIPLOMA",
+    "HISTORICO_ESCOLAR",
+    "ENSINO_SUPERIOR",
+    "MESTRADO",
+    "DOUTORADO",
+    "CURSO",
+
+    // Experiência profissional
+    "EXPERIENCIA_PROFISSIONAL",
+    "CTPS",
+    "CONTRATO_TRABALHO",
+    "DECLARACAO_EXPERIENCIA",
+
+    // Ações afirmativas / cotas
+    "DECLARACAO_RACA_COR",
+
+    // PCD
+    "PCD_LAUDO_MEDICO",
+    "PCD_RELATORIO",
+
+    // Outros
+    "COMPROVANTE_RESERVA_VAGA",
+    "OUTROS",
+  ],
+  { message: "Selecione uma opção válida!" },
+);
 
 type DocumentoTipo = z.infer<typeof DocumentoTipoEnum>;
 
