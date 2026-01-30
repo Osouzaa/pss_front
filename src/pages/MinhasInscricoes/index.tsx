@@ -1,4 +1,3 @@
-// src/pages/MinhasInscricoes/index.tsx
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -6,8 +5,7 @@ import * as S from "./styles";
 
 import type { InscricaoStatus } from "../../api/inscricoes";
 import { getInscricoesMe } from "../../api/get-inscricoes-me";
-
-/** ===== helpers ===== */
+import { ModalLembrete } from "../../components/ModalLembrete";
 
 function fmtDateTimeBR(iso?: string | null) {
   if (!iso) return "—";
@@ -20,8 +18,6 @@ function normalizeStatusLabel(s?: string) {
   if (!s) return "—";
   return s.replaceAll("_", " ");
 }
-
-/** ===== tipos do retorno ===== */
 
 type VagaResponse = {
   id_vaga: string;

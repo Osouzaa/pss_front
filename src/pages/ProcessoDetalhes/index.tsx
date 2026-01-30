@@ -16,6 +16,8 @@ import { queryClient } from "../../lib/react-query";
 import { Trash2, Pencil } from "lucide-react";
 import { ModalConfirmDelete } from "../../components/ModalConfirmDelete";
 
+import { useAuth } from "../../contexts/auth-context";
+
 function fmtDateBR(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -34,6 +36,7 @@ function normalizeText(s: string) {
 
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
+  const { isAdmin } = useAuth();
 
   const [tab, setTab] = useState("vagas");
   const [qVaga, setQVaga] = useState("");
@@ -51,8 +54,10 @@ export function ProcessoSeletivosDetalhes() {
 
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
+
   const [openModalDelete, setOpenModalDelete] = useState(false);
   const [perguntaToDelete, setPerguntaToDelete] = useState<any>(null);
+
   const {
     data: processo,
     isLoading,
@@ -87,25 +92,53 @@ export function ProcessoSeletivosDetalhes() {
   }, [processo?.vagas, qVaga]);
 
   function onEditarVaga(v: any) {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem editar vaga.");
+      return;
+    }
     setVagaToEdit(v);
     setOpenModal(true);
   }
 
   function onCadastrarVaga() {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem cadastrar vaga.");
+      return;
+    }
     setOpenModal(true);
   }
 
+  function onEditarProcesso() {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem editar o processo.");
+      return;
+    }
+    setOpenModalEditProceso(true);
+  }
+
   function onCadastrarPergunta() {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem cadastrar perguntas.");
+      return;
+    }
     setPerguntaToEdit(null);
     setOpenModalNovaPergunta(true);
   }
 
   function onEditarPergunta(pergunta: any) {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem editar perguntas.");
+      return;
+    }
     setPerguntaToEdit(pergunta);
     setOpenModalNovaPergunta(true);
   }
 
   function onAbrirOpcoes(pergunta: { id_pergunta: string }) {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem gerenciar opções.");
+      return;
+    }
     setPerguntaSelecionada(pergunta);
     setOpenModalOpcoes(true);
   }
@@ -123,6 +156,10 @@ export function ProcessoSeletivosDetalhes() {
   });
 
   function onExcluirPergunta(pergunta: any) {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem excluir perguntas.");
+      return;
+    }
     setPerguntaToDelete(pergunta);
     setOpenModalDelete(true);
   }
@@ -183,20 +220,21 @@ export function ProcessoSeletivosDetalhes() {
         </S.HeaderLeft>
 
         <S.HeaderRight>
-          <S.SecondaryButton
-            type="button"
-            onClick={() => setOpenModalEditProceso(true)}
-          >
-            Editar processo
-          </S.SecondaryButton>
+          {isAdmin && (
+            <>
+              <S.SecondaryButton type="button" onClick={onEditarProcesso}>
+                Editar processo
+              </S.SecondaryButton>
 
-          <S.PrimaryButton type="button" onClick={onCadastrarVaga}>
-            Cadastrar vaga
-          </S.PrimaryButton>
+              <S.PrimaryButton type="button" onClick={onCadastrarVaga}>
+                Cadastrar vaga
+              </S.PrimaryButton>
 
-          <S.PrimaryButton type="button" onClick={onCadastrarPergunta}>
-            Cadastrar perguntas
-          </S.PrimaryButton>
+              <S.PrimaryButton type="button" onClick={onCadastrarPergunta}>
+                Cadastrar perguntas
+              </S.PrimaryButton>
+            </>
+          )}
         </S.HeaderRight>
       </S.Header>
 
@@ -243,7 +281,8 @@ export function ProcessoSeletivosDetalhes() {
             <S.EmptyState>
               <S.EmptyTitle>Nenhuma vaga encontrada</S.EmptyTitle>
               <S.EmptyText>
-                Tente outro termo de busca ou cadastre uma nova vaga.
+                Tente outro termo de busca
+                {isAdmin ? " ou cadastre uma nova vaga." : "."}
               </S.EmptyText>
             </S.EmptyState>
           ) : (
@@ -284,12 +323,16 @@ export function ProcessoSeletivosDetalhes() {
 
                       <S.Td style={{ textAlign: "right" }}>
                         <S.RowActions>
-                          <S.SecondaryButton
-                            type="button"
-                            onClick={() => onEditarVaga(v)}
-                          >
-                            Editar
-                          </S.SecondaryButton>
+                          {isAdmin ? (
+                            <S.SecondaryButton
+                              type="button"
+                              onClick={() => onEditarVaga(v)}
+                            >
+                              Editar
+                            </S.SecondaryButton>
+                          ) : (
+                            <S.Muted>—</S.Muted>
+                          )}
                         </S.RowActions>
                       </S.Td>
                     </S.Tr>
@@ -319,8 +362,9 @@ export function ProcessoSeletivosDetalhes() {
             <S.EmptyState>
               <S.EmptyTitle>Nenhuma pergunta cadastrada</S.EmptyTitle>
               <S.EmptyText>
-                Cadastre perguntas para este processo seletivo clicando no botão
-                "Cadastrar perguntas" acima.
+                {isAdmin
+                  ? 'Cadastre perguntas para este processo seletivo clicando no botão "Cadastrar perguntas" acima.'
+                  : "Nenhuma pergunta cadastrada para este processo seletivo."}
               </S.EmptyText>
             </S.EmptyState>
           ) : (
@@ -412,32 +456,38 @@ export function ProcessoSeletivosDetalhes() {
 
                           <S.Td style={{ textAlign: "right" }}>
                             <S.RowActions>
-                              <S.IconButton
-                                type="button"
-                                title="Editar"
-                                onClick={() => onEditarPergunta(pergunta)}
-                              >
-                                <Pencil size={16} />
-                              </S.IconButton>
+                              {isAdmin ? (
+                                <>
+                                  <S.IconButton
+                                    type="button"
+                                    title="Editar"
+                                    onClick={() => onEditarPergunta(pergunta)}
+                                  >
+                                    <Pencil size={16} />
+                                  </S.IconButton>
 
-                              {podeGerenciarOpcoes && (
-                                <S.SecondaryButton
-                                  type="button"
-                                  onClick={() => onAbrirOpcoes(pergunta)}
-                                >
-                                  Opções
-                                </S.SecondaryButton>
+                                  {podeGerenciarOpcoes && (
+                                    <S.SecondaryButton
+                                      type="button"
+                                      onClick={() => onAbrirOpcoes(pergunta)}
+                                    >
+                                      Opções
+                                    </S.SecondaryButton>
+                                  )}
+
+                                  <S.IconButton
+                                    type="button"
+                                    title="Excluir"
+                                    className="danger"
+                                    onClick={() => onExcluirPergunta(pergunta)}
+                                    disabled={deletePerguntaMut.isPending}
+                                  >
+                                    <Trash2 size={16} />
+                                  </S.IconButton>
+                                </>
+                              ) : (
+                                <S.Muted>—</S.Muted>
                               )}
-
-                              <S.IconButton
-                                type="button"
-                                title="Excluir"
-                                className="danger"
-                                onClick={() => onExcluirPergunta(pergunta)}
-                                disabled={deletePerguntaMut.isPending}
-                              >
-                                <Trash2 size={16} />
-                              </S.IconButton>
                             </S.RowActions>
                           </S.Td>
                         </S.Tr>
@@ -450,59 +500,65 @@ export function ProcessoSeletivosDetalhes() {
         </S.Section>
       )}
 
-      <ModalNovaVaga
-        open={openModal}
-        onOpenChange={(v) => {
-          setOpenModal(v);
-          if (!v) setVagaToEdit(null);
-        }}
-        id_processo_seletivo={processo.id_processo_seletivo}
-        vagaToEdit={vagaToEdit}
-      />
+      {/* ✅ Modais/admin: renderiza só se isAdmin */}
+      {isAdmin && (
+        <>
+          <ModalNovaVaga
+            open={openModal}
+            onOpenChange={(v) => {
+              setOpenModal(v);
+              if (!v) setVagaToEdit(null);
+            }}
+            id_processo_seletivo={processo.id_processo_seletivo}
+            vagaToEdit={vagaToEdit}
+          />
 
-      <ModalNovoProcesso
-        processoToEdit={processo}
-        onOpenChange={setOpenModalEditProceso}
-        open={openModalEditProcesso}
-      />
+          <ModalNovoProcesso
+            processoToEdit={processo}
+            onOpenChange={setOpenModalEditProceso}
+            open={openModalEditProcesso}
+          />
 
-      <ModalNovaPergunta
-        open={openModalNovaPergunta}
-        onOpenChange={(v) => {
-          setOpenModalNovaPergunta(v);
-          if (!v) setPerguntaToEdit(null);
-        }}
-        id_processo_seletivo={processo.id_processo_seletivo}
-        perguntaToEdit={perguntaToEdit}
-      />
+          <ModalNovaPergunta
+            open={openModalNovaPergunta}
+            onOpenChange={(v) => {
+              setOpenModalNovaPergunta(v);
+              if (!v) setPerguntaToEdit(null);
+            }}
+            id_processo_seletivo={processo.id_processo_seletivo}
+            perguntaToEdit={perguntaToEdit}
+          />
 
-      <ModalOpcoes
-        open={openModalOpcoes}
-        onOpenChange={(v) => {
-          setOpenModalOpcoes(v);
-          if (!v) setPerguntaSelecionada(null);
-        }}
-        id_pergunta={perguntaSelecionada?.id_pergunta ?? ""}
-        id_processo_seletivo={processo.id_processo_seletivo}
-      />
-      <ModalConfirmDelete
-        open={openModalDelete}
-        onOpenChange={(v) => {
-          setOpenModalDelete(v);
-          if (!v) setPerguntaToDelete(null);
-        }}
-        itemName={perguntaToDelete?.titulo ?? "Pergunta"}
-        invalidateQueryKeys={[
-          ["perguntas-processos", processo.id_processo_seletivo],
-          ["processo-id", processo.id_processo_seletivo],
-        ]}
-        onConfirm={async () => {
-          if (!perguntaToDelete?.id_pergunta) return;
+          <ModalOpcoes
+            open={openModalOpcoes}
+            onOpenChange={(v) => {
+              setOpenModalOpcoes(v);
+              if (!v) setPerguntaSelecionada(null);
+            }}
+            id_pergunta={perguntaSelecionada?.id_pergunta ?? ""}
+            id_processo_seletivo={processo.id_processo_seletivo}
+          />
 
-          await deletePerguntaMut.mutateAsync(perguntaToDelete.id_pergunta);
-          toast.success("Pergunta excluída com sucesso!");
-        }}
-      />
+          <ModalConfirmDelete
+            open={openModalDelete}
+            onOpenChange={(v) => {
+              setOpenModalDelete(v);
+              if (!v) setPerguntaToDelete(null);
+            }}
+            itemName={perguntaToDelete?.titulo ?? "Pergunta"}
+            invalidateQueryKeys={[
+              ["perguntas-processos", processo.id_processo_seletivo],
+              ["processo-id", processo.id_processo_seletivo],
+            ]}
+            onConfirm={async () => {
+              if (!perguntaToDelete?.id_pergunta) return;
+
+              await deletePerguntaMut.mutateAsync(perguntaToDelete.id_pergunta);
+              toast.success("Pergunta excluída com sucesso!");
+            }}
+          />
+        </>
+      )}
     </S.Container>
   );
 }
