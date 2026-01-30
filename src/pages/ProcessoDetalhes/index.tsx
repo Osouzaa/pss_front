@@ -553,8 +553,30 @@ export function ProcessoSeletivosDetalhes() {
             onConfirm={async () => {
               if (!perguntaToDelete?.id_pergunta) return;
 
-              await deletePerguntaMut.mutateAsync(perguntaToDelete.id_pergunta);
-              toast.success("Pergunta excluída com sucesso!");
+              try {
+                await deletePerguntaMut.mutateAsync(
+                  perguntaToDelete.id_pergunta,
+                );
+                toast.success("Pergunta excluída com sucesso!");
+              } catch (err: any) {
+                const status = err?.response?.status;
+                const msg =
+                  err?.response?.data?.message ||
+                  err?.response?.data?.error ||
+                  "Não foi possível excluir a pergunta.";
+
+                if (status === 409) {
+                  toast.warning(
+                    "Não é possível excluir esta pergunta porque existem respostas vinculadas a essa pergunta.",
+                    {
+                      duration: 4000,
+                    },
+                  );
+                  return;
+                }
+
+                toast.error(msg);
+              }
             }}
           />
         </>
