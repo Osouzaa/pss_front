@@ -5,7 +5,6 @@ import * as S from "./styles";
 
 import type { InscricaoStatus } from "../../api/inscricoes";
 import { getInscricoesMe } from "../../api/get-inscricoes-me";
-import { ModalLembrete } from "../../components/ModalLembrete";
 
 function fmtDateTimeBR(iso?: string | null) {
   if (!iso) return "—";

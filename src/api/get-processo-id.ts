@@ -1,14 +1,11 @@
 import { api } from "../lib/axios";
 
-/** ===== ENUMS ===== */
-
 export type ProcessoStatus =
   | "RASCUNHO"
   | "ABERTO"
   | "EM_ANALISE"
   | "EM_ANDAMENTO"
-  | "ENCERRADO"
-  | "CANCELADO";
+  | "ENCERRADO";
 
 export type PerguntaTipo =
   | "BOOLEAN"
@@ -19,8 +16,6 @@ export type PerguntaTipo =
   | "DATA";
 
 export type NivelVaga = "MEDIO" | "SUPERIOR";
-
-/** ===== VAGAS ===== */
 
 export interface VagaProcessoSeletivoResponse {
   id_vaga: string;
