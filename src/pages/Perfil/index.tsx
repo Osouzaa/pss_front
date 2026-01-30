@@ -48,6 +48,7 @@ export function Perfil() {
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isCepLoading, setIsCepLoading] = useState(false);
 
   const { data: result, isLoading: isLoadingMe } = useQuery({
     queryFn: getMe,
@@ -121,6 +122,8 @@ export function Perfil() {
 
     (async () => {
       try {
+        setIsCepLoading(true);
+
         const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, {
           signal: controller.signal,
         });
@@ -136,7 +139,10 @@ export function Perfil() {
         const data = (await res.json()) as ViaCepResponse;
 
         if (data?.erro) {
-          setError("cep", { type: "manual", message: "CEP não encontrado" });
+          setError("cep", {
+            type: "manual",
+            message: "CEP não encontrado",
+          });
           return;
         }
 
@@ -152,10 +158,15 @@ export function Perfil() {
           type: "manual",
           message: "Erro ao consultar ViaCEP",
         });
+      } finally {
+        setIsCepLoading(false);
       }
     })();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      setIsCepLoading(false);
+    };
   }, [cepValue, setError, setValue, isEditing]);
 
   async function onSubmit(values: CreateCandidateFormData) {
@@ -339,16 +350,39 @@ export function Perfil() {
           </S.CardHeader>
 
           <S.FormGrid>
-            <InputBase
-              id="cep"
-              label="CEP"
-              placeholder="00000-000"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              error={errors.cep?.message}
-              disabled={locked}
-              {...register("cep")}
-            />
+            {isCepLoading ? (
+              <S.CepLoadingField>
+                <S.CepLoadingLabel>CEP</S.CepLoadingLabel>
+
+                <S.CepLoadingBox>
+                  <S.CepLoadingText>
+                    Consultando CEP
+                    <S.DotPulse>
+                      <span />
+                      <span />
+                      <span />
+                    </S.DotPulse>
+                  </S.CepLoadingText>
+
+                  <S.Shimmer />
+                </S.CepLoadingBox>
+
+                <S.CepLoadingHint>
+                  Preenchendo endereço automaticamente…
+                </S.CepLoadingHint>
+              </S.CepLoadingField>
+            ) : (
+              <InputBase
+                id="cep"
+                label="CEP"
+                placeholder="00000-000"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                error={errors.cep?.message}
+                disabled={locked}
+                {...register("cep")}
+              />
+            )}
 
             <InputBase
               id="logradouro"

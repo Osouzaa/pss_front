@@ -215,17 +215,63 @@ export function ModalAddAnexo({
                     error={errors.tipo?.message}
                   >
                     <option value="">Selecione</option>
+
+                    {/* Identificação */}
                     <option value="CPF">CPF</option>
+                    <option value="RG">RG</option>
+                    <option value="CNH">CNH</option>
+                    <option value="CERTIDAO_NASCIMENTO">
+                      Certidão de nascimento
+                    </option>
+                    <option value="CERTIDAO_CASAMENTO">
+                      Certidão de casamento
+                    </option>
+
+                    {/* Endereço */}
                     <option value="COMPROVANTE_ENDERECO">
                       Comprovante de endereço
                     </option>
+
+                    {/* Obrigações / situações */}
+                    <option value="CERTIFICADO_RESERVISTA">
+                      Certificado de reservista
+                    </option>
+                    <option value="TITULO_ELEITOR">Título de eleitor</option>
+
+                    {/* Formação */}
                     <option value="DIPLOMA">Diploma</option>
+                    <option value="HISTORICO_ESCOLAR">Histórico escolar</option>
                     <option value="ENSINO_SUPERIOR">Ensino Superior</option>
                     <option value="MESTRADO">Mestrado (até 2)</option>
                     <option value="DOUTORADO">Doutorado</option>
-                    <option value="CURSO">Cursos</option>
+                    <option value="CURSO">Cursos / Certificados</option>
+
+                    {/* Experiência */}
                     <option value="EXPERIENCIA_PROFISSIONAL">
-                      Experiêcia Profissional
+                      Experiência Profissional
+                    </option>
+                    <option value="CTPS">CTPS</option>
+                    <option value="CONTRATO_TRABALHO">
+                      Contrato de trabalho
+                    </option>
+                    <option value="DECLARACAO_EXPERIENCIA">
+                      Declaração de experiência
+                    </option>
+
+                    {/* Cotas / ações afirmativas */}
+                    <option value="DECLARACAO_RACA_COR">
+                      Autodeclaração de raça/cor
+                    </option>
+
+                    {/* PCD */}
+                    <option value="PCD_LAUDO_MEDICO">PCD — Laudo médico</option>
+                    <option value="PCD_RELATORIO">
+                      PCD — Relatório complementar
+                    </option>
+
+                    {/* Outros */}
+                    <option value="COMPROVANTE_RESERVA_VAGA">
+                      Comprovante de reserva de vaga
                     </option>
                     <option value="OUTROS">Outros</option>
                   </SelectBase>
@@ -243,7 +289,14 @@ export function ModalAddAnexo({
                   />
                 </FieldGrid>
 
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "10px"}}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    marginTop: "10px",
+                  }}
+                >
                   <Chip>
                     <FileText size={14} />
                     {labelTipo(tipo)}

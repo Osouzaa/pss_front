@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 const ui = {
   radius: {
@@ -480,4 +480,113 @@ export const SecondaryButton = styled.button`
   @media (min-width: 520px) {
     width: auto;
   }
+`;
+
+const shimmer = keyframes`
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(160%); }
+`;
+
+export const CepLoadingField = styled.div`
+  width: 100%;
+  display: grid;
+  gap: 0.45rem;
+`;
+
+export const CepLoadingLabel = styled.span`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const CepLoadingBox = styled.div`
+  position: relative;
+  width: 100%;
+  height: 44px; /* ajuste se seu InputBase for maior/menor */
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+
+  display: flex;
+  align-items: center;
+  padding: 0 0.9rem;
+
+  overflow: hidden;
+
+  /* leve sensação de "desabilitado" */
+  opacity: 0.92;
+`;
+
+export const CepLoadingText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+
+  color: ${({ theme }) => theme.description};
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+`;
+
+export const DotPulse = styled.span`
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: ${({ theme }) => theme.primary};
+    opacity: 0.25;
+    animation: pulse 1.1s infinite ease-in-out;
+  }
+
+  span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.25;
+    }
+    50% {
+      transform: translateY(-2px);
+      opacity: 0.7;
+    }
+  }
+`;
+
+export const Shimmer = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  /* faixa brilhante */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.35),
+      transparent
+    );
+    animation: ${shimmer} 1.25s infinite ease-in-out;
+  }
+`;
+
+/* Mensagem pequena opcional (abaixo do "input") */
+export const CepLoadingHint = styled.small`
+  color: ${({ theme }) => theme.description};
+  font-size: 0.85rem;
 `;
