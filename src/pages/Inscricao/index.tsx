@@ -13,6 +13,7 @@ import { PerguntasSection } from "./components/PerguntasSection";
 import { ActionsBar } from "./components/ActionsBar";
 import { toDateInputValue } from "./components/PerguntaField";
 import { AnexosUser } from "../../components/AnexosUser";
+import { InscricaoSkeleton } from "../../components/SkeletonInscricao";
 
 export function InscricaoPage() {
   const navigate = useNavigate();
@@ -114,8 +115,7 @@ export function InscricaoPage() {
   if (processoQuery.isLoading) return <S.Page>Carregando processo...</S.Page>;
   if (processoQuery.isError || !processo)
     return <S.Page>Não foi possível carregar o processo.</S.Page>;
-  if (idInscricao && inscricaoQuery.isLoading)
-    return <S.Page>Carregando inscrição...</S.Page>;
+  if (idInscricao && inscricaoQuery.isLoading) return <InscricaoSkeleton />;
 
   const iniciou = !!idInscricao;
 
