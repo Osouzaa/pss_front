@@ -95,7 +95,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const me = (await getMe()) as UsuarioComCandidatoDTO;
-
         if ("senha_hash" in me) delete (me as any).senha_hash;
 
         if (!mounted) return;

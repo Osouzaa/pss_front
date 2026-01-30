@@ -86,14 +86,6 @@ export const createNovaPerguntaSchema = z
 
     // REGRA 3/4: comprovante
     if (!data.exige_comprovante) return;
-
-    if (data.exige_comprovante && !data.label_comprovante?.trim()) {
-      ctx.addIssue({
-        path: ["label_comprovante"],
-        message: "Informe o texto do comprovante (ex: 'Anexar diploma').",
-        code: z.ZodIssueCode.custom,
-      });
-    }
   });
 
 export type CreateNovaPerguntaFormData = z.infer<

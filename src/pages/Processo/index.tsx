@@ -53,8 +53,10 @@ export function Processo() {
     if (loadingMe) return;
     if (!user) return;
 
-    if (isPrimeiroAcesso) {
-      setOpenFirstAccess(true);
+    if (user.tipo === "CANDIDATO") {
+      if (isPrimeiroAcesso) {
+        setOpenFirstAccess(true);
+      }
     }
   }, [loadingMe, user, isPrimeiroAcesso]);
 
