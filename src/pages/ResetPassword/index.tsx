@@ -4,11 +4,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FiLock, FiEye, FiEyeOff, FiCheckCircle, FiArrowLeft } from "react-icons/fi";
+import {
+  FiCheckCircle,
+  FiArrowLeft
+} from "react-icons/fi";
 
 import * as S from "./styles";
 import { InputBase } from "../../components/InputBase";
-import { resetPasswordSchema, type ResetPasswordFormData } from "../../schemas/reset-password";
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormData,
+} from "../../schemas/reset-password";
 import { resetPasswordRequest } from "../../api/resetPassword";
 
 export function ResetPassword() {
@@ -63,7 +69,7 @@ export function ResetPassword() {
 
     await mutateAsync({
       token: data.token,
-      password: data.password,
+      senha: data.password,
     });
   }
 
@@ -78,7 +84,11 @@ export function ResetPassword() {
             <S.Subtitle>{subtitle}</S.Subtitle>
           </div>
 
-          <S.BackBtn type="button" onClick={() => navigate("/login")} disabled={isSubmitting}>
+          <S.BackBtn
+            type="button"
+            onClick={() => navigate("/login")}
+            disabled={isSubmitting}
+          >
             <FiArrowLeft size={16} />
             Voltar
           </S.BackBtn>
@@ -108,11 +118,13 @@ export function ResetPassword() {
 
           {!tokenFromUrl ? (
             <S.Alert>
-              Token não encontrado na URL. Abra o link enviado por e-mail para redefinir sua senha.
+              Token não encontrado na URL. Abra o link enviado por e-mail para
+              redefinir sua senha.
             </S.Alert>
           ) : (
             <S.Hint>
-              Dica: use pelo menos 8 caracteres, com maiúscula, minúscula e número.
+              Dica: use pelo menos 8 caracteres, com maiúscula, minúscula e
+              número.
             </S.Hint>
           )}
 
