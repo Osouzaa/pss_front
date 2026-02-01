@@ -382,3 +382,31 @@ export const BottomNote = styled.div`
   color: ${({ theme }) => theme.description};
   font-size: 0.9rem;
 `;
+
+export const ForgotRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -2px;
+`;
+
+export const ForgotButton = styled.button`
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  font-weight: 500;
+  font-size: 0.92rem;
+  color: ${({ theme }) => theme.link};
+
+  padding: 6px 8px;
+  border-radius: 10px;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.BGlink};
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+`;

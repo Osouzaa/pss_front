@@ -183,6 +183,15 @@ export function Login() {
                         {showPass ? <FiEyeOff /> : <FiEye />}
                       </S.IconButton>
                     </S.PasswordWrap>
+                    <S.ForgotRow>
+                      <S.ForgotButton
+                        type="button"
+                        onClick={() => navigate("/esqueci_senha")}
+                        disabled={isPending}
+                      >
+                        Esqueci minha senha
+                      </S.ForgotButton>
+                    </S.ForgotRow>
                   </S.Field>
 
                   <FormMessage message={message} type={messageType} />
