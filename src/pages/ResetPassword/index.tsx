@@ -23,9 +23,6 @@ export function ResetPassword() {
 
   const tokenFromUrl = params.get("token") ?? "";
 
-  const [showPwd, setShowPwd] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
   const title = useMemo(() => "Redefinir senha", []);
   const subtitle = useMemo(() => "Crie uma nova senha para sua conta.", []);
 
@@ -100,7 +97,7 @@ export function ResetPassword() {
 
           <InputBase
             label="Nova senha"
-            type={showPwd ? "text" : "password"}
+            type="password"
             placeholder="Digite sua nova senha"
             {...register("password")}
             error={errors.password?.message}
@@ -109,7 +106,7 @@ export function ResetPassword() {
 
           <InputBase
             label="Confirmar senha"
-            type={showConfirm ? "text" : "password"}
+               type="password"
             placeholder="Confirme sua nova senha"
             {...register("confirmPassword")}
             error={errors.confirmPassword?.message}
