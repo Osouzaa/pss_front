@@ -23,6 +23,7 @@ import {
   UploadHint,
   Chip,
   FieldGrid,
+  UploadNote,
 } from "./styles";
 
 import { InputBase } from "../../../../components/InputBase";
@@ -343,7 +344,10 @@ export function ModalAddAnexo({
               {/* ===== Seção: Upload ===== */}
               <Section>
                 <SectionTitle>Arquivo</SectionTitle>
-
+                <UploadNote>
+                  Envie o documento com{" "}
+                  <strong>frente e verso no mesmo arquivo</strong>.
+                </UploadNote>
                 <input
                   ref={fileRef}
                   type="file"

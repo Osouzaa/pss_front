@@ -1,24 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiUser, FiMapPin, FiSave } from "react-icons/fi";
 
 import * as S from "./styles";
 import { InputBase } from "../../components/InputBase";
 import { Controller, useController, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import {
   createCandidateSchema,
   type CreateCandidateFormData,
 } from "../../schemas/create-candidate";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { atualizarInfoCandidate } from "../../api/atualiza-info-candidates";
 import { toast } from "sonner";
-import { getMe } from "../../api/get-me";
 
 import { formatTelefone, unformatTelefone } from "../../utils/formart-phone";
 import { formatCPF } from "../../utils/formart-cpf";
 import { AnexosUser } from "../../components/AnexosUser";
 import { atualizacaoPerfilError } from "../../errs/atualizacao.perfil.erro";
+import { useAuth } from "../../contexts/auth-context";
 
 type ViaCepResponse = {
   cep?: string;
@@ -32,10 +33,9 @@ type ViaCepResponse = {
 
 function toDateInputValue(value?: string | null) {
   if (!value) return "";
-  // se já vier YYYY-MM-DD, retorna direto
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
 
-  const d = new Date(value); // ISO
+  const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
 
   const yyyy = d.getUTCFullYear();
@@ -44,16 +44,18 @@ function toDateInputValue(value?: string | null) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function onlyDigits(v?: string | null) {
+  return (v ?? "").replace(/\D/g, "");
+}
+
 export function Perfil() {
   const queryClient = useQueryClient();
+  const { user, isLoading: isLoadingMe, refreshMe } = useAuth();
+
+  const cand = user?.candidato;
 
   const [isEditing, setIsEditing] = useState(false);
   const [isCepLoading, setIsCepLoading] = useState(false);
-
-  const { data: result, isLoading: isLoadingMe } = useQuery({
-    queryFn: getMe,
-    queryKey: ["me"],
-  });
 
   const {
     register,
@@ -62,8 +64,9 @@ export function Perfil() {
     setValue,
     setError,
     reset,
-    formState: { errors },
+    clearErrors,
     control,
+    formState: { errors },
   } = useForm<CreateCandidateFormData>({
     resolver: zodResolver(createCandidateSchema),
     mode: "onBlur",
@@ -75,8 +78,9 @@ export function Perfil() {
     control,
   });
 
-  useEffect(() => {
-    const cand = result?.candidato;
+  const locked = useMemo(() => !isEditing, [isEditing]);
+
+  function fillFormFromCandidate() {
     if (!cand) return;
 
     reset({
@@ -94,28 +98,40 @@ export function Perfil() {
       cidade: cand.cidade ?? "",
       uf: (cand.uf ?? "MG").toUpperCase(),
     });
-  }, [result, reset]);
+  }
+
+  // ✅ preenche form quando carregar user/candidato
+  useEffect(() => {
+    fillFormFromCandidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cand?.cpf]); // chave estável o suficiente pra re-run quando trocar candidato
 
   const updateMutation = useMutation({
     mutationFn: atualizarInfoCandidate,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Perfil atualizado com sucesso!");
       setIsEditing(false);
+
+      // ✅ atualiza contexto (fecha modal de 1º acesso sem refresh)
+      await refreshMe();
+
+      // ✅ atualiza qualquer tela que use ["me"] via react-query (se existir)
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (err) => {
       toast.error(atualizacaoPerfilError(err));
     },
   });
+
   const isSaving = updateMutation.isPending;
-  const locked = !isEditing || isSaving;
 
   const cepValue = watch("cep");
 
+  // ✅ ViaCEP (somente quando editando)
   useEffect(() => {
     if (!isEditing) return;
 
-    const cepDigits = (cepValue ?? "").replace(/\D/g, "");
+    const cepDigits = onlyDigits(cepValue);
     if (cepDigits.length !== 8) return;
 
     const controller = new AbortController();
@@ -146,6 +162,8 @@ export function Perfil() {
           return;
         }
 
+        clearErrors("cep");
+
         setValue("logradouro", data.logradouro ?? "", { shouldValidate: true });
         setValue("bairro", data.bairro ?? "", { shouldValidate: true });
         setValue("cidade", data.localidade ?? "", { shouldValidate: true });
@@ -167,15 +185,18 @@ export function Perfil() {
       controller.abort();
       setIsCepLoading(false);
     };
-  }, [cepValue, setError, setValue, isEditing]);
+  }, [cepValue, clearErrors, isEditing, setError, setValue]);
 
   async function onSubmit(values: CreateCandidateFormData) {
-    // garante formato de data pro backend (YYYY-MM-DD)
     const payload: CreateCandidateFormData = {
       ...values,
+      telefone: unformatTelefone(values.telefone ?? ""),
+      cpf: onlyDigits(values.cpf),
+      cep: onlyDigits(values.cep),
+      uf: (values.uf ?? "MG").toUpperCase(),
       data_nascimento: values.data_nascimento
         ? toDateInputValue(values.data_nascimento)
-        : (values.data_nascimento ?? ""),
+        : "",
     };
 
     await updateMutation.mutateAsync(payload);
@@ -185,31 +206,15 @@ export function Perfil() {
     if (isSaving) return;
 
     if (isEditing) {
-      // cancelar edição: volta pro que veio da API
-      const cand = result?.candidato;
-      if (cand) {
-        reset({
-          nome_completo: cand.nome_completo ?? "",
-          email: cand.email ?? "",
-          telefone: cand.telefone ?? "",
-          cpf: cand.cpf ?? "",
-          rg: cand.rg ?? "",
-          data_nascimento: toDateInputValue(cand.data_nascimento),
-          cep: cand.cep ?? "",
-          logradouro: cand.logradouro ?? "",
-          numero: cand.numero ?? "",
-          complemento: cand.complemento ?? "",
-          bairro: cand.bairro ?? "",
-          cidade: cand.cidade ?? "",
-          uf: (cand.uf ?? "MG").toUpperCase(),
-        });
-      }
+      fillFormFromCandidate();
       setIsEditing(false);
       return;
     }
 
     setIsEditing(true);
   }
+
+  const fullyLocked = locked || isSaving || isLoadingMe;
 
   return (
     <S.Page>
@@ -240,7 +245,6 @@ export function Perfil() {
       </S.Header>
 
       <S.Content>
-        {/* ===== Coluna 1: Dados pessoais + Endereço ===== */}
         <S.Card>
           <S.CardHeader>
             <S.CardIcon $variant="primary">
@@ -260,7 +264,7 @@ export function Perfil() {
               placeholder="Seu nome completo"
               autoComplete="name"
               error={errors.nome_completo?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("nome_completo")}
             />
 
@@ -271,7 +275,7 @@ export function Perfil() {
               inputMode="email"
               autoComplete="email"
               error={errors.email?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("email")}
             />
 
@@ -279,7 +283,7 @@ export function Perfil() {
               name="telefone"
               control={control}
               render={({ field }) => {
-                const formmatedValue = formatTelefone(field.value || "");
+                const formattedValue = formatTelefone(field.value || "");
                 return (
                   <InputBase
                     id="telefone"
@@ -288,12 +292,9 @@ export function Perfil() {
                     inputMode="tel"
                     autoComplete="tel"
                     error={errors.telefone?.message}
-                    disabled={locked}
-                    value={formmatedValue}
-                    onChange={(e) => {
-                      const rawValue = unformatTelefone(e.target.value);
-                      field.onChange(rawValue);
-                    }}
+                    disabled={fullyLocked}
+                    value={formattedValue}
+                    onChange={(e) => field.onChange(unformatTelefone(e.target.value))}
                     onBlur={field.onBlur}
                   />
                 );
@@ -305,7 +306,7 @@ export function Perfil() {
               label="Data de nascimento"
               type="date"
               error={errors.data_nascimento?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("data_nascimento")}
             />
 
@@ -316,7 +317,7 @@ export function Perfil() {
               inputMode="numeric"
               autoComplete="off"
               error={errors.cpf?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("cpf")}
               value={cpfField.value ?? ""}
               onChange={(e) => cpfField.onChange(formatCPF(e.target.value))}
@@ -329,7 +330,7 @@ export function Perfil() {
               placeholder="RG"
               autoComplete="off"
               error={errors.rg?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("rg")}
             />
           </S.FormGrid>
@@ -343,9 +344,7 @@ export function Perfil() {
 
             <S.CardHeaderText>
               <S.CardTitle>Endereço</S.CardTitle>
-              <S.CardDesc>
-                Digite o CEP para preencher automaticamente.
-              </S.CardDesc>
+              <S.CardDesc>Digite o CEP para preencher automaticamente.</S.CardDesc>
             </S.CardHeaderText>
           </S.CardHeader>
 
@@ -379,7 +378,7 @@ export function Perfil() {
                 inputMode="numeric"
                 autoComplete="postal-code"
                 error={errors.cep?.message}
-                disabled={locked}
+                disabled={fullyLocked}
                 {...register("cep")}
               />
             )}
@@ -390,7 +389,7 @@ export function Perfil() {
               placeholder="Rua, Avenida..."
               autoComplete="address-line1"
               error={errors.logradouro?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("logradouro")}
             />
 
@@ -401,7 +400,7 @@ export function Perfil() {
               inputMode="numeric"
               autoComplete="address-line2"
               error={errors.numero?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("numero")}
             />
 
@@ -411,7 +410,7 @@ export function Perfil() {
               placeholder="Apto, bloco..."
               autoComplete="off"
               error={errors.complemento?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("complemento")}
             />
 
@@ -421,7 +420,7 @@ export function Perfil() {
               placeholder="Bairro"
               autoComplete="address-level3"
               error={errors.bairro?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("bairro")}
             />
 
@@ -431,30 +430,32 @@ export function Perfil() {
               placeholder="Cidade"
               autoComplete="address-level2"
               error={errors.cidade?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("cidade")}
             />
 
             <InputBase
               id="uf"
-              label="Uf"
+              label="UF"
               placeholder="Ex: MG"
               error={errors.uf?.message}
-              disabled={locked}
+              disabled={fullyLocked}
               {...register("uf")}
             />
           </S.FormGrid>
+
           <S.FooterActions>
             <S.SecondaryButton
               type="button"
               onClick={handleSubmit(onSubmit)}
-              disabled={!isEditing || isSaving}
+              disabled={!isEditing || isSaving || isLoadingMe}
             >
               <FiSave />
               {isSaving ? "Salvando..." : "Salvar alterações"}
             </S.SecondaryButton>
           </S.FooterActions>
         </S.Card>
+
         <S.Card>
           <AnexosUser />
         </S.Card>

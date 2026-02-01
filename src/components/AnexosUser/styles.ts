@@ -247,17 +247,58 @@ export const DocItem = styled.div`
   background: ${({ theme }) => theme.background};
   border-radius: ${ui.radius.lg};
   padding: ${ui.space.md};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+
+  /* ✅ grid estável: texto nunca empurra botões */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: ${ui.space.md};
+  align-items: center;
+
+  @media (max-width: 520px) {
+    /* ✅ em telas pequenas, botões descem */
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 `;
 
 export const DocLeft = styled.div`
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: ${ui.space.md};
+  align-items: center;
   min-width: 0;
+`;
+
+export const DocRight = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${ui.space.sm};
+
+  @media (max-width: 520px) {
+    justify-content: flex-end;
+    width: 100%;
+  }
+`;
+
+export const DocName = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.text};
+
+  /* ✅ o segredo: permite encolher e cortar sem quebrar layout */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  /* ✅ se você preferir 2 linhas ao invés de 1:
+     comente as 3 linhas acima e use isso:
+     display: -webkit-box;
+     -webkit-line-clamp: 2;
+     -webkit-box-orient: vertical;
+     overflow: hidden;
+     white-space: normal;
+  */
 `;
 
 export const DocBadge = styled.span`
@@ -279,30 +320,12 @@ export const DocInfo = styled.div`
   min-width: 0;
 `;
 
-export const DocName = styled.div`
-  font-size: 13px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.text};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 52vw;
-
-  @media (min-width: 768px) {
-    max-width: 380px;
-  }
-`;
 
 export const DocMeta = styled.div`
   font-size: 11.5px;
   color: ${({ theme }) => theme.description};
 `;
 
-export const DocRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${ui.space.sm};
-`;
 
 export const DangerIconButton = styled.button`
   width: 40px;

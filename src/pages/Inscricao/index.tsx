@@ -102,13 +102,13 @@ export function InscricaoPage() {
     setIdInscricao(newId);
     navigate(`/processos/${idProcesso}/inscricao/${newId}`, { replace: true });
   }
-
   async function handleFinalizar() {
     if (!idVaga) return toast.error("Selecione uma vaga.");
     if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
 
     await salvarMut.mutateAsync(buildPayload());
     await enviarMut.mutateAsync();
+    navigate('/minhas-inscricoes')
   }
 
   if (!idProcesso) return <S.Page>Processo inválido.</S.Page>;
@@ -118,6 +118,8 @@ export function InscricaoPage() {
   if (idInscricao && inscricaoQuery.isLoading) return <InscricaoSkeleton />;
 
   const iniciou = !!idInscricao;
+  const MANY_QUESTIONS_THRESHOLD = 12;
+  const isLongForm = (perguntas?.length ?? 0) >= MANY_QUESTIONS_THRESHOLD;
 
   return (
     <S.Page>
@@ -135,7 +137,7 @@ export function InscricaoPage() {
         </S.CardHeader>
 
         <S.Form onSubmit={(e) => e.preventDefault()}>
-          <S.Layout>
+          <S.Layout $singleColumn={isLongForm}>
             <S.Main>
               <S.Grid>
                 <div style={{ gridColumn: "1 / -1" }}>
@@ -184,7 +186,7 @@ export function InscricaoPage() {
               ) : null}
             </S.Main>
 
-            <S.Side>
+            <S.Side $singleColumn={isLongForm}>
               <S.SideCard>
                 <S.SideHeader>
                   <S.SideTitle>Anexos</S.SideTitle>

@@ -29,12 +29,22 @@ export function Processo() {
   } = useQuery({
     queryKey: ["all-processos", page, q],
     queryFn: () => getAllProcessos({ page, limit: 10, q }),
-    enabled: !loadingMe, // opcional: espera auth carregar
+    enabled: !loadingMe, // espera auth carregar
   });
 
   const meta = result?.meta;
   const items = result?.items ?? [];
   const hasData = items.length > 0;
+
+  // ✅ ÚNICO efeito: abre e fecha o modal conforme o estado real do usuário
+  useEffect(() => {
+    if (loadingMe) return;
+
+    const shouldOpen =
+      user?.tipo === "CANDIDATO" && !!isPrimeiroAcesso;
+
+    setOpenFirstAccess(shouldOpen);
+  }, [loadingMe, user?.tipo, isPrimeiroAcesso]);
 
   function handleCreate() {
     if (!isAdmin) return;
@@ -48,17 +58,6 @@ export function Processo() {
   function handleSubscribe(id: string) {
     navigate(`/processos/${id}/inscricao/`);
   }
-
-  useEffect(() => {
-    if (loadingMe) return;
-    if (!user) return;
-
-    if (user.tipo === "CANDIDATO") {
-      if (isPrimeiroAcesso) {
-        setOpenFirstAccess(true);
-      }
-    }
-  }, [loadingMe, user, isPrimeiroAcesso]);
 
   if (isLoading) {
     return <div>Carregando...</div>;
@@ -75,7 +74,6 @@ export function Processo() {
         </S.TitleArea>
 
         <S.HeaderActions>
-          {/* ✅ só mostra para ADMIN */}
           {isAdmin && (
             <S.CreateButton type="button" onClick={handleCreate}>
               Criar processo
@@ -122,7 +120,6 @@ export function Processo() {
           <S.EmptyTitle>Nenhum processo encontrado</S.EmptyTitle>
           <S.EmptyText>
             Tente outro termo de busca.
-            {/* ✅ só admin vê esse texto */}
             {isAdmin ? " Ou crie um novo processo." : ""}
           </S.EmptyText>
         </S.EmptyState>

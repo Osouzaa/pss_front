@@ -581,9 +581,9 @@ export const BooleanOption = styled.label<{
 
   &:hover {
     background: ${({ theme, $disabled }) =>
-      $disabled ? theme.backgroundInput : `${theme.lightPrimary}`};
+    $disabled ? theme.backgroundInput : `${theme.lightPrimary}`};
     border-color: ${({ theme, $disabled }) =>
-      $disabled ? theme.border : `${theme.primary}66`};
+    $disabled ? theme.border : `${theme.primary}66`};
   }
 
   &:active {
@@ -611,28 +611,43 @@ export const ContainerTwoColumns = styled.div`
   gap: 1rem;
 `;
 
-export const Layout = styled.div`
+export const Layout = styled.div<{ $singleColumn?: boolean }>`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 500px;
   gap: 16px;
   align-items: start;
 
-  @media (max-width: 980px) {
+  /* ✅ 80% / 20% */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+
+  /* quebra para 1 coluna em telas menores */
+  @media (max-width: 1100px) {
     grid-template-columns: 1fr;
   }
+
+  /* força 1 coluna quando formulário é grande */
+  ${({ $singleColumn }) =>
+    $singleColumn &&
+    css`
+      grid-template-columns: 1fr;
+    `}
 `;
 
 export const Main = styled.div`
-  min-width: 0;
+  min-width: 0; /* importantíssimo para grid não estourar */
 `;
 
-export const Side = styled.aside`
+export const Side = styled.aside<{ $singleColumn?: boolean }>`
   min-width: 0;
 
-  @media (min-width: 981px) {
-    position: sticky;
-    top: 16px; /* ajusta conforme seu header/topbar */
-  }
+  /* ✅ sticky só quando estiver em 2 colunas */
+  ${({ $singleColumn }) =>
+    !$singleColumn &&
+    css`
+      @media (min-width: 1101px) {
+        position: sticky;
+        top: 16px;
+      }
+    `}
 `;
 
 export const SideCard = styled.div`
@@ -641,6 +656,19 @@ export const SideCard = styled.div`
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  min-width: 0;
+`;
+
+export const SideBody = styled.div`
+  padding: 14px;
+  min-width: 0;
+  overflow: auto;
+
+  /* quebra textos grandes (nome de arquivo gigante, etc.) */
+  * {
+    min-width: 0;
+    word-break: break-word;
+  }
 `;
 
 export const SideHeader = styled.div`
@@ -653,9 +681,6 @@ export const SideHeader = styled.div`
   );
 `;
 
-export const SideBody = styled.div`
-  padding: 14px;
-`;
 
 export const SideTitle = styled.h3`
   margin: 0;

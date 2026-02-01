@@ -80,6 +80,17 @@ export const Title = styled(Dialog.Title)`
   color: ${({ theme }) => theme.text};
 `;
 
+export const UploadNote = styled.div`
+  font-size: 12px;
+  opacity: 0.85;
+  margin-bottom: 10px;
+  color: ${({ theme }) => theme.text};
+
+  strong {
+    font-weight: 900;
+  }
+`;
+
 export const Body = styled.div`
   padding: 14px 16px 16px;
 `;
@@ -97,7 +108,7 @@ export const Section = styled.section`
 `;
 
 export const SectionTitle = styled.div`
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0.2px;
   margin-bottom: 10px;
