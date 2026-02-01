@@ -14,7 +14,7 @@ import {
 
 import { FormMessage } from "../../components/FormMessage";
 import { novoUsuario } from "../../api/novo-usuario";
-import { handleCadastroError } from "../../errs/handle.cadastro.erro"; // 👈 use o handler
+import { handleCadastroError } from "../../errs/handle.cadastro.erro";
 
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -33,6 +33,8 @@ import Logo from "../../assets/logo.png";
 import logo_pmi from "../../assets/logo-pmi-positiva.png";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
 import { PageTransition } from "../../components/PageTransition";
+import { ModalContaInativa } from "./components/ModalContaInativa";
+
 
 function passwordScore(pwd: string) {
   const okLen = pwd.length >= 8;
@@ -53,14 +55,20 @@ export function Cadastro() {
   const [showPass, setShowPass] = useState(false);
   const [inlineMsg, setInlineMsg] = useState<InlineMsg>({});
 
+  // ✅ estado do modal de conta inativa
+  const [openContaInativa, setOpenContaInativa] = useState(false);
+  const [createdEmail, setCreatedEmail] = useState("");
+
   const {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isValid },
+    formState: { errors, isValid, touchedFields, submitCount },
+    reset,
   } = useForm<CreateNovoUserFormData>({
     resolver: zodResolver(createNovoUserSchema),
     mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: {
       email: "",
       senha: "",
@@ -68,7 +76,10 @@ export function Cadastro() {
     },
   });
 
-  // limpa mensagem da API/sucesso quando o usuário altera qualquer campo
+  const hasInteracted =
+    submitCount > 0 || !!touchedFields.email || !!touchedFields.senha;
+
+  // limpa mensagem de API/sucesso quando o usuário altera qualquer campo
   useEffect(() => {
     const sub = watch(() => {
       setInlineMsg((prev) =>
@@ -79,6 +90,7 @@ export function Cadastro() {
   }, [watch]);
 
   const senhaValue = watch("senha") ?? "";
+  const emailValue = watch("email") ?? "";
   const pwd = useMemo(() => passwordScore(senhaValue), [senhaValue]);
 
   const { mutateAsync: novoUsuarioFn, isPending } = useMutation({
@@ -97,15 +109,16 @@ export function Cadastro() {
         role: data.role,
       });
 
-      setInlineMsg({
-        type: "success",
-        message: "Conta criada com sucesso! Redirecionando para o login…",
-      });
+      // ✅ abre o modal de alerta com o e-mail que acabou de cadastrar
+      const email = (data.email ?? "").trim();
+      setCreatedEmail(email);
+      setOpenContaInativa(true);
 
-      toast.success("Conta criada com sucesso! Faça login para continuar.");
-      navigate("/login", { replace: true });
+      // opcional: limpa a senha do form (pra não ficar ali se voltar)
+      reset({ ...data, senha: "" }, { keepErrors: false, keepDirty: false });
+
+      toast.success("Conta criada! Verifique seu e-mail para ativar.");
     } catch (err) {
-      // ✅ erro da API
       setInlineMsg({
         type: "error",
         message: handleCadastroError(err),
@@ -113,14 +126,18 @@ export function Cadastro() {
     }
   }
 
-  const zodMsg =
-    errors.email?.message ||
-    errors.senha?.message ||
-    (pwd.ok ? undefined : "A senha precisa cumprir os requisitos acima.");
+  const zodMsg = !hasInteracted
+    ? undefined
+    : errors.email?.message ||
+      errors.senha?.message ||
+      (pwd.ok ? undefined : "A senha precisa cumprir os requisitos acima.");
 
   const message = inlineMsg.message ?? zodMsg;
+
   const type: "success" | "error" | "warning" | undefined =
     inlineMsg.type ?? (zodMsg ? "warning" : undefined);
+
+  const shouldShowMessage = !!message;
 
   return (
     <PageTransition>
@@ -231,9 +248,7 @@ export function Cadastro() {
                       <S.IconButton
                         type="button"
                         onClick={() => setShowPass((v) => !v)}
-                        aria-label={
-                          showPass ? "Ocultar senha" : "Mostrar senha"
-                        }
+                        aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
                         title={showPass ? "Ocultar senha" : "Mostrar senha"}
                       >
                         {showPass ? <FiEyeOff /> : <FiEye />}
@@ -264,7 +279,9 @@ export function Cadastro() {
                     </S.Rules>
                   </S.Field>
 
-                  <FormMessage message={message} type={type} />
+                  {shouldShowMessage && (
+                    <FormMessage message={message} type={type} />
+                  )}
 
                   <S.PrimaryButton disabled={!canSubmit}>
                     {isPending ? "Cadastrando..." : "Criar conta"}
@@ -291,6 +308,13 @@ export function Cadastro() {
             </S.ContentGrid>
           </S.Card>
         </S.Center>
+
+        {/* ✅ MODAL DE ALERTA (sem form) */}
+        <ModalContaInativa
+          open={openContaInativa}
+          onOpenChange={setOpenContaInativa}
+          email={createdEmail || emailValue}
+        />
       </S.Page>
     </PageTransition>
   );

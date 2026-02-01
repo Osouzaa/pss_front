@@ -1,0 +1,92 @@
+import * as Dialog from "@radix-ui/react-dialog";
+import { X, MailCheck } from "lucide-react";
+import { useMemo } from "react";
+import { useNavigate } from "react-router";
+
+import {
+  Content,
+  HeaderContent,
+  Overlay,
+  Title,
+  Body,
+  EmailBox,
+  Footer,
+  IconWrap,
+  Subtitle,
+} from "./styles";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  email: string; // 👈 vem por props
+};
+
+export function ModalContaInativa({ open, onOpenChange, email }: Props) {
+  const navigate = useNavigate();
+
+  const safeEmail = useMemo(() => (email ?? "").trim(), [email]);
+
+  function handleClose() {
+    onOpenChange(false);
+  }
+
+  function goLogin() {
+    onOpenChange(false);
+    navigate("/login", { replace: true });
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Overlay />
+        <Content
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <HeaderContent>
+            <Title>Conta criada com sucesso!</Title>
+
+            <button type="button" onClick={handleClose} aria-label="Fechar">
+              <X size={16} />
+            </button>
+          </HeaderContent>
+
+          <Body>
+            <IconWrap aria-hidden="true">
+              <MailCheck size={22} />
+            </IconWrap>
+
+            <div>
+              <Subtitle>
+                Sua conta foi criada com sucesso, mas ainda está <b>inativa</b>.
+              </Subtitle>
+
+              <p>
+                Para ativar, confirme o e-mail enviado para:
+              </p>
+
+              <EmailBox title={safeEmail || "E-mail não informado"}>
+                {safeEmail || "—"}
+              </EmailBox>
+
+              <p>
+                Depois de confirmar, volte e faça login normalmente.
+              </p>
+            </div>
+          </Body>
+
+          <Footer>
+            <button type="button" className="secondary" onClick={handleClose}>
+              Fechar
+            </button>
+
+            <button type="button" className="primary" onClick={goLogin}>
+              Ir para o login
+            </button>
+          </Footer>
+        </Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
