@@ -2,7 +2,7 @@ import { api } from "../lib/axios";
 
 export async function resetPasswordRequest(payload: {
   token: string;
-  password: string;
+  senha: string;
 }) {
   await api.post("/auth/redefinir-senha", payload);
 }

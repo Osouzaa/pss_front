@@ -17,7 +17,11 @@ export function Processo() {
 
   const { user, isAdmin, isPrimeiroAcesso, isLoading: loadingMe } = useAuth();
 
+  // ✅ qDraft = input (não dispara busca)
+  const [qDraft, setQDraft] = useState("");
+  // ✅ q = filtro aplicado (dispara busca)
   const [q, setQ] = useState("");
+
   const [openModal, setOpenModal] = useState(false);
   const [page, setPage] = useState(1);
   const [openFirstAccess, setOpenFirstAccess] = useState(false);
@@ -29,20 +33,17 @@ export function Processo() {
   } = useQuery({
     queryKey: ["all-processos", page, q],
     queryFn: () => getAllProcessos({ page, limit: 10, q }),
-    enabled: !loadingMe, // espera auth carregar
+    enabled: !loadingMe,
   });
 
   const meta = result?.meta;
   const items = result?.items ?? [];
   const hasData = items.length > 0;
 
-  // ✅ ÚNICO efeito: abre e fecha o modal conforme o estado real do usuário
   useEffect(() => {
     if (loadingMe) return;
 
-    const shouldOpen =
-      user?.tipo === "CANDIDATO" && !!isPrimeiroAcesso;
-
+    const shouldOpen = user?.tipo === "CANDIDATO" && !!isPrimeiroAcesso;
     setOpenFirstAccess(shouldOpen);
   }, [loadingMe, user?.tipo, isPrimeiroAcesso]);
 
@@ -57,6 +58,19 @@ export function Processo() {
 
   function handleSubscribe(id: string) {
     navigate(`/processos/${id}/inscricao/`);
+  }
+
+  // ✅ aplica filtro só ao clicar (ou Enter)
+  function applyFilter() {
+    const next = qDraft.trim();
+    setPage(1);
+    setQ(next);
+  }
+
+  function clearFilter() {
+    setQDraft("");
+    setPage(1);
+    setQ("");
   }
 
   if (isLoading) {
@@ -87,14 +101,30 @@ export function Processo() {
           <S.SearchLabel htmlFor="q">Buscar</S.SearchLabel>
           <S.SearchInput
             id="q"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(1);
+            value={qDraft}
+            onChange={(e) => setQDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") applyFilter();
             }}
             placeholder="Buscar por título, secretaria, status..."
           />
         </S.SearchWrap>
+
+        {/* ✅ Botões para efetivar */}
+        <S.FilterActions>
+          <S.FilterButton type="button" onClick={applyFilter}>
+            Filtrar
+          </S.FilterButton>
+
+          <S.ClearButton
+            type="button"
+            onClick={clearFilter}
+            disabled={!qDraft && !q}
+            title="Limpar filtro"
+          >
+            Limpar
+          </S.ClearButton>
+        </S.FilterActions>
 
         <S.Counter>
           {meta ? (

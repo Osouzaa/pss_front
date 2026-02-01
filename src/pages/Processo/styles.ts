@@ -520,3 +520,89 @@ export const PageInfo = styled.div`
   font-size: 13px;
   color: ${({ theme }) => theme.description};
 `;
+
+export const FilterActions = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: ${ui.space.sm};
+
+  /* no desktop fica do lado do input */
+  @media (max-width: 720px) {
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  @media (max-width: 420px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: ${ui.space.sm};
+  }
+`;
+
+export const FilterButton = styled.button`
+  height: ${ui.h.btn};
+  padding: 0 14px;
+  border-radius: ${ui.radius.md};
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme["text-white"]};
+  font-weight: 900;
+
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    opacity 0.14s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0px);
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+  }
+`;
+
+export const ClearButton = styled.button`
+  height: ${ui.h.btn};
+  padding: 0 14px;
+  border-radius: ${ui.radius.md};
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.lightDefault};
+  color: ${({ theme }) => theme.text};
+  font-weight: 900;
+
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    background 0.14s ease,
+    border-color 0.14s ease,
+    opacity 0.14s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: ${({ theme }) => theme.primary};
+    background: ${({ theme }) => theme.active};
+  }
+
+  &:active {
+    transform: translateY(0px);
+    opacity: 0.92;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+  }
+`;
