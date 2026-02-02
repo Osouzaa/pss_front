@@ -27,7 +27,9 @@ export function InscricaoPage() {
   const [idVaga, setIdVaga] = useState<string>("");
 
   const [respostas, setRespostas] = useState<RespostasState>({});
-  const hydratedRef = useRef(false);
+
+  // ✅ em vez de boolean, guarda QUAL inscrição foi hidratada
+  const hydratedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     setIdInscricao(id_inscricao ?? "");
@@ -41,14 +43,17 @@ export function InscricaoPage() {
 
   // reset ao trocar inscrição
   useEffect(() => {
-    hydratedRef.current = false;
+    hydratedIdRef.current = null;
     setRespostas({});
   }, [idInscricao]);
 
   // hidratar respostas
   useEffect(() => {
+    if (!idInscricao) return;
     if (!inscricaoQuery.data) return;
-    if (hydratedRef.current) return;
+
+    // ✅ se já hidratou esse id, não faz de novo
+    if (hydratedIdRef.current === idInscricao) return;
 
     const { inscricao, respostas: respostasApi } = inscricaoQuery.data;
 
@@ -71,8 +76,10 @@ export function InscricaoPage() {
     }
 
     setRespostas(next);
-    hydratedRef.current = true;
-  }, [inscricaoQuery.data]);
+
+    // ✅ marca que hidratou essa inscrição
+    hydratedIdRef.current = idInscricao;
+  }, [idInscricao, inscricaoQuery.data]);
 
   const { iniciarMut, salvarMut, enviarMut, buildPayload } =
     useInscricaoActions({
@@ -102,13 +109,14 @@ export function InscricaoPage() {
     setIdInscricao(newId);
     navigate(`/processos/${idProcesso}/inscricao/${newId}`, { replace: true });
   }
+
   async function handleFinalizar() {
     if (!idVaga) return toast.error("Selecione uma vaga.");
     if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
 
     await salvarMut.mutateAsync(buildPayload());
     await enviarMut.mutateAsync();
-    navigate('/minhas-inscricoes')
+    navigate("/minhas-inscricoes");
   }
 
   if (!idProcesso) return <S.Page>Processo inválido.</S.Page>;

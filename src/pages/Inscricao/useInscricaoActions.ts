@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { iniciarInscricao } from "../../api/iniciar-inscricao";
 import {
@@ -14,11 +14,20 @@ export function useInscricaoActions(params: {
   perguntas: Array<{ id_pergunta: string; tipo: string }>;
   respostas: RespostasState;
 }) {
-  const { idInscricao, perguntas, respostas } = params;
+  const { idProcesso, idInscricao, perguntas, respostas } = params;
+
+  const queryClient = useQueryClient();
 
   const iniciarMut = useMutation({
     mutationFn: (body: { id_processo_seletivo: string; id_vaga: string }) =>
       iniciarInscricao(body),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] });
+      // se a inscrição já existir no cache, também limpa
+      queryClient.invalidateQueries({ queryKey: ["inscricao", idProcesso] });
+    },
+
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? "Erro ao iniciar inscrição."),
   });
@@ -26,14 +35,30 @@ export function useInscricaoActions(params: {
   const salvarMut = useMutation({
     mutationFn: (body: SalvarRespostasBody) =>
       salvarRespostasLote(idInscricao, body),
+
+    onSuccess: () => {
+      toast.success("Alterações salvas!");
+      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] });
+      queryClient.invalidateQueries({
+        queryKey: ["inscricao", idProcesso, idInscricao],
+      });
+    },
+
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? "Erro ao salvar respostas."),
-    onSuccess: () => toast.success("Alterações salvas!"),
   });
 
   const enviarMut = useMutation({
     mutationFn: () => enviarInscricaoTwo(idInscricao),
-    onSuccess: () => toast.success("Inscrição enviada com sucesso!"),
+
+    onSuccess: () => {
+      toast.success("Inscrição enviada com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] });
+      queryClient.invalidateQueries({
+        queryKey: ["inscricao", idProcesso, idInscricao],
+      });
+    },
+
     onError: (e: any) =>
       toast.error(e?.response?.data?.message ?? "Erro ao enviar inscrição."),
   });
