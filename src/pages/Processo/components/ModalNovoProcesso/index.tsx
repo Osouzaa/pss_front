@@ -204,14 +204,7 @@ export function ModalNovoProcesso({
               error={errors.titulo?.message}
             />
 
-            <InputBase
-              label="Secretaria"
-              placeholder="Ex: Secretaria de Educação"
-              {...register("secretaria")}
-              error={errors.secretaria?.message}
-            />
-
-            <SelectBase {...register("secretaria")}>
+            <SelectBase {...register("secretaria")} label="Secretaria">
               <option value="">Selecione</option>
               {SECRETARIAS.map((nome) => (
                 <option key={nome} value={nome}>
