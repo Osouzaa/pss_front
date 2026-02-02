@@ -39,6 +39,7 @@ const DocumentoTipoEnum = z.enum(
     "CERTIDAO_NASCIMENTO",
     "CERTIDAO_CASAMENTO",
 
+    "DECLARACAO_MATRICULA",
     // Endereço
     "COMPROVANTE_ENDERECO",
 
@@ -278,6 +279,9 @@ export function ModalAddAnexo({
                     <option value="MESTRADO">Mestrado (até 2)</option>
                     <option value="DOUTORADO">Doutorado</option>
                     <option value="CURSO">Cursos / Certificados</option>
+                    <option value="DECLARACAO_MATRICULA">
+                      Declarção de Matricula
+                    </option>
 
                     {/* Experiência */}
                     <option value="EXPERIENCIA_PROFISSIONAL">

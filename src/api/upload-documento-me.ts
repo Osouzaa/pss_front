@@ -7,6 +7,7 @@ export type DocumentoTipo =
   | "CNH"
   | "CERTIDAO_NASCIMENTO"
   | "CERTIDAO_CASAMENTO"
+  | "DECLARACAO_MATRICULA"
   // Endereço
   | "COMPROVANTE_ENDERECO"
   // Obrigações civis
