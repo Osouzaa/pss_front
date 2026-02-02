@@ -3,15 +3,12 @@ import { api } from "../lib/axios";
 type CriarNovaVagaPayload = {
   id_processo_seletivo: string;
   nome: string;
-  nivel: "MEDIO" | "SUPERIOR";
+  nivel: "FUNDAMENTAL" | "MEDIO" | "SUPERIOR" | "POS_GRADUACAO";
   quantidade_de_vagas: number;
 };
 
 export async function criarNovaVaga(payload: CriarNovaVagaPayload) {
-  const response = await api.post(
-    "/processos-seletivos-vagas",
-    payload
-  );
+  const response = await api.post("/processos-seletivos-vagas", payload);
 
   return response.data;
 }

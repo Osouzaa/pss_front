@@ -28,7 +28,7 @@ import { criarNovaVaga } from "../../../../api/criar-nova.vaga";
 type VagaToEdit = {
   id_vaga: string;
   nome: string;
-  nivel: "FUNDAMENTAL" | "MEDIO" | "SUPERIOR";
+  nivel: "FUNDAMENTAL" | "MEDIO" | "SUPERIOR" | "POS_GRADUACAO";
   quantidade_de_vagas: number | string;
 };
 
@@ -184,6 +184,7 @@ export function ModalNovaVaga({
                 <option value="FUNDAMENTAL">Nível Fundamental</option>
                 <option value="MEDIO">Nível Médio</option>
                 <option value="SUPERIOR">Nível Superior</option>
+                <option value="POS_GRADUACAO">Pós Graduação</option>
               </SelectBase>
 
               <InputBase

@@ -6,7 +6,7 @@ export const createNovaVagaSchema = z.object({
     .min(3, "Informe o nome da vaga")
     .max(160, "Nome da vaga muito longo"),
 
-  nivel: z.enum(["MEDIO", "SUPERIOR"], {
+  nivel: z.enum(["FUNDAMENTAL", "MEDIO", "SUPERIOR", "POS_GRADUACAO"], {
     errorMap: () => ({ message: "Selecione o nível da vaga" }),
   }),
 
