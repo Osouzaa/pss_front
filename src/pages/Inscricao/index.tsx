@@ -115,8 +115,13 @@ export function InscricaoPage() {
     if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
 
     try {
-      await salvarMut.mutateAsync(buildPayload());
+      await salvarMut.mutateAsync({
+        body: buildPayload(),
+        silent: true, // ✅ não mostra "Alterações salvas!" no finalizar
+      });
+
       await enviarMut.mutateAsync();
+
       navigate("/minhas-inscricoes");
     } catch {
       // não navega

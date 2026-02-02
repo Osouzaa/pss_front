@@ -8,6 +8,22 @@ import {
 import { enviarInscricaoTwo } from "../../api/enviar-inscricao";
 import type { RespostasState } from "./types";
 
+function getApiErrorMessage(e: any, fallback: string) {
+  return e?.response?.data?.message ?? e?.message ?? fallback;
+}
+
+function getFaltandoDocs(e: any): string[] | null {
+  const data = e?.response?.data;
+  return Array.isArray(data?.faltandoDocumentos)
+    ? data.faltandoDocumentos
+    : null;
+}
+
+type SalvarMutVars = {
+  body: SalvarRespostasBody;
+  silent?: boolean;
+};
+
 export function useInscricaoActions(params: {
   idProcesso: string;
   idInscricao: string;
@@ -15,60 +31,63 @@ export function useInscricaoActions(params: {
   respostas: RespostasState;
 }) {
   const { idProcesso, idInscricao, perguntas, respostas } = params;
-
   const queryClient = useQueryClient();
+
+  const invalidateAll = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] }),
+      queryClient.invalidateQueries({
+        queryKey: ["inscricao", idProcesso, idInscricao],
+      }),
+      queryClient.invalidateQueries({ queryKey: ["inscricao", idProcesso] }),
+    ]);
+  };
 
   const iniciarMut = useMutation({
     mutationFn: (body: { id_processo_seletivo: string; id_vaga: string }) =>
       iniciarInscricao(body),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] });
-      // se a inscrição já existir no cache, também limpa
-      queryClient.invalidateQueries({ queryKey: ["inscricao", idProcesso] });
+    onSuccess: async () => {
+      await invalidateAll();
     },
 
     onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? "Erro ao iniciar inscrição."),
+      toast.error(getApiErrorMessage(e, "Erro ao iniciar inscrição.")),
   });
 
+  // ✅ aceita um "meta" para salvar silencioso
   const salvarMut = useMutation({
-    mutationFn: (body: SalvarRespostasBody) =>
+    mutationFn: ({ body }: SalvarMutVars) =>
       salvarRespostasLote(idInscricao, body),
 
-    onSuccess: () => {
-      toast.success("Alterações salvas!");
-      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] });
-      queryClient.invalidateQueries({
-        queryKey: ["inscricao", idProcesso, idInscricao],
-      });
+    onSuccess: async (_data, variables) => {
+      const silent = variables?.silent === true;
+
+      if (!silent) toast.success("Alterações salvas!");
+      await invalidateAll();
     },
 
     onError: (e: any) => {
-      console.log(e);
-      const data = e?.response?.data;
-      const msg = data?.message ?? "Erro ao enviar inscrição.";
-      const faltando = Array.isArray(data?.faltandoDocumentos)
-        ? data.faltandoDocumentos.join(", ")
-        : null;
-
-      toast.error(faltando ? `${msg} Faltando: ${faltando}.` : msg);
+      toast.error(e?.response?.data?.message ?? "Erro ao salvar respostas.");
     },
   });
 
   const enviarMut = useMutation({
     mutationFn: () => enviarInscricaoTwo(idInscricao),
 
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Inscrição enviada com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["processo-id", idProcesso] });
-      queryClient.invalidateQueries({
-        queryKey: ["inscricao", idProcesso, idInscricao],
-      });
+      await invalidateAll();
     },
 
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? "Erro ao enviar inscrição."),
+    onError: (e: any) => {
+      const msg = getApiErrorMessage(e, "Erro ao enviar inscrição.");
+      const faltando = getFaltandoDocs(e);
+
+      toast.error(
+        faltando?.length ? `${msg} Faltando: ${faltando.join(", ")}.` : msg,
+      );
+    },
   });
 
   function buildPayload(): SalvarRespostasBody {
@@ -91,10 +110,9 @@ export function useInscricaoActions(params: {
         }
 
         if (p.tipo === "TEXTO") {
-          return {
-            id_pergunta: p.id_pergunta,
-            valor_texto: typeof v === "string" ? v : "",
-          };
+          // ✅ melhor mandar null se vazio (seu backend já faz isso)
+          const txt = typeof v === "string" ? v.trim() : "";
+          return { id_pergunta: p.id_pergunta, valor_texto: txt ? txt : null };
         }
 
         if (p.tipo === "DATA") {
@@ -116,5 +134,10 @@ export function useInscricaoActions(params: {
     };
   }
 
-  return { iniciarMut, salvarMut, enviarMut, buildPayload };
+  return {
+    iniciarMut,
+    salvarMut,
+    enviarMut,
+    buildPayload,
+  };
 }
