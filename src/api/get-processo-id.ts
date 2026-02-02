@@ -39,6 +39,8 @@ export interface PerguntaOpcaoResponse {
   ativa: boolean;
   data_criacao: string; // ISO
   data_atualizacao: string; // ISO
+  exige_comprovante: boolean;
+  label_comprovante: string;
 }
 
 /** ===== PERGUNTAS ===== */

@@ -61,15 +61,31 @@ export const createNovaPerguntaSchema = z
     ativa: z.boolean().default(true),
 
     pontuacao_fundamental: z.coerce.number().int().min(0).optional().nullable(),
-
     pontuacao_medio: z.coerce.number().int().min(0).optional().nullable(),
-
     pontuacao_superior: z.coerce.number().int().min(0).optional().nullable(),
 
     // ✅ faixas com medio/superior nullable
     faixas: z.array(FaixaExperienciaSchema).optional(),
+
+    // ✅ NOVO: exige anexo + qual documento
+    exige_comprovante: z.boolean().default(false),
+    label_comprovante: z.string().nullable().default(null),
   })
   .superRefine((data, ctx) => {
+    /**
+     * REGRA 0: Se exige comprovante, precisa escolher o documento
+     */
+    if (data.exige_comprovante) {
+      const doc = (data.label_comprovante ?? "").trim();
+      if (!doc) {
+        ctx.addIssue({
+          path: ["label_comprovante"],
+          message: "Selecione o documento exigido.",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+    }
+
     /**
      * REGRA 1: BOOLEAN precisa ter pelo menos uma pontuação
      */

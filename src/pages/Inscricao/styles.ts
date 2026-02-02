@@ -581,9 +581,9 @@ export const BooleanOption = styled.label<{
 
   &:hover {
     background: ${({ theme, $disabled }) =>
-    $disabled ? theme.backgroundInput : `${theme.lightPrimary}`};
+      $disabled ? theme.backgroundInput : `${theme.lightPrimary}`};
     border-color: ${({ theme, $disabled }) =>
-    $disabled ? theme.border : `${theme.primary}66`};
+      $disabled ? theme.border : `${theme.primary}66`};
   }
 
   &:active {
@@ -681,7 +681,6 @@ export const SideHeader = styled.div`
   );
 `;
 
-
 export const SideTitle = styled.h3`
   margin: 0;
   color: ${({ theme }) => theme.text};
@@ -695,4 +694,24 @@ export const SideText = styled.p`
   color: ${({ theme }) => theme.description};
   font-size: 13px;
   line-height: 1.5;
+`;
+
+export const AttachmentBadge = styled.span`
+  margin-left: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 184, 0, 0.16);
+  border: 1px solid rgba(255, 184, 0, 0.35);
+`;
+
+export const AttachmentHint = styled.div`
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  background: rgba(255, 184, 0, 0.1);
+  border: 1px solid rgba(255, 184, 0, 0.25);
 `;

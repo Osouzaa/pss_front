@@ -6,7 +6,7 @@ import type {
   PerguntaProcessoResponse,
 } from "../../../api/get-processo-id";
 
-import * as S from "../styles"; // <-- novo
+import * as S from "../styles";
 
 type AnswerValue = boolean | number | string | null;
 
@@ -34,6 +34,39 @@ type Props = {
   onChangeValue: (next: AnswerValue) => void;
 };
 
+// ✅ regra: o comprovante está na PERGUNTA (qualquer tipo)
+function perguntaRequerComprovante(p: PerguntaProcessoResponse): {
+  required: boolean;
+  label: string | null;
+} {
+  const anyP = p as any;
+
+  const required = Boolean(
+    anyP?.exige_comprovante ??
+    anyP?.exigeComprovante ??
+    anyP?.comprovante_obrigatorio ??
+    anyP?.comprovanteObrigatorio ??
+    anyP?.anexo_obrigatorio ??
+    anyP?.anexoObrigatorio ??
+    anyP?.requer_anexo ??
+    anyP?.requerAnexo,
+  );
+
+  const labelRaw =
+    anyP?.label_comprovante ??
+    anyP?.labelComprovante ??
+    anyP?.texto_comprovante ??
+    anyP?.textoComprovante ??
+    anyP?.descricao_comprovante ??
+    anyP?.descricaoComprovante ??
+    null;
+
+  const label =
+    typeof labelRaw === "string" && labelRaw.trim() ? labelRaw.trim() : null;
+
+  return { required, label };
+}
+
 export function PerguntaField({
   p,
   value,
@@ -51,15 +84,27 @@ export function PerguntaField({
   const valueAsNumber = typeof value === "number" ? value : null;
   const valueAsBoolean = typeof value === "boolean" ? value : null;
 
+  const { required: needsAttachment, label: attachmentLabelFromApi } =
+    perguntaRequerComprovante(p);
+
+  const attachmentLabel =
+    attachmentLabelFromApi ?? "Esta pergunta exige anexo de confirmação.";
+
   return (
     <S.FieldCard>
       <S.HeaderPerguntas>
         <S.TitleRow>
           <S.TitleInput>{p.titulo}</S.TitleInput>
-          {p.obrigatoria ? <S.Required>*</S.Required> : null}
-        </S.TitleRow>
 
-        {p.descricao ? <S.Description>{p.descricao}</S.Description> : null}
+          {p.obrigatoria ? <S.Required>*</S.Required> : null}
+
+          {/* ✅ aparece em QUALQUER pergunta */}
+          {needsAttachment ? (
+            <S.AttachmentBadge>
+              Anexo obrigatório : {attachmentLabel}
+            </S.AttachmentBadge>
+          ) : null}
+        </S.TitleRow>
       </S.HeaderPerguntas>
 
       <S.Body>
@@ -136,10 +181,10 @@ export function PerguntaField({
         {p.tipo === "SELECT" ? (
           <SelectBase
             id={`p_${idPergunta}`}
-            value={typeof value === "string" ? value : ""}
+            value={valueAsString}
             disabled={disabled}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-              onChangeValue(e.target.value)
+              onChangeValue(e.target.value || null)
             }
           >
             <option value="">Selecione</option>

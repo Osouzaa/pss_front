@@ -44,8 +44,16 @@ export function useInscricaoActions(params: {
       });
     },
 
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message ?? "Erro ao salvar respostas."),
+    onError: (e: any) => {
+      console.log(e);
+      const data = e?.response?.data;
+      const msg = data?.message ?? "Erro ao enviar inscrição.";
+      const faltando = Array.isArray(data?.faltandoDocumentos)
+        ? data.faltandoDocumentos.join(", ")
+        : null;
+
+      toast.error(faltando ? `${msg} Faltando: ${faltando}.` : msg);
+    },
   });
 
   const enviarMut = useMutation({

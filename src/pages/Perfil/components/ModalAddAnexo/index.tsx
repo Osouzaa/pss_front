@@ -29,6 +29,7 @@ import {
 import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
 import { uploadDocumentoMe } from "../../../../api/upload-documento-me";
+import { DOCUMENTO_TIPOS } from "../../../../utils/documentoTipos";
 
 const DocumentoTipoEnum = z.enum(
   [
@@ -250,69 +251,12 @@ export function ModalAddAnexo({
                   >
                     <option value="">Selecione</option>
 
-                    {/* Identificação */}
-                    <option value="CPF">CPF</option>
-                    <option value="RG">RG</option>
-                    <option value="CNH">CNH</option>
-                    <option value="CERTIDAO_NASCIMENTO">
-                      Certidão de nascimento
-                    </option>
-                    <option value="CERTIDAO_CASAMENTO">
-                      Certidão de casamento
-                    </option>
-
-                    {/* Endereço */}
-                    <option value="COMPROVANTE_ENDERECO">
-                      Comprovante de endereço
-                    </option>
-
-                    {/* Obrigações / situações */}
-                    <option value="CERTIFICADO_RESERVISTA">
-                      Certificado de reservista
-                    </option>
-                    <option value="TITULO_ELEITOR">Título de eleitor</option>
-
-                    {/* Formação */}
-                    <option value="DIPLOMA">Diploma</option>
-                    <option value="HISTORICO_ESCOLAR">Histórico escolar</option>
-                    <option value="ENSINO_SUPERIOR">Ensino Superior</option>
-                    <option value="MESTRADO">Mestrado (até 2)</option>
-                    <option value="DOUTORADO">Doutorado</option>
-                    <option value="CURSO">Cursos / Certificados</option>
-                    <option value="DECLARACAO_MATRICULA">
-                      Declarção de Matricula
-                    </option>
-
-                    {/* Experiência */}
-                    <option value="EXPERIENCIA_PROFISSIONAL">
-                      Experiência Profissional
-                    </option>
-                    <option value="CTPS">CTPS</option>
-                    <option value="CONTRATO_TRABALHO">
-                      Contrato de trabalho
-                    </option>
-                    <option value="DECLARACAO_EXPERIENCIA">
-                      Declaração de experiência
-                    </option>
-
-                    {/* Cotas / ações afirmativas */}
-                    <option value="DECLARACAO_RACA_COR">
-                      Autodeclaração de raça/cor
-                    </option>
-
-                    {/* PCD */}
-                    <option value="PCD_LAUDO_MEDICO">PCD — Laudo médico</option>
-                    <option value="PCD_RELATORIO">
-                      PCD — Relatório complementar
-                    </option>
-
-                    {/* Outros */}
-                    <option value="COMPROVANTE_RESERVA_VAGA">
-                      Comprovante de reserva de vaga
-                    </option>
-                    <option value="OUTROS">Outros</option>
+                    {DOCUMENTO_TIPOS.map((t) => (
+                      <option key={t} value={t}>
+                        {labelTipo(t)}
+                      </option>
+                    ))}
                   </SelectBase>
-
                   <InputBase
                     label="Descrição (opcional)"
                     placeholder={

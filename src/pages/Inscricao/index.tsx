@@ -114,9 +114,13 @@ export function InscricaoPage() {
     if (!idVaga) return toast.error("Selecione uma vaga.");
     if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
 
-    await salvarMut.mutateAsync(buildPayload());
-    await enviarMut.mutateAsync();
-    navigate("/minhas-inscricoes");
+    try {
+      await salvarMut.mutateAsync(buildPayload());
+      await enviarMut.mutateAsync();
+      navigate("/minhas-inscricoes");
+    } catch {
+      // não navega
+    }
   }
 
   if (!idProcesso) return <S.Page>Processo inválido.</S.Page>;

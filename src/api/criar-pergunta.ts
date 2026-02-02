@@ -7,7 +7,7 @@ export type PerguntaTipo =
   | "SELECT"
   | "MULTISELECT"
   | "DATA"
-  | "EXPERIENCIA_DIAS"; // ✅ novo
+  | "EXPERIENCIA_DIAS";
 
 type Payload = {
   titulo: string;
@@ -20,6 +20,10 @@ type Payload = {
   pontuacao_fundamental?: number | null;
   pontuacao_medio?: number | null;
   pontuacao_superior?: number | null;
+
+  // ✅ NOVO: anexo obrigatório + qual documento
+  exige_comprovante?: boolean;
+  label_comprovante?: string | null;
 
   regra_json?: string | null;
 };

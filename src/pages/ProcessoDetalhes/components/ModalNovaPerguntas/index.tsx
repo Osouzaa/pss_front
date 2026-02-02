@@ -27,6 +27,7 @@ import {
 
 import { criarPergunta } from "../../../../api/criar-pergunta";
 import { editarPergunta } from "../../../../api/editar-pergunta";
+import { DOCUMENTO_TIPOS } from "../../../../utils/documentoTipos";
 
 type PerguntaTipo =
   | "BOOLEAN"
@@ -53,7 +54,6 @@ type PerguntaToEdit = {
   exige_comprovante?: boolean | null;
   label_comprovante?: string | null;
 
-  // ✅ novo (se seu backend retornar)
   regra_json?: string | null;
 };
 
@@ -63,10 +63,6 @@ interface IModalNovaPergunta {
   id_processo_seletivo: string;
   perguntaToEdit?: PerguntaToEdit | null;
 }
-
-/**
- * ✅ Ajuste: medio/superior podem ser null para iniciar vazio no input
- */
 type FaixaForm = { ate: number; medio: number | null; superior: number | null };
 
 const DEFAULT_FAIXAS: FaixaForm[] = [
@@ -94,11 +90,8 @@ function normalizeFaixasFromEdit(regra: any): FaixaForm[] | null {
   const incoming: FaixaForm[] = regra.faixas
     .map((f: any) => ({
       ate: Number(f?.ate ?? 0),
-
-      // ✅ se vier undefined/null, mantém null (não vira 0)
       medio:
         f?.medio === null || f?.medio === undefined ? null : Number(f.medio),
-
       superior:
         f?.superior === null || f?.superior === undefined
           ? null
@@ -107,7 +100,6 @@ function normalizeFaixasFromEdit(regra: any): FaixaForm[] | null {
     .filter((f: FaixaForm) => Number.isFinite(f.ate) && f.ate > 0)
     .sort((a: { ate: number }, b: { ate: number }) => a.ate - b.ate);
 
-  // completa/normaliza para exatamente os 5 "ate" fixos
   const map = new Map<number, FaixaForm>();
   for (const f of incoming) map.set(f.ate, f);
 
@@ -147,12 +139,17 @@ export function ModalNovaPergunta({
       pontuacao_medio: null,
       pontuacao_superior: null,
 
-      // ✅ agora começa com null nos campos de pontos
       faixas: DEFAULT_FAIXAS,
+
+      // ✅ NOVO
+      exige_comprovante: false,
+      label_comprovante: null,
     },
   });
 
   const tipo = watch("tipo");
+  const exigeComprovante = watch("exige_comprovante");
+  const faixasWatch = watch("faixas") ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -174,12 +171,15 @@ export function ModalNovaPergunta({
         pontuacao_superior: perguntaToEdit.pontuacao_superior ?? null,
 
         faixas: faixasFromEdit ?? DEFAULT_FAIXAS,
+
+        // ✅ NOVO
+        exige_comprovante: !!perguntaToEdit.exige_comprovante,
+        label_comprovante: perguntaToEdit.label_comprovante ?? null,
       });
 
       return;
     }
 
-    // modo criar
     reset({
       titulo: "",
       descricao: "",
@@ -193,6 +193,10 @@ export function ModalNovaPergunta({
       pontuacao_superior: null,
 
       faixas: DEFAULT_FAIXAS,
+
+      // ✅ NOVO
+      exige_comprovante: false,
+      label_comprovante: null,
     });
   }, [open, perguntaToEdit, reset]);
 
@@ -206,6 +210,15 @@ export function ModalNovaPergunta({
       setValue("pontuacao_superior", null, { shouldValidate: true });
     }
   }, [tipo, open, setValue]);
+
+  // ✅ se não exige comprovante, limpa o documento
+  useEffect(() => {
+    if (!open) return;
+
+    if (!exigeComprovante) {
+      setValue("label_comprovante", null, { shouldValidate: true });
+    }
+  }, [exigeComprovante, open, setValue]);
 
   function handleClose() {
     onOpenChange(false);
@@ -261,6 +274,12 @@ export function ModalNovaPergunta({
         pontuacao_fundamental: data.pontuacao_fundamental ?? null,
         pontuacao_medio: data.pontuacao_medio ?? null,
         pontuacao_superior: data.pontuacao_superior ?? null,
+
+        // ✅ NOVO: anexo
+        exige_comprovante: data.exige_comprovante ?? false,
+        label_comprovante: data.exige_comprovante
+          ? (data.label_comprovante ?? null)
+          : null,
       };
 
       // ✅ regra_json para experiência
@@ -272,13 +291,11 @@ export function ModalNovaPergunta({
             .sort((a, b) => Number(a.ate) - Number(b.ate))
             .map((f) => ({
               ate: Number(f.ate),
-              // ✅ garante número no JSON (se preferir null, remova o ?? 0)
               medio: f.medio ?? 0,
               superior: f.superior ?? 0,
             })),
         });
 
-        // não manda pontuação fixa nesse tipo
         payload.pontuacao_fundamental = null;
         payload.pontuacao_medio = null;
         payload.pontuacao_superior = null;
@@ -308,8 +325,6 @@ export function ModalNovaPergunta({
       toast.error(e?.message ?? "Não foi possível salvar a pergunta");
     }
   };
-
-  const faixasWatch = watch("faixas") ?? [];
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -387,6 +402,45 @@ export function ModalNovaPergunta({
                 <option value="false">Não</option>
               </SelectBase>
             </Row>
+
+            {/* ✅ NOVO: anexo */}
+            <Row>
+              <SelectBase
+                label="Precisa de anexo?"
+                {...register("exige_comprovante", {
+                  setValueAs: (v) => v === true || v === "true",
+                })}
+              >
+                <option value="false">Não</option>
+                <option value="true">Sim</option>
+              </SelectBase>
+
+              {exigeComprovante ? (
+                <SelectBase
+                  label="Qual documento?"
+                  {...register("label_comprovante", {
+                    setValueAs: (v) => (v === "" ? null : String(v)),
+                  })}
+                  error={errors.label_comprovante?.message as any}
+                >
+                  <option value="">Selecione</option>
+                  {DOCUMENTO_TIPOS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </SelectBase>
+              ) : (
+                <div />
+              )}
+            </Row>
+
+            {exigeComprovante ? (
+              <p style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
+                Se o candidato tentar finalizar sem esse documento, o backend
+                deve bloquear.
+              </p>
+            ) : null}
 
             {/* ✅ Pontuação por nível (BOOLEAN) */}
             {showPontuacaoPorNivel ? (
@@ -468,7 +522,6 @@ export function ModalNovaPergunta({
                       label="Pontos (Médio)"
                       type="number"
                       placeholder="Ex: 10"
-                      // ✅ aqui: vazio vira null (campo começa em branco)
                       {...register(`faixas.${idx}.medio` as const, {
                         setValueAs: (v) =>
                           v === "" || v === null || v === undefined
@@ -482,7 +535,6 @@ export function ModalNovaPergunta({
                       label="Pontos (Superior)"
                       type="number"
                       placeholder="Ex: 15"
-                      // ✅ aqui: vazio vira null (campo começa em branco)
                       {...register(`faixas.${idx}.superior` as const, {
                         setValueAs: (v) =>
                           v === "" || v === null || v === undefined
