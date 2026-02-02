@@ -29,7 +29,7 @@ import {
 import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
 import { uploadDocumentoMe } from "../../../../api/upload-documento-me";
-import { DOCUMENTO_TIPOS } from "../../../../utils/documentoTipos";
+import { DOCUMENTO_TIPO_OPTIONS } from "../../../../utils/documentoTipos";
 
 const DocumentoTipoEnum = z.enum(
   [
@@ -251,9 +251,9 @@ export function ModalAddAnexo({
                   >
                     <option value="">Selecione</option>
 
-                    {DOCUMENTO_TIPOS.map((t) => (
-                      <option key={t} value={t}>
-                        {labelTipo(t)}
+                    {DOCUMENTO_TIPO_OPTIONS.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
                       </option>
                     ))}
                   </SelectBase>

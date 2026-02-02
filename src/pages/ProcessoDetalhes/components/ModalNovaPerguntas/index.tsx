@@ -27,7 +27,7 @@ import {
 
 import { criarPergunta } from "../../../../api/criar-pergunta";
 import { editarPergunta } from "../../../../api/editar-pergunta";
-import { DOCUMENTO_TIPOS } from "../../../../utils/documentoTipos";
+import { DOCUMENTO_TIPO_OPTIONS } from "../../../../utils/documentoTipos";
 
 type PerguntaTipo =
   | "BOOLEAN"
@@ -424,9 +424,9 @@ export function ModalNovaPergunta({
                   error={errors.label_comprovante?.message as any}
                 >
                   <option value="">Selecione</option>
-                  {DOCUMENTO_TIPOS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
+                  {DOCUMENTO_TIPO_OPTIONS.map((d) => (
+                    <option key={d.value} value={d.value}>
+                      {d.label}
                     </option>
                   ))}
                 </SelectBase>

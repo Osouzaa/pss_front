@@ -1,83 +1,45 @@
-export const DOCUMENTO_TIPOS = [
+export const DOCUMENTO_TIPO_OPTIONS = [
   // Identificação
-  "CPF",
-  "RG",
-  "CNH",
-  "CERTIDAO_NASCIMENTO",
-  "CERTIDAO_CASAMENTO",
+  { value: "CPF", label: "CPF" },
+  { value: "RG", label: "RG" },
+  { value: "CNH", label: "CNH" },
+  { value: "CERTIDAO_NASCIMENTO", label: "CERTIDÃO DE NASCIMENTO" },
+  { value: "CERTIDAO_CASAMENTO", label: "CERTIDÃO DE CASAMENTO" },
 
-  "DECLARACAO_MATRICULA",
+  { value: "DECLARACAO_MATRICULA", label: "DECLARAÇÃO DE MATRÍCULA" },
 
   // Endereço
-  "COMPROVANTE_ENDERECO",
+  { value: "COMPROVANTE_ENDERECO", label: "COMPROVANTE DE ENDEREÇO" },
 
   // Obrigações civis
-  "CERTIFICADO_RESERVISTA",
-  "TITULO_ELEITOR",
+  { value: "CERTIFICADO_RESERVISTA", label: "CERTIFICADO DE RESERVISTA" },
+  { value: "TITULO_ELEITOR", label: "TÍTULO DE ELEITOR" },
 
   // Formação
-  "DIPLOMA",
-  "HISTORICO_ESCOLAR",
-  "ENSINO_SUPERIOR",
-  "MESTRADO",
-  "DOUTORADO",
-  "CURSO",
+  { value: "DIPLOMA", label: "DIPLOMA" },
+  { value: "HISTORICO_ESCOLAR", label: "HISTÓRICO ESCOLAR" },
+  { value: "ENSINO_SUPERIOR", label: "ENSINO SUPERIOR" },
+  { value: "MESTRADO", label: "MESTRADO (ATÉ 2)" },
+  { value: "DOUTORADO", label: "DOUTORADO" },
+  { value: "CURSO", label: "CURSOS / CERTIFICADOS" },
 
   // Experiência profissional
-  "EXPERIENCIA_PROFISSIONAL",
-  "CTPS",
-  "CONTRATO_TRABALHO",
-  "DECLARACAO_EXPERIENCIA",
+  { value: "EXPERIENCIA_PROFISSIONAL", label: "EXPERIÊNCIA PROFISSIONAL" },
+  { value: "CTPS", label: "CTPS" },
+  { value: "CONTRATO_TRABALHO", label: "CONTRATO DE TRABALHO" },
+  { value: "DECLARACAO_EXPERIENCIA", label: "DECLARAÇÃO DE EXPERIÊNCIA" },
 
   // Ações afirmativas / cotas
-  "DECLARACAO_RACA_COR",
+  { value: "DECLARACAO_RACA_COR", label: "AUTODECLARAÇÃO DE RAÇA/COR" },
 
   // PCD
-  "PCD_LAUDO_MEDICO",
-  "PCD_RELATORIO",
+  { value: "PCD_LAUDO_MEDICO", label: "PCD — LAUDO MÉDICO" },
+  { value: "PCD_RELATORIO", label: "PCD — RELATÓRIO COMPLEMENTAR" },
 
   // Outros
-  "COMPROVANTE_RESERVA_VAGA",
-  "OUTROS",
+  {
+    value: "COMPROVANTE_RESERVA_VAGA",
+    label: "COMPROVANTE DE RESERVA DE VAGA",
+  },
+  { value: "OUTROS", label: "OUTROS" },
 ] as const;
-
-export type DocumentoTipo = (typeof DOCUMENTO_TIPOS)[number];
-
-export const LABELS_DOCUMENTO_TIPO: Record<DocumentoTipo, string> = {
-  CPF: "CPF",
-  RG: "RG",
-  CNH: "CNH",
-  CERTIDAO_NASCIMENTO: "Certidão de nascimento",
-  CERTIDAO_CASAMENTO: "Certidão de casamento",
-
-  DECLARACAO_MATRICULA: "Declaração de matrícula",
-
-  COMPROVANTE_ENDERECO: "Comprovante de endereço",
-
-  CERTIFICADO_RESERVISTA: "Certificado de reservista",
-  TITULO_ELEITOR: "Título de eleitor",
-
-  DIPLOMA: "Diploma",
-  HISTORICO_ESCOLAR: "Histórico escolar",
-  ENSINO_SUPERIOR: "Ensino Superior",
-  MESTRADO: "Mestrado (até 2)",
-  DOUTORADO: "Doutorado",
-  CURSO: "Cursos / Certificados",
-
-  EXPERIENCIA_PROFISSIONAL: "Experiência Profissional",
-  CTPS: "CTPS",
-  CONTRATO_TRABALHO: "Contrato de trabalho",
-  DECLARACAO_EXPERIENCIA: "Declaração de experiência",
-
-  DECLARACAO_RACA_COR: "Autodeclaração de raça/cor",
-
-  PCD_LAUDO_MEDICO: "PCD — Laudo médico",
-  PCD_RELATORIO: "PCD — Relatório complementar",
-
-  COMPROVANTE_RESERVA_VAGA: "Comprovante de reserva de vaga",
-  OUTROS: "Outros",
-};
-
-export function labelTipo(tipo: DocumentoTipo) {
-  return LABELS_DOCUMENTO_TIPO[tipo] ?? tipo;
-}
