@@ -518,17 +518,35 @@ export const FieldCard = styled.section`
 `;
 
 export const TitleRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
+  display: grid;
+  align-items: start;
+  gap: 8px 10px;
 
+  /* 1) título cresce  2) asterisco fixo  3) badge se adapta */
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "title required badge";
+
+  @media (max-width: 520px) {
+    /* no mobile, badge vai pra baixo e ocupa tudo */
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title required"
+      "badge badge";
+  }
+`;
 export const TitleInput = styled.h4`
+  grid-area: title;
   margin: 0;
   font-size: 14.5px;
   font-weight: 900;
   color: ${({ theme }) => theme.text};
   letter-spacing: -0.01em;
+
+  /* garante quebra bonita e não estoura layout */
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
 `;
 
 export const Description = styled.p`
@@ -537,11 +555,27 @@ export const Description = styled.p`
   color: ${({ theme }) => theme.description};
   line-height: 1.6;
 `;
-export const Required = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.hoverDanger};
-`;
 
+export const Required = styled.span`
+  grid-area: required;
+
+  /* tamanho fixo e alinhamento consistente */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+
+  /* deixa mais “badge” e menos perdido */
+  color: ${({ theme }) => theme["text-white"]};
+  background: ${({ theme }) => theme.hoverDanger};
+`;
 export const Body = styled.div`
   margin-top: 12px;
 `;
@@ -697,15 +731,33 @@ export const SideText = styled.p`
 `;
 
 export const AttachmentBadge = styled.span`
-  margin-left: 10px;
-  padding: 4px 8px;
+  grid-area: badge;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 4px 10px;
   border-radius: 999px;
+
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.2;
+
   background: rgba(255, 184, 0, 0.16);
   border: 1px solid rgba(255, 184, 0, 0.35);
-`;
 
+  /* não estourar com textos grandes */
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 520px) {
+    width: fit-content; /* fica “pílula” e não barra gigante */
+  }
+`;
 export const AttachmentHint = styled.div`
   margin-top: 8px;
   padding: 10px 12px;

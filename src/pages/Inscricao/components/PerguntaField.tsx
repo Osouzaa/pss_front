@@ -98,10 +98,9 @@ export function PerguntaField({
 
           {p.obrigatoria ? <S.Required>*</S.Required> : null}
 
-          {/* ✅ aparece em QUALQUER pergunta */}
           {needsAttachment ? (
             <S.AttachmentBadge>
-              Anexo obrigatório : {attachmentLabel}
+              Anexo obrigatório: {attachmentLabel}
             </S.AttachmentBadge>
           ) : null}
         </S.TitleRow>
