@@ -17,13 +17,7 @@ import { Trash2, Pencil } from "lucide-react";
 import { ModalConfirmDelete } from "../../components/ModalConfirmDelete";
 
 import { useAuth } from "../../contexts/auth-context";
-
-function fmtDateBR(iso?: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR");
-}
+import { formatDate } from "../../utils/fomartDate.utils";
 
 /** helper de busca simples */
 function normalizeText(s: string) {
@@ -213,8 +207,8 @@ export function ProcessoSeletivosDetalhes() {
             </S.StatusPill>
 
             <S.InfoChip>
-              Inscrições: {fmtDateBR(processo.data_inicio_inscricoes)} →{" "}
-              {fmtDateBR(processo.data_fim_inscricoes)}
+              Inscrições: {formatDate(processo.data_inicio_inscricoes)} →{" "}
+              {formatDate(processo.data_fim_inscricoes)}
             </S.InfoChip>
           </S.BadgesRow>
         </S.HeaderLeft>
@@ -450,7 +444,7 @@ export function ProcessoSeletivosDetalhes() {
 
                           <S.Td>
                             <S.Muted>
-                              {fmtDateBR(pergunta.data_criacao)}
+                              {formatDate(pergunta.data_criacao)}
                             </S.Muted>
                           </S.Td>
 
