@@ -26,6 +26,7 @@ import Logo from "../../assets/logo_pss_funil0.png";
 
 import { useTheme } from "../../contexts/ThemeContext";
 import { PageTransition } from "../../components/PageTransition";
+import { useAuth } from "../../contexts/auth-context";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -33,6 +34,15 @@ export function Login() {
   const navigate = useNavigate();
 
   const { mode, toggleTheme } = useTheme();
+  const { isLoading: loadingMe, hasSession, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (loadingMe) return;
+
+    if (hasSession || isAuthenticated) {
+      navigate("/processos", { replace: true });
+    }
+  }, [loadingMe, hasSession, isAuthenticated, navigate]);
 
   const [showPass, setShowPass] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
