@@ -10,7 +10,6 @@ import { useMutation } from "@tanstack/react-query";
 import { login } from "../../api/login";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { TokenSistems } from "../../constants/env.constantes";
 import { queryClient } from "../../lib/react-query";
 
 import { FiEye, FiEyeOff, FiSun, FiMoon, FiLock, FiUser } from "react-icons/fi";
@@ -34,15 +33,20 @@ export function Login() {
   const navigate = useNavigate();
 
   const { mode, toggleTheme } = useTheme();
-  const { isLoading: loadingMe, hasSession, isAuthenticated } = useAuth();
+  const {
+    isLoading: loadingMe,
+    isAuthenticated,
+    setSession,
+    refreshMe,
+  } = useAuth();
 
   useEffect(() => {
     if (loadingMe) return;
 
-    if (hasSession || isAuthenticated) {
+    if (isAuthenticated) {
       navigate("/processos", { replace: true });
     }
-  }, [loadingMe, hasSession, isAuthenticated, navigate]);
+  }, [loadingMe, isAuthenticated, navigate]);
 
   const [showPass, setShowPass] = useState(false);
   const [formError, setFormError] = useState<string | undefined>(undefined);
@@ -76,13 +80,14 @@ export function Login() {
         senha: data.senha,
       });
 
-      localStorage.setItem(TokenSistems.TOKEN_PSS, response.token);
-      localStorage.setItem(
-        TokenSistems.TOKEN_USER,
-        JSON.stringify(response.user),
-      );
-
+      // ✅ limpa cache do usuário anterior
       queryClient.clear();
+
+      // ✅ avisa o AuthContext (reativo) e grava token
+      setSession(response.token);
+
+      // ✅ opcional (recomendado): puxa /me agora, sem “delay”
+      await refreshMe();
 
       toast.success("Login realizado com sucesso!");
       navigate("/processos", { replace: true });

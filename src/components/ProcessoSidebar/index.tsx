@@ -11,9 +11,9 @@ import {
   FiLogOut,
 } from "react-icons/fi";
 import { toast } from "sonner";
-import { TokenSistems } from "../../constants/env.constantes";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
 import logo_pmi_positiva from "../../assets/logo-pmi-positiva.png";
+import { useAuth } from "../../contexts/auth-context";
 type Props = {
   isDark: boolean;
   onToggleTheme: () => void;
@@ -23,6 +23,8 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
@@ -42,9 +44,8 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
 
   const handleSignOut = () => {
     toast.success("Saindo do sistema!");
-    localStorage.removeItem(TokenSistems.TOKEN_PSS);
-    localStorage.removeItem(TokenSistems.TOKEN_USER);
 
+    logout(); // 🔴 ESSENCIAL
     navigate("/login", { replace: true });
   };
 

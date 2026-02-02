@@ -28,6 +28,7 @@ import { editarProcesso } from "../../../../api/editar-processo";
 import type { ProcessoSeletivoResponse } from "../../../../api/get-processo-id";
 import { creatProcessoError } from "../../../../errs/create-processo.erro copy";
 import { editProcessoError } from "../../../../errs/edit-processo.error";
+import { SECRETARIAS } from "../../../../utils/secreatias.map.utils";
 
 interface IModalNovoProcesso {
   open: boolean;
@@ -209,6 +210,15 @@ export function ModalNovoProcesso({
               {...register("secretaria")}
               error={errors.secretaria?.message}
             />
+
+            <SelectBase {...register("secretaria")}>
+              <option value="">Selecione</option>
+              {SECRETARIAS.map((nome) => (
+                <option key={nome} value={nome}>
+                  {nome}
+                </option>
+              ))}
+            </SelectBase>
 
             <Row>
               <InputBase
