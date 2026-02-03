@@ -1,30 +1,20 @@
-// styles.ts (COMPLETO) — usando somente as variáveis do seu theme
+// styles.ts — PATCH para não sobrepor a BottomBar/Sidebar no mobile
 import styled from "styled-components";
 
 /* =========================
    TOKENS LOCAIS (não cores)
 ========================= */
 const ui = {
-  radius: {
-    md: "14px",
-    lg: "18px",
-    xl: "20px",
-    pill: "999px",
-  },
-  space: {
-    xs: "6px",
-    sm: "10px",
-    md: "12px",
-    lg: "16px",
-  },
-  h: {
-    btn: "40px",
-    input: "40px",
-  },
+  radius: { md: "14px", lg: "18px", xl: "20px", pill: "999px" },
+  space: { xs: "6px", sm: "10px", md: "12px", lg: "16px" },
+  h: { btn: "40px", input: "40px" },
   shadow: {
     sm: "0 10px 30px rgba(0,0,0,0.08)",
     md: "0 16px 50px rgba(0,0,0,0.12)",
   },
+
+  // ✅ altura aproximada da sua barra fixa no mobile (ajuste se preciso)
+  mobileBottomBar: "78px",
 };
 
 /* =========================
@@ -35,6 +25,13 @@ export const ContainerProcesso = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+
+  /* ✅ evita que a barra fixa (sidebar/bottombar) sobreponha o fim da tela */
+  @media (max-width: 768px) {
+    padding-bottom: calc(
+      ${ui.mobileBottomBar} + env(safe-area-inset-bottom, 0px)
+    );
+  }
 `;
 
 export const PageHeader = styled.header`
@@ -217,7 +214,6 @@ export const Card = styled.article`
     box-shadow 0.18s ease,
     border-color 0.18s ease;
 
-  /* brilho suave usando cor do tema */
   &::before {
     content: "";
     position: absolute;
@@ -243,6 +239,9 @@ export const Card = styled.article`
 `;
 
 export const CardTop = styled.div`
+  position: relative;
+  z-index: 1;
+
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -256,7 +255,6 @@ export const CardTitle = styled.h3`
   color: ${({ theme }) => theme.text};
   font-weight: 900;
 
-  /* clamp 2 linhas */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -264,6 +262,9 @@ export const CardTitle = styled.h3`
 `;
 
 export const CardDesc = styled.p`
+  position: relative;
+  z-index: 1;
+
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
@@ -271,9 +272,12 @@ export const CardDesc = styled.p`
 `;
 
 /* =========================
-   META (chips bonitos)
+   META
 ========================= */
 export const MetaRow = styled.div`
+  position: relative;
+  z-index: 1;
+
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -314,6 +318,9 @@ export const MetaValue = styled.span`
    FOOTER / BUTTONS
 ========================= */
 export const CardFooter = styled.div`
+  position: relative;
+  z-index: 2;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -329,6 +336,9 @@ export const CardFooter = styled.div`
 `;
 
 export const SecondaryButton = styled.button`
+  position: relative;
+  z-index: 3;
+
   height: ${ui.h.btn};
   padding: 0 14px;
   border-radius: ${ui.radius.md};
@@ -357,6 +367,9 @@ export const SecondaryButton = styled.button`
 `;
 
 export const PrimaryButton = styled.button`
+  position: relative;
+  z-index: 3;
+
   height: ${ui.h.btn};
   padding: 0 14px;
   border-radius: ${ui.radius.md};
@@ -368,7 +381,6 @@ export const PrimaryButton = styled.button`
 
   cursor: pointer;
 
-  /* sombra “premium” sem inventar cor fora do tema (usa active) */
   box-shadow: 0 14px 28px ${({ theme }) => theme.active};
   transition:
     transform 0.14s ease,
@@ -396,7 +408,7 @@ export const PrimaryButton = styled.button`
 `;
 
 /* =========================
-   STATUS PILL (com suas cores)
+   STATUS PILL
 ========================= */
 const statusTokens = (status: string, theme: any) => {
   switch (status) {
@@ -417,6 +429,9 @@ const statusTokens = (status: string, theme: any) => {
 };
 
 export const StatusPill = styled.span<{ $status: string }>`
+  position: relative;
+  z-index: 2;
+
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -482,6 +497,13 @@ export const Pagination = styled.div`
   border-radius: ${ui.radius.lg};
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
+
+  /* ✅ mesma regra: nunca ficar “atrás” da barra fixa no mobile */
+  @media (max-width: 768px) {
+    margin-bottom: calc(
+      ${ui.mobileBottomBar} + env(safe-area-inset-bottom, 0px)
+    );
+  }
 `;
 
 export const PageButton = styled.button`
@@ -526,7 +548,6 @@ export const FilterActions = styled.div`
   align-items: flex-end;
   gap: ${ui.space.sm};
 
-  /* no desktop fica do lado do input */
   @media (max-width: 720px) {
     align-items: center;
     justify-content: flex-start;
@@ -607,6 +628,9 @@ export const ClearButton = styled.button`
   }
 `;
 
+/* =========================
+   WARN (mantive seu estilo atual)
+========================= */
 export const ProfileWarn = styled.div`
   display: flex;
   align-items: flex-start;
