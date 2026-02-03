@@ -25,6 +25,8 @@ type AuthContextData = {
   isAtivo: boolean;
   isPrimeiroAcesso: boolean;
 
+  isPerfilCandidatoCompleto: boolean;
+
   setSession: (token: string) => void; // 👈 login chama isso
   refreshMe: () => Promise<void>;
   logout: () => void;
@@ -58,6 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isCandidato = user?.tipo === "CANDIDATO";
   const isAtivo = !!user?.ativo;
   const isPrimeiroAcesso = !!user?.fl_primeiro_acesso;
+
+  const isPerfilCandidatoCompleto = !isCandidato || !!user?.id_candidato;
 
   const logout = useCallback(() => {
     try {
@@ -134,6 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isCandidato,
       isAtivo,
       isPrimeiroAcesso,
+
+      isPerfilCandidatoCompleto,
+
       setSession,
       refreshMe,
       logout,
@@ -148,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isCandidato,
       isAtivo,
       isPrimeiroAcesso,
+      isPerfilCandidatoCompleto,
       setSession,
       refreshMe,
       logout,

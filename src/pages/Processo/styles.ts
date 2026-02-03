@@ -606,3 +606,46 @@ export const ClearButton = styled.button`
     transform: none;
   }
 `;
+
+export const ProfileWarn = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.08);
+
+  margin-bottom: 14px;
+`;
+
+export const ProfileWarnInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+export const ProfileWarnTitle = styled.div`
+  font-weight: 800;
+`;
+
+export const ProfileWarnText = styled.div`
+  opacity: 0.9;
+  font-size: 0.95rem;
+`;
+
+export const ProfileWarnButton = styled.button`
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 10px 12px;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.14);
+  cursor: pointer;
+  font-weight: 800;
+
+  &:hover {
+    filter: brightness(1.02);
+  }
+`;

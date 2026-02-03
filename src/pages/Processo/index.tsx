@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import * as S from "./styles";
 
@@ -16,6 +16,11 @@ export function Processo() {
   const navigate = useNavigate();
 
   const { user, isAdmin, isPrimeiroAcesso, isLoading: loadingMe } = useAuth();
+
+  // ✅ regra: candidato sem id_candidato => perfil incompleto
+  const isPerfilIncompleto = useMemo(() => {
+    return user?.tipo === "CANDIDATO" && !user?.id_candidato;
+  }, [user?.tipo, user?.id_candidato]);
 
   // ✅ qDraft = input (não dispara busca)
   const [qDraft, setQDraft] = useState("");
@@ -57,6 +62,13 @@ export function Processo() {
   }
 
   function handleSubscribe(id: string) {
+    // ✅ bloqueia navegação se perfil incompleto
+    if (isPerfilIncompleto) {
+      // pode trocar por toast se quiser
+      navigate("/perfil");
+      return;
+    }
+
     navigate(`/processos/${id}/inscricao/`);
   }
 
@@ -79,6 +91,26 @@ export function Processo() {
 
   return (
     <S.ContainerProcesso>
+      {/* ✅ ALERTA de perfil incompleto */}
+      {isPerfilIncompleto && (
+        <S.ProfileWarn>
+          <S.ProfileWarnInfo>
+            <S.ProfileWarnTitle>Atualize seu perfil</S.ProfileWarnTitle>
+            <S.ProfileWarnText>
+              Para se inscrever em um processo, complete suas informações no
+              Perfil.
+            </S.ProfileWarnText>
+          </S.ProfileWarnInfo>
+
+          <S.ProfileWarnButton
+            type="button"
+            onClick={() => navigate("/perfil")}
+          >
+            Atualizar agora
+          </S.ProfileWarnButton>
+        </S.ProfileWarn>
+      )}
+
       <S.PageHeader>
         <S.TitleArea>
           <S.Title>Processos</S.Title>
@@ -110,7 +142,6 @@ export function Processo() {
           />
         </S.SearchWrap>
 
-        {/* ✅ Botões para efetivar */}
         <S.FilterActions>
           <S.FilterButton type="button" onClick={applyFilter}>
             Filtrar
@@ -156,51 +187,65 @@ export function Processo() {
       ) : (
         <>
           <S.Grid>
-            {items.map((p) => (
-              <S.Card key={p.id_processo_seletivo}>
-                <S.CardTop>
-                  <S.CardTitle>{p.titulo}</S.CardTitle>
-                  <S.StatusPill $status={p.status}>{p.status}</S.StatusPill>
-                </S.CardTop>
+            {items.map((p) => {
+              const bloqueadoPorPerfil = isPerfilIncompleto;
+              const bloqueadoPorStatus = p.status !== "ABERTO";
 
-                <S.MetaRow>
-                  <S.MetaItem>
-                    <S.MetaLabel>Secretaria</S.MetaLabel>
-                    <S.MetaValue>{p.secretaria ?? "—"}</S.MetaValue>
-                  </S.MetaItem>
+              const disabled = bloqueadoPorStatus || bloqueadoPorPerfil;
 
-                  <S.MetaItem>
-                    <S.MetaLabel>Período</S.MetaLabel>
-                    <S.MetaValue>
-                      {formatDate(p.data_inicio_inscricoes)} •{" "}
-                      {formatDate(p.data_fim_inscricoes)}
-                    </S.MetaValue>
-                  </S.MetaItem>
+              const title = bloqueadoPorPerfil
+                ? "Complete seu perfil para se inscrever"
+                : bloqueadoPorStatus
+                  ? "Inscrições não estão abertas"
+                  : undefined;
 
-                  <S.MetaItem>
-                    <S.MetaLabel>Status</S.MetaLabel>
-                    <S.MetaValue>{p.status}</S.MetaValue>
-                  </S.MetaItem>
-                </S.MetaRow>
+              return (
+                <S.Card key={p.id_processo_seletivo}>
+                  <S.CardTop>
+                    <S.CardTitle>{p.titulo}</S.CardTitle>
+                    <S.StatusPill $status={p.status}>{p.status}</S.StatusPill>
+                  </S.CardTop>
 
-                <S.CardFooter>
-                  <S.SecondaryButton
-                    type="button"
-                    onClick={() => handleDetails(p.id_processo_seletivo)}
-                  >
-                    Ver detalhes
-                  </S.SecondaryButton>
+                  <S.MetaRow>
+                    <S.MetaItem>
+                      <S.MetaLabel>Secretaria</S.MetaLabel>
+                      <S.MetaValue>{p.secretaria ?? "—"}</S.MetaValue>
+                    </S.MetaItem>
 
-                  <S.PrimaryButton
-                    type="button"
-                    disabled={p.status !== "ABERTO"}
-                    onClick={() => handleSubscribe(p.id_processo_seletivo)}
-                  >
-                    Inscrever
-                  </S.PrimaryButton>
-                </S.CardFooter>
-              </S.Card>
-            ))}
+                    <S.MetaItem>
+                      <S.MetaLabel>Período</S.MetaLabel>
+                      <S.MetaValue>
+                        {formatDate(p.data_inicio_inscricoes)} •{" "}
+                        {formatDate(p.data_fim_inscricoes)}
+                      </S.MetaValue>
+                    </S.MetaItem>
+
+                    <S.MetaItem>
+                      <S.MetaLabel>Status</S.MetaLabel>
+                      <S.MetaValue>{p.status}</S.MetaValue>
+                    </S.MetaItem>
+                  </S.MetaRow>
+
+                  <S.CardFooter>
+                    <S.SecondaryButton
+                      type="button"
+                      onClick={() => handleDetails(p.id_processo_seletivo)}
+                    >
+                      Ver detalhes
+                    </S.SecondaryButton>
+
+                    <S.PrimaryButton
+                      type="button"
+                      disabled={disabled}
+                      title={title}
+                      onClick={() => handleSubscribe(p.id_processo_seletivo)}
+                    >
+                      Inscrever
+                    </S.PrimaryButton>
+                  </S.CardFooter>
+                </S.Card>
+              );
+            })}
           </S.Grid>
 
           {!!meta && meta.pages > 1 && (
