@@ -20,6 +20,7 @@ import { RequireAuth } from "./RequireAuth";
 import { ForgotPassword } from "../pages/ForgotPassword";
 import { ResetPassword } from "../pages/ResetPassword";
 import InscricaoDetalhePage from "../pages/InscricaoDetalhePage";
+import { RequireRole } from "./RequireRole";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -54,10 +55,12 @@ function AnimatedRoutes() {
               element={<InscricaoPage />}
             />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
-            <Route
-              path="/processos/:id/inscricoes/:id_inscricao/detalhe"
-              element={<InscricaoDetalhePage />}
-            />
+            <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
+              <Route
+                path="/processos/:id/inscricoes/:id_inscricao/detalhe"
+                element={<InscricaoDetalhePage />}
+              />
+            </Route>
           </Route>
         </Route>
 
