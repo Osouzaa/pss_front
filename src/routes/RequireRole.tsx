@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import { TokenSistems } from "../constants/env.constantes";
 
 type JwtPayload = {
-  role?: string;
+  tipo?: string;
 };
 
 type Props = {
@@ -20,7 +20,7 @@ export function RequireRole({ allowedRoles }: Props) {
   try {
     const decoded = jwtDecode<JwtPayload>(token);
 
-    if (!decoded.role || !allowedRoles.includes(decoded.role)) {
+    if (!decoded.tipo || !allowedRoles.includes(decoded.tipo)) {
       return <Navigate to="/processos" replace />;
     }
 
