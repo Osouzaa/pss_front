@@ -1,6 +1,6 @@
 import { api } from "../lib/axios";
 
-interface IGetAllAnswers {
+export interface IGetAllAnswers {
   id_pergunta: string;
   id_processo_seletivo: string;
   titulo: string;
