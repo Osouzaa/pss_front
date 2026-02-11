@@ -16,6 +16,9 @@ import { TablePerguntas } from "./components/TablePerguntas";
 import { TableInscricoes } from "./components/TableInscricoes";
 import { ModalNovaPergunta } from "./components/ModalNovaPerguntas";
 import { buscarPerguntasProcessos } from "../../api/buscar-perguntas-processos";
+import { getAllVagasProcessoId } from "../../api/get-all-vagas-processoId";
+
+import { Pagination } from "../../components/Pagination"; // ✅ ajuste o path conforme seu projeto
 
 function normalizeText(s: string) {
   return (s ?? "")
@@ -40,6 +43,10 @@ export function ProcessoSeletivosDetalhes() {
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
 
+  // ===== PAGINAÇÃO VAGAS =====
+  const [pageVagas, setPageVagas] = useState(1);
+  const [pageSizeVagas, setPageSizeVagas] = useState(10);
+
   // ===== PAGINAÇÃO INSCRIÇÕES =====
   const [pageInscricoes, setPageInscricoes] = useState(1);
   const [pageSizeInscricoes, setPageSizeInscricoes] = useState(20);
@@ -48,21 +55,31 @@ export function ProcessoSeletivosDetalhes() {
   const [pagePerguntas, setPagePerguntas] = useState(1);
   const [pageSizePerguntas, setPageSizePerguntas] = useState(20);
 
-  const {
-    data: processo,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["processo-id", id],
-    queryFn: () => {
-      if (!id) throw new Error("ID do processo não informado");
-      return getProcessoId(id);
-    },
+  const qVagaNormalized = useMemo(() => normalizeText(qVaga), [qVaga]);
+
+  const { data: processo, isLoading } = useQuery({
+    queryKey: ["processo", id],
+    queryFn: () => getProcessoId(id!),
     enabled: !!id,
   });
 
-  // ✅ PERGUNTAS PAGINADAS
+  // ✅ VAGAS PAGINADAS
+  const {
+    data: resultAllVagas,
+    isLoading: isLoadingVagas,
+    isFetching: isFetchingVagas,
+  } = useQuery({
+    queryKey: ["vagas-processo", id, pageVagas, pageSizeVagas, qVagaNormalized],
+    queryFn: () =>
+      getAllVagasProcessoId(id!, {
+        page: pageVagas,
+        limit: pageSizeVagas,
+        q: qVagaNormalized || undefined,
+      }),
+    enabled: !!id,
+    staleTime: 30_000,
+  });
+
   const { data: perguntas, isLoading: isLoadingPerguntas } = useQuery({
     queryKey: ["perguntas-processos", id, pagePerguntas, pageSizePerguntas],
     queryFn: () =>
@@ -73,7 +90,6 @@ export function ProcessoSeletivosDetalhes() {
     enabled: !!id,
   });
 
-  // ✅ INSCRIÇÕES PAGINADAS
   const { data: resultAllInscricoes, isLoading: isLoadingInscricoes } =
     useQuery({
       queryKey: ["all-inscricoes", id, pageInscricoes, pageSizeInscricoes],
@@ -83,20 +99,8 @@ export function ProcessoSeletivosDetalhes() {
           limit: pageSizeInscricoes,
         }),
       enabled: !!id,
+      staleTime: 30_000,
     });
-
-  const vagasFiltradas = useMemo(() => {
-    const list = processo?.vagas ?? [];
-    const nq = normalizeText(qVaga);
-    if (!nq) return list;
-
-    return list.filter((v) => {
-      const hay = normalizeText(
-        `${v.nome} ${v.nivel} ${v.quantidade_de_vagas ?? ""}`,
-      );
-      return hay.includes(nq);
-    });
-  }, [processo?.vagas, qVaga]);
 
   function onEditarVaga(v: any) {
     if (!isAdmin) {
@@ -145,23 +149,11 @@ export function ProcessoSeletivosDetalhes() {
     );
   }
 
-  if (isError || !processo) {
-    return (
-      <S.Container>
-        <S.Header>
-          <S.HeaderLeft>
-            <S.Title>Não foi possível carregar</S.Title>
-            <S.Subtitle>
-              {(error as Error)?.message ?? "Tente novamente"}
-            </S.Subtitle>
-          </S.HeaderLeft>
-        </S.Header>
-      </S.Container>
-    );
-  }
-
   const totalInscricoes = resultAllInscricoes?.total ?? 0;
   const totalPerguntas = perguntas?.total ?? 0;
+
+  const vagasItems = resultAllVagas?.items ?? [];
+  const vagasTotal = resultAllVagas?.meta?.total ?? 0;
 
   return (
     <S.Container>
@@ -173,19 +165,19 @@ export function ProcessoSeletivosDetalhes() {
 
       <S.Header>
         <S.HeaderLeft>
-          <S.Title>{processo.titulo}</S.Title>
+          <S.Title>{processo?.titulo}</S.Title>
           <S.Subtitle>
-            {processo.secretaria ?? "—"} • Ano {processo.ano}
+            {processo?.secretaria ?? "—"} • Ano {processo?.ano}
           </S.Subtitle>
 
           <S.BadgesRow>
-            <S.StatusPill $status={processo.status}>
-              {processo.status}
+            <S.StatusPill $status={processo?.status!}>
+              {processo?.status}
             </S.StatusPill>
 
             <S.InfoChip>
-              Inscrições: {formatDate(processo.data_inicio_inscricoes)} →{" "}
-              {formatDate(processo.data_fim_inscricoes)}
+              Inscrições: {formatDate(processo?.data_inicio_inscricoes)} →{" "}
+              {formatDate(processo?.data_fim_inscricoes)}
             </S.InfoChip>
           </S.BadgesRow>
         </S.HeaderLeft>
@@ -216,7 +208,7 @@ export function ProcessoSeletivosDetalhes() {
           aria-current={tab === "vagas"}
           $active={tab === "vagas"}
         >
-          Vagas ({processo.vagas?.length ?? 0})
+          Vagas ({vagasTotal})
         </S.TabButton>
 
         <S.TabButton
@@ -240,7 +232,6 @@ export function ProcessoSeletivosDetalhes() {
 
       {tab === "vagas" && (
         <S.Section>
-          {/* ... seu bloco de vagas permanece igual ... */}
           <S.SectionHeader>
             <S.SectionTitle>Vagas</S.SectionTitle>
             <S.SectionHint>Gerencie as vagas deste processo.</S.SectionHint>
@@ -252,13 +243,21 @@ export function ProcessoSeletivosDetalhes() {
               <S.SearchInput
                 id="qvaga"
                 value={qVaga}
-                onChange={(e) => setQVaga(e.target.value)}
+                onChange={(e) => {
+                  setQVaga(e.target.value);
+                  setPageVagas(1); // ✅ quando busca muda, volta pra 1
+                }}
                 placeholder="Buscar por nome, nível..."
               />
             </S.SearchWrap>
           </S.VagasToolbar>
 
-          {vagasFiltradas.length === 0 ? (
+          {isLoadingVagas ? (
+            <S.EmptyState>
+              <S.EmptyTitle>Carregando vagas...</S.EmptyTitle>
+              <S.EmptyText>Buscando vagas do processo.</S.EmptyText>
+            </S.EmptyState>
+          ) : vagasItems.length === 0 ? (
             <S.EmptyState>
               <S.EmptyTitle>Nenhuma vaga encontrada</S.EmptyTitle>
               <S.EmptyText>
@@ -267,60 +266,76 @@ export function ProcessoSeletivosDetalhes() {
               </S.EmptyText>
             </S.EmptyState>
           ) : (
-            <S.VagasTableWrap>
-              <S.VagasTable>
-                <thead>
-                  <tr>
-                    <S.Th>Vaga</S.Th>
-                    <S.Th style={{ width: 180 }}>Nível</S.Th>
-                    <S.Th style={{ width: 180 }}>Quantidade</S.Th>
-                    <S.Th style={{ width: 220, textAlign: "right" }}>
-                      Ações
-                    </S.Th>
-                  </tr>
-                </thead>
+            <>
+              <S.VagasTableWrap>
+                <S.VagasTable>
+                  <thead>
+                    <tr>
+                      <S.Th>Vaga</S.Th>
+                      <S.Th style={{ width: 180 }}>Nível</S.Th>
+                      <S.Th style={{ width: 180 }}>Quantidade</S.Th>
+                      <S.Th style={{ width: 220, textAlign: "right" }}>
+                        Ações
+                      </S.Th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {vagasFiltradas.map((v) => (
-                    <S.Tr key={v.id_vaga}>
-                      <S.Td>
-                        <S.VagaName title={v.nome}>{v.nome}</S.VagaName>
-                        <S.VagaSubText>
-                          Processo: {processo.id_processo_seletivo}
-                        </S.VagaSubText>
-                      </S.Td>
+                  <tbody>
+                    {vagasItems.map((v) => (
+                      <S.Tr key={v.id_vaga}>
+                        <S.Td>
+                          <S.VagaName title={v.nome}>{v.nome}</S.VagaName>
+                          <S.VagaSubText>
+                            Processo: {v.id_processo_seletivo}
+                          </S.VagaSubText>
+                        </S.Td>
 
-                      <S.Td>
-                        <S.CountPill title="Nível mínimo">
-                          {v.nivel}
-                        </S.CountPill>
-                      </S.Td>
+                        <S.Td>
+                          <S.CountPill title="Nível mínimo">
+                            {v.nivel}
+                          </S.CountPill>
+                        </S.Td>
 
-                      <S.Td>
-                        <S.CountPill title="Quantidade de vagas">
-                          {Number(v.quantidade_de_vagas)} vagas
-                        </S.CountPill>
-                      </S.Td>
+                        <S.Td>
+                          <S.CountPill title="Quantidade de vagas">
+                            {Number(v.quantidade_de_vagas)} vagas
+                          </S.CountPill>
+                        </S.Td>
 
-                      <S.Td style={{ textAlign: "right" }}>
-                        <S.RowActions>
-                          {isAdmin ? (
-                            <S.SecondaryButton
-                              type="button"
-                              onClick={() => onEditarVaga(v)}
-                            >
-                              Editar
-                            </S.SecondaryButton>
-                          ) : (
-                            <S.Muted>—</S.Muted>
-                          )}
-                        </S.RowActions>
-                      </S.Td>
-                    </S.Tr>
-                  ))}
-                </tbody>
-              </S.VagasTable>
-            </S.VagasTableWrap>
+                        <S.Td style={{ textAlign: "right" }}>
+                          <S.RowActions>
+                            {isAdmin ? (
+                              <S.SecondaryButton
+                                type="button"
+                                onClick={() => onEditarVaga(v)}
+                              >
+                                Editar
+                              </S.SecondaryButton>
+                            ) : (
+                              <S.Muted>—</S.Muted>
+                            )}
+                          </S.RowActions>
+                        </S.Td>
+                      </S.Tr>
+                    ))}
+                  </tbody>
+                </S.VagasTable>
+              </S.VagasTableWrap>
+
+              {/* ✅ PAGINAÇÃO */}
+              <Pagination
+                page={pageVagas}
+                total={vagasTotal}
+                pageSize={pageSizeVagas}
+                onPageChange={setPageVagas}
+                showPageSize
+                onPageSizeChange={(s) => {
+                  setPageVagas(1);
+                  setPageSizeVagas(s);
+                }}
+                loading={isFetchingVagas}
+              />
+            </>
           )}
         </S.Section>
       )}
@@ -365,7 +380,7 @@ export function ProcessoSeletivosDetalhes() {
               setOpenModal(v);
               if (!v) setVagaToEdit(null);
             }}
-            id_processo_seletivo={processo.id_processo_seletivo}
+            id_processo_seletivo={id!}
             vagaToEdit={vagaToEdit}
           />
 
