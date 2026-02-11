@@ -19,6 +19,7 @@ import { AuthenticacaoEmail } from "../pages/AuthenticacaoEmail";
 import { RequireAuth } from "./RequireAuth";
 import { ForgotPassword } from "../pages/ForgotPassword";
 import { ResetPassword } from "../pages/ResetPassword";
+import InscricaoDetalhePage from "../pages/InscricaoDetalhePage";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -34,7 +35,7 @@ function AnimatedRoutes() {
         <Route path="/confirmar-email" element={<AuthenticacaoEmail />} />
         <Route path="/esqueci_senha" element={<ForgotPassword />} />
         <Route path="/redefinir-senha" element={<ResetPassword />} />
-        
+
         {/* privadas */}
         <Route element={<RequireAuth />}>
           <Route element={<DefaultLayout />}>
@@ -53,6 +54,10 @@ function AnimatedRoutes() {
               element={<InscricaoPage />}
             />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
+            <Route
+              path="/processos/:id/inscricoes/:id_inscricao/detalhe"
+              element={<InscricaoDetalhePage />}
+            />
           </Route>
         </Route>
 

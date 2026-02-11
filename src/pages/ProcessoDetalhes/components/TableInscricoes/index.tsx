@@ -1,4 +1,6 @@
 import { Eye } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
+
 import * as S from "./styles";
 import type { GetAllInscricoesByProcessoIdResponse } from "../../../../api/get-all-inscricoes-by-processoId";
 import { Pagination } from "../../../../components/Pagination"; // ajuste o path
@@ -23,8 +25,15 @@ export function TableInscricoes({
   onPageChange,
   onPageSizeChange,
 }: ITableInscricoesProps) {
+  const navigate = useNavigate();
+  const { id } = useParams(); // ✅ id do processo na rota /processos_detalhes/:id
   const rows = resultAllInscricoes?.data ?? [];
   const total = resultAllInscricoes?.total ?? 0;
+
+  function handleVerDetalhes(id_inscricao: string) {
+    if (!id) return;
+    navigate(`/processos/${id}/inscricoes/${id_inscricao}/detalhe`);
+  }
 
   return (
     <S.Section>
@@ -98,7 +107,12 @@ export function TableInscricoes({
 
                     <S.Td style={{ textAlign: "right" }}>
                       <S.RowActions>
-                        <S.SecondaryButton type="button" title="Ver detalhes">
+                        <S.SecondaryButton
+                          type="button"
+                          title="Ver detalhes"
+                          onClick={() => handleVerDetalhes(i.id_inscricao)}
+                          disabled={!id}
+                        >
                           <S.BtnInline>
                             <Eye size={16} />
                             Ver mais
