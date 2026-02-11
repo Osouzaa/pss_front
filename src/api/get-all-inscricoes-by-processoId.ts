@@ -98,23 +98,42 @@ export interface Inscricao {
 
   pontuacao_total: number;
 
-  // vem string JSON ou null (se quiser depois eu te mando helper pra parsear)
   pontuacao_detalhe_json: string | null;
 
-  data_envio: string | null; // ISO
+  data_envio: string | null;
   observacao: string | null;
 
-  data_criacao: string; // ISO
-  data_atualizacao: string; // ISO
+  data_criacao: string;
+  data_atualizacao: string;
 }
 
-export type GetAllInscricoesByProcessoIdResponse = Inscricao[];
+export interface PaginatedResponse<T> {
+  data: T[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export type GetAllInscricoesByProcessoIdResponse = PaginatedResponse<Inscricao>;
+
+export type GetAllInscricoesByProcessoIdParams = {
+  page?: number;
+  limit?: number;
+};
 
 export async function getAllInscricoesByProcessoId(
   id_processo: string,
+  params?: GetAllInscricoesByProcessoIdParams,
 ): Promise<GetAllInscricoesByProcessoIdResponse> {
   const response = await api.get<GetAllInscricoesByProcessoIdResponse>(
     `/processos-seletivos-inscricoes/all/${id_processo}`,
+    {
+      params: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 20,
+      },
+    },
   );
 
   return response.data;

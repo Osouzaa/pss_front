@@ -39,6 +39,8 @@ export function ProcessoSeletivosDetalhes() {
 
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
+  const [pageInscricoes, setPageInscricoes] = useState(1);
+  const [pageSizeInscricoes, setPageSizeInscricoes] = useState(20);
 
   const {
     data: processo,
@@ -62,9 +64,14 @@ export function ProcessoSeletivosDetalhes() {
 
   const { data: resultAllInscricoes, isLoading: isLoadingInscricoes } =
     useQuery({
-      queryKey: ["all-inscricoes", id],
-      queryFn: () => getAllInscricoesByProcessoId(id!),
+      queryKey: ["all-inscricoes", id, pageInscricoes, pageSizeInscricoes],
+      queryFn: () =>
+        getAllInscricoesByProcessoId(id!, {
+          page: pageInscricoes,
+          limit: pageSizeInscricoes,
+        }),
       enabled: !!id,
+      staleTime: 30_000,
     });
 
   const vagasFiltradas = useMemo(() => {
@@ -141,6 +148,7 @@ export function ProcessoSeletivosDetalhes() {
       </S.Container>
     );
   }
+  const totalInscricoes = resultAllInscricoes?.total ?? 0;
 
   return (
     <S.Container>
@@ -213,7 +221,7 @@ export function ProcessoSeletivosDetalhes() {
           aria-current={tab === "inscricoes"}
           $active={tab === "inscricoes"}
         >
-          Inscrições ({resultAllInscricoes?.length ?? 0})
+          Inscrições ({totalInscricoes})
         </S.TabButton>
       </S.Tabs>
 
@@ -318,6 +326,13 @@ export function ProcessoSeletivosDetalhes() {
         <TableInscricoes
           isLoadingInscricoes={isLoadingInscricoes}
           resultAllInscricoes={resultAllInscricoes}
+          page={pageInscricoes}
+          pageSize={pageSizeInscricoes}
+          onPageChange={setPageInscricoes}
+          onPageSizeChange={(s) => {
+            setPageInscricoes(1);
+            setPageSizeInscricoes(s);
+          }}
         />
       )}
 
