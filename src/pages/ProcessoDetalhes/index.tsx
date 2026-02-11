@@ -63,7 +63,6 @@ export function ProcessoSeletivosDetalhes() {
     enabled: !!id,
   });
 
-  // ✅ VAGAS PAGINADAS
   const {
     data: resultAllVagas,
     isLoading: isLoadingVagas,
@@ -220,14 +219,16 @@ export function ProcessoSeletivosDetalhes() {
           Perguntas ({totalPerguntas})
         </S.TabButton>
 
-        <S.TabButton
-          type="button"
-          onClick={() => setTab("inscricoes")}
-          aria-current={tab === "inscricoes"}
-          $active={tab === "inscricoes"}
-        >
-          Inscrições ({totalInscricoes})
-        </S.TabButton>
+        {isAdmin && (
+          <S.TabButton
+            type="button"
+            onClick={() => setTab("inscricoes")}
+            aria-current={tab === "inscricoes"}
+            $active={tab === "inscricoes"}
+          >
+            Inscrições ({totalInscricoes})
+          </S.TabButton>
+        )}
       </S.Tabs>
 
       {tab === "vagas" && (
@@ -358,7 +359,7 @@ export function ProcessoSeletivosDetalhes() {
         />
       )}
 
-      {tab === "inscricoes" && (
+      {tab === "inscricoes" && isAdmin && (
         <TableInscricoes
           isLoadingInscricoes={isLoadingInscricoes}
           resultAllInscricoes={resultAllInscricoes}
