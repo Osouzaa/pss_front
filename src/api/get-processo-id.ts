@@ -60,8 +60,6 @@ export interface PerguntaProcessoResponse {
   data_atualizacao: string; // ISO
 }
 
-/** ===== PROCESSO SELETIVO ===== */
-
 export interface ProcessoSeletivoResponse {
   id_processo_seletivo: string;
   titulo: string;

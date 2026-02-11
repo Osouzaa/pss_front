@@ -250,6 +250,15 @@ export function ProcessoSeletivosDetalhes() {
         >
           Perguntas ({perguntas?.length ?? 0})
         </S.TabButton>
+
+        <S.TabButton
+          type="button"
+          onClick={() => setTab("inscricoes")}
+          aria-current={tab === "inscricoes"}
+          $active={tab === "inscricoes"}
+        >
+          Inscrições
+        </S.TabButton>
       </S.Tabs>
 
       {tab === "vagas" && (
@@ -494,7 +503,7 @@ export function ProcessoSeletivosDetalhes() {
         </S.Section>
       )}
 
-      {/* ✅ Modais/admin: renderiza só se isAdmin */}
+      {tab === "inscricoes" && <h1> Inscrições</h1>}
       {isAdmin && (
         <>
           <ModalNovaVaga
