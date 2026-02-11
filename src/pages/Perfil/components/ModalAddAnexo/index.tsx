@@ -96,6 +96,9 @@ interface IModalAddAnexo {
   defaultTipo?: DocumentoTipo;
 }
 
+const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIMES = ["application/pdf", "image/png", "image/jpeg"] as const;
+
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
   const kb = bytes / 1024;
@@ -166,6 +169,9 @@ export function ModalAddAnexo({
       descricao: "",
     });
     setSelectedFile(null);
+
+    // limpa o input file quando reabrir
+    if (fileRef.current) fileRef.current.value = "";
   }, [open, defaultTipo, reset]);
 
   function handleClose() {
@@ -189,21 +195,60 @@ export function ModalAddAnexo({
     },
   });
 
+  function validateAndSetFile(file: File | null) {
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    // valida tipo (mime). Obs: alguns browsers podem mandar "" em casos raros
+    if (file.type && !ALLOWED_MIMES.includes(file.type as any)) {
+      toast.error("Formato inválido. Envie PDF, PNG ou JPG.");
+      setSelectedFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
+    // valida tamanho ANTES de aceitar selecionar
+    if (file.size > MAX_BYTES) {
+      toast.error(
+        `Arquivo muito grande (${formatBytes(file.size)}). Máximo permitido: ${formatBytes(
+          MAX_BYTES,
+        )}.`,
+      );
+      setSelectedFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
+    setSelectedFile(file);
+  }
+
   const onSubmit = async (data: UploadDocumentoFormData) => {
     if (!selectedFile) {
-      toast.error("Selecione um arquivo");
+      toast.error("Selecione um arquivo (máx. 10MB).");
       return;
     }
 
-    const allowed = ["application/pdf", "image/png", "image/jpeg"];
-    if (selectedFile.type && !allowed.includes(selectedFile.type)) {
+    // redundante (segurança): garante que ninguém burle com state/DOM
+    if (selectedFile.size > MAX_BYTES) {
+      toast.error(
+        `Arquivo muito grande (${formatBytes(selectedFile.size)}). Máximo permitido: ${formatBytes(
+          MAX_BYTES,
+        )}.`,
+      );
+      setSelectedFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
+    if (
+      selectedFile.type &&
+      !ALLOWED_MIMES.includes(selectedFile.type as any)
+    ) {
       toast.error("Formato inválido. Envie PDF, PNG ou JPG.");
-      return;
-    }
-
-    const maxBytes = 10 * 1024 * 1024; // 10MB
-    if (selectedFile.size > maxBytes) {
-      toast.error("Arquivo muito grande. Máximo 10MB.");
+      setSelectedFile(null);
+      if (fileRef.current) fileRef.current.value = "";
       return;
     }
 
@@ -257,6 +302,7 @@ export function ModalAddAnexo({
                       </option>
                     ))}
                   </SelectBase>
+
                   <InputBase
                     label="Descrição (opcional)"
                     placeholder={
@@ -292,18 +338,20 @@ export function ModalAddAnexo({
               {/* ===== Seção: Upload ===== */}
               <Section>
                 <SectionTitle>Arquivo</SectionTitle>
+
                 <UploadNote>
                   Envie o documento com{" "}
                   <strong>frente e verso no mesmo arquivo</strong>.
                 </UploadNote>
+
                 <input
                   ref={fileRef}
                   type="file"
-                  accept=".pdf,.png,.jpg,.jpeg"
+                  accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                   style={{ display: "none" }}
                   onChange={(e) => {
                     const f = e.target.files?.[0] ?? null;
-                    setSelectedFile(f);
+                    validateAndSetFile(f);
 
                     // permite selecionar o mesmo arquivo novamente
                     e.currentTarget.value = "";
@@ -324,7 +372,8 @@ export function ModalAddAnexo({
                       {selectedFile ? "Trocar arquivo" : "Selecionar arquivo"}
                     </UploadName>
                     <UploadHint>
-                      Clique para escolher um arquivo no seu computador
+                      Clique para escolher um arquivo no seu computador (máx.{" "}
+                      {formatBytes(MAX_BYTES)})
                     </UploadHint>
                   </div>
                 </UploadZone>
@@ -345,7 +394,7 @@ export function ModalAddAnexo({
                 ) : (
                   <UploadMeta>
                     <div>Formatos aceitos: PDF, PNG, JPG</div>
-                    <div>Tamanho máximo: 10MB</div>
+                    <div>Tamanho máximo: {formatBytes(MAX_BYTES)}</div>
                   </UploadMeta>
                 )}
               </Section>
@@ -365,7 +414,7 @@ export function ModalAddAnexo({
                   className="primary"
                   title={
                     !selectedFile
-                      ? "Selecione um arquivo"
+                      ? "Selecione um arquivo (máx. 10MB)"
                       : !isValid
                         ? "Preencha os campos corretamente"
                         : submitText
