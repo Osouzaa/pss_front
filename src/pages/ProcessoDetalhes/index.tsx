@@ -13,11 +13,15 @@ import { ModalOpcoes } from "./components/ModalOpcoes";
 import { toast } from "sonner";
 import { deletarPergunta } from "../../api/deletar-pergunta";
 import { queryClient } from "../../lib/react-query";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Eye } from "lucide-react";
 import { ModalConfirmDelete } from "../../components/ModalConfirmDelete";
 
 import { useAuth } from "../../contexts/auth-context";
 import { formatDate } from "../../utils/fomartDate.utils";
+import {
+  getAllInscricoesByProcessoId,
+  type Inscricao,
+} from "../../api/get-all-inscricoes-by-processoId";
 
 /** helper de busca simples */
 function normalizeText(s: string) {
@@ -26,6 +30,66 @@ function normalizeText(s: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+}
+
+function formatPhoneBR(phone?: string | null) {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (!digits) return "—";
+
+  // 11 dígitos: (31) 98299-1526
+  if (digits.length === 11) {
+    const ddd = digits.slice(0, 2);
+    const p1 = digits.slice(2, 7);
+    const p2 = digits.slice(7);
+    return `(${ddd}) ${p1}-${p2}`;
+  }
+
+  // 10 dígitos: (31) 3299-1526
+  if (digits.length === 10) {
+    const ddd = digits.slice(0, 2);
+    const p1 = digits.slice(2, 6);
+    const p2 = digits.slice(6);
+    return `(${ddd}) ${p1}-${p2}`;
+  }
+
+  return phone ?? "—";
+}
+
+function getNomeInscricao(i: Inscricao) {
+  return (
+    i.usuario?.candidato?.nome_completo ||
+    i.usuario?.nome_completo ||
+    i.usuario?.email ||
+    "—"
+  );
+}
+
+function getTelefoneInscricao(i: Inscricao) {
+  return formatPhoneBR(i.usuario?.candidato?.telefone);
+}
+
+function getEnderecoCompleto(i: Inscricao) {
+  const c = i.usuario?.candidato;
+  if (!c) return "—";
+
+  const parts: string[] = [];
+
+  if (c.logradouro) parts.push(c.logradouro);
+  if (c.numero) parts.push(c.numero);
+  if (c.complemento) parts.push(c.complemento);
+  if (c.bairro) parts.push(c.bairro);
+
+  const cidadeUf = [c.cidade, c.uf].filter(Boolean).join(" - ");
+  if (cidadeUf) parts.push(cidadeUf);
+
+  const full = parts.join(", ").trim();
+  return full || "—";
+}
+
+function getDataInscricao(i: Inscricao) {
+  // regra: se enviou, mostra data_envio; senão data_criacao
+  const iso = i.data_envio ?? i.data_criacao ?? i.data_atualizacao;
+  return iso ? formatDate(iso) : "—";
 }
 
 export function ProcessoSeletivosDetalhes() {
@@ -52,6 +116,10 @@ export function ProcessoSeletivosDetalhes() {
   const [openModalDelete, setOpenModalDelete] = useState(false);
   const [perguntaToDelete, setPerguntaToDelete] = useState<any>(null);
 
+  const [openModalVerMais, setOpenModalVerMais] = useState(false);
+  const [inscricaoSelecionada, setInscricaoSelecionada] =
+    useState<Inscricao | null>(null);
+
   const {
     data: processo,
     isLoading,
@@ -72,6 +140,13 @@ export function ProcessoSeletivosDetalhes() {
     enabled: !!processo?.id_processo_seletivo,
   });
 
+  const { data: resultAllInscricoes, isLoading: isLoadingInscricoes } =
+    useQuery<Inscricao[]>({
+      queryKey: ["all-inscricoes", id],
+      queryFn: () => getAllInscricoesByProcessoId(id!),
+      enabled: !!id,
+    });
+
   const vagasFiltradas = useMemo(() => {
     const list = processo?.vagas ?? [];
     const nq = normalizeText(qVaga);
@@ -84,6 +159,15 @@ export function ProcessoSeletivosDetalhes() {
       return hay.includes(nq);
     });
   }, [processo?.vagas, qVaga]);
+
+  const inscricoesOrdenadas = useMemo(() => {
+    const list = resultAllInscricoes ?? [];
+    return list.slice().sort((a, b) => {
+      const da = new Date(a.data_envio ?? a.data_criacao).getTime();
+      const db = new Date(b.data_envio ?? b.data_criacao).getTime();
+      return db - da;
+    });
+  }, [resultAllInscricoes]);
 
   function onEditarVaga(v: any) {
     if (!isAdmin) {
@@ -156,6 +240,14 @@ export function ProcessoSeletivosDetalhes() {
     }
     setPerguntaToDelete(pergunta);
     setOpenModalDelete(true);
+  }
+
+  function onVerMaisInscricao(i: Inscricao) {
+    setInscricaoSelecionada(i);
+    setOpenModalVerMais(true);
+
+    // se preferir, pode navegar para uma rota:
+    // navigate(`/processos/${id}/inscricoes/${i.id_inscricao}`)
   }
 
   if (isLoading) {
@@ -257,7 +349,7 @@ export function ProcessoSeletivosDetalhes() {
           aria-current={tab === "inscricoes"}
           $active={tab === "inscricoes"}
         >
-          Inscrições
+          Inscrições ({resultAllInscricoes?.length ?? 0})
         </S.TabButton>
       </S.Tabs>
 
@@ -503,7 +595,99 @@ export function ProcessoSeletivosDetalhes() {
         </S.Section>
       )}
 
-      {tab === "inscricoes" && <h1> Inscrições</h1>}
+      {tab === "inscricoes" && (
+        <S.Section>
+          <S.SectionHeader>
+            <S.SectionTitle>Inscrições</S.SectionTitle>
+            <S.SectionHint>
+              Veja todas as inscrições feitas neste processo seletivo.
+            </S.SectionHint>
+          </S.SectionHeader>
+
+          {isLoadingInscricoes ? (
+            <S.EmptyState>
+              <S.EmptyTitle>Carregando inscrições...</S.EmptyTitle>
+              <S.EmptyText>Aguarde um momento.</S.EmptyText>
+            </S.EmptyState>
+          ) : !inscricoesOrdenadas || inscricoesOrdenadas.length === 0 ? (
+            <S.EmptyState>
+              <S.EmptyTitle>Nenhuma inscrição encontrada</S.EmptyTitle>
+              <S.EmptyText>
+                Quando alguém se inscrever, aparecerá aqui.
+              </S.EmptyText>
+            </S.EmptyState>
+          ) : (
+            <S.InscricoesTableWrap>
+              <S.InscricoesTable>
+                <thead>
+                  <tr>
+                    <S.Th style={{ width: 170 }}>Data</S.Th>
+                    <S.Th style={{ width: 260 }}>Nome</S.Th>
+                    <S.Th style={{ width: 180 }}>Telefone</S.Th>
+                    <S.Th style={{ width: 180 }}> Vaga</S.Th>
+                    <S.Th>Endereço</S.Th>
+                    <S.Th style={{ width: 160, textAlign: "right" }}>
+                      Ações
+                    </S.Th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {inscricoesOrdenadas.map((i) => (
+                    <S.Tr key={i.id_inscricao}>
+                      <S.Td>
+                        <S.Muted>{getDataInscricao(i)}</S.Muted>
+                      </S.Td>
+
+                      <S.Td>
+                        <S.CellStrong title={getNomeInscricao(i)}>
+                          {getNomeInscricao(i)}
+                        </S.CellStrong>
+                        <S.CellSub title={i.usuario?.email ?? ""}>
+                          {i.usuario?.email ?? "—"}
+                        </S.CellSub>
+                      </S.Td>
+
+                      <S.Td>
+                        <S.CellMono title={getTelefoneInscricao(i)}>
+                          {getTelefoneInscricao(i)}
+                        </S.CellMono>
+                      </S.Td>
+                      <S.Td>
+                        <S.CellMono title={i.vaga.nome}>
+                          {i.vaga.nome}
+                        </S.CellMono>
+                      </S.Td>
+
+                      <S.Td>
+                        <S.CellClamp2 title={getEnderecoCompleto(i)}>
+                          {getEnderecoCompleto(i)}
+                        </S.CellClamp2>
+                      </S.Td>
+
+                      <S.Td style={{ textAlign: "right" }}>
+                        <S.RowActions>
+                          <S.SecondaryButton
+                            type="button"
+                            onClick={() => onVerMaisInscricao(i)}
+                            title="Ver detalhes"
+                          >
+                            <S.BtnInline>
+                              <Eye size={16} />
+                              Ver mais
+                            </S.BtnInline>
+                          </S.SecondaryButton>
+                        </S.RowActions>
+                      </S.Td>
+                    </S.Tr>
+                  ))}
+                </tbody>
+              </S.InscricoesTable>
+            </S.InscricoesTableWrap>
+          )}
+        </S.Section>
+      )}
+
       {isAdmin && (
         <>
           <ModalNovaVaga
@@ -582,6 +766,87 @@ export function ProcessoSeletivosDetalhes() {
               }
             }}
           />
+
+          {/* Modal "Ver mais" (placeholder simples) */}
+          {openModalVerMais && (
+            <S.SimpleOverlay
+              role="dialog"
+              aria-modal="true"
+              onClick={() => setOpenModalVerMais(false)}
+            >
+              <S.SimpleModal onClick={(e) => e.stopPropagation()}>
+                <S.SimpleModalHeader>
+                  <S.SimpleModalTitle>Detalhes da inscrição</S.SimpleModalTitle>
+                  <S.IconButton
+                    type="button"
+                    title="Fechar"
+                    onClick={() => setOpenModalVerMais(false)}
+                  >
+                    ✕
+                  </S.IconButton>
+                </S.SimpleModalHeader>
+
+                <S.SimpleModalBody>
+                  <S.KV>
+                    <S.KVRow>
+                      <S.K>Protocolo</S.K>
+                      <S.V>{inscricaoSelecionada?.protocolo ?? "—"}</S.V>
+                    </S.KVRow>
+
+                    <S.KVRow>
+                      <S.K>Nome</S.K>
+                      <S.V>
+                        {inscricaoSelecionada
+                          ? getNomeInscricao(inscricaoSelecionada)
+                          : "—"}
+                      </S.V>
+                    </S.KVRow>
+
+                    <S.KVRow>
+                      <S.K>Telefone</S.K>
+                      <S.V>
+                        {inscricaoSelecionada
+                          ? getTelefoneInscricao(inscricaoSelecionada)
+                          : "—"}
+                      </S.V>
+                    </S.KVRow>
+
+                    <S.KVRow>
+                      <S.K>Endereço</S.K>
+                      <S.V>
+                        {inscricaoSelecionada
+                          ? getEnderecoCompleto(inscricaoSelecionada)
+                          : "—"}
+                      </S.V>
+                    </S.KVRow>
+
+                    <S.KVRow>
+                      <S.K>Status</S.K>
+                      <S.V>{inscricaoSelecionada?.status ?? "—"}</S.V>
+                    </S.KVRow>
+
+                    <S.KVRow>
+                      <S.K>Data</S.K>
+                      <S.V>
+                        {inscricaoSelecionada
+                          ? getDataInscricao(inscricaoSelecionada)
+                          : "—"}
+                      </S.V>
+                    </S.KVRow>
+                  </S.KV>
+                </S.SimpleModalBody>
+
+                <S.SimpleModalFooter>
+                  <S.SecondaryButton
+                    type="button"
+                    onClick={() => setOpenModalVerMais(false)}
+                  >
+                    Fechar
+                  </S.SecondaryButton>
+                </S.SimpleModalFooter>
+              </S.SimpleModal>
+            </S.SimpleOverlay>
+          )}
         </>
       )}
     </S.Container>

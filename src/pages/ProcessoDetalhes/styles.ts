@@ -1125,3 +1125,194 @@ export const PerguntaActions = styled.div`
   gap: 8px;
   flex-wrap: wrap;
 `;
+
+export const InscricoesTableWrap = styled.div`
+  width: 100%;
+  max-width: 100%;
+  border-radius: ${ui.radius.xl};
+  overflow: hidden;
+
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
+`;
+
+export const InscricoesTable = styled.table`
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  min-width: 860px;
+
+  thead tr {
+    background: ${({ theme }) => theme.lightDefault};
+  }
+
+  tbody tr + tr td {
+    border-top: 1px solid ${({ theme }) => theme.border};
+  }
+
+  @media (max-width: 520px) {
+    min-width: 780px;
+  }
+
+  @media (max-width: 420px) {
+    min-width: 720px;
+  }
+`;
+
+export const CellStrong = styled.div`
+  font-size: 13px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+  line-height: 1.25;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  max-width: clamp(180px, 34vw, 360px);
+`;
+
+export const CellSub = styled.div`
+  margin-top: 4px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  max-width: clamp(180px, 34vw, 360px);
+`;
+
+export const CellMono = styled.div`
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.text};
+  white-space: nowrap;
+`;
+
+export const CellClamp2 = styled.div`
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  line-height: 1.35;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  max-width: clamp(220px, 46vw, 560px);
+`;
+
+export const BtnInline = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+/* =========================
+   MODAL SIMPLES (VER MAIS)
+========================= */
+export const SimpleOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+
+  display: grid;
+  place-items: center;
+
+  padding: 14px;
+`;
+
+export const SimpleModal = styled.div`
+  width: min(720px, 100%);
+  border-radius: ${ui.radius.xl};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+
+  box-shadow: ${ui.shadow.md};
+  overflow: hidden;
+`;
+
+export const SimpleModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 12px 14px;
+  background: ${({ theme }) => theme.lightDefault};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const SimpleModalTitle = styled.h3`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const SimpleModalBody = styled.div`
+  padding: 14px;
+`;
+
+export const SimpleModalFooter = styled.div`
+  padding: 12px 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  border-top: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+`;
+export const PaginationBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 14px;
+  background: ${({ theme }) => theme.background};
+  margin-bottom: 12px;
+`;
+
+export const PaginationLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const PaginationRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const PagePill = styled.span`
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  font-size: 13px;
+`;
+
+export const Select = styled.select`
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+  color: ${({ theme }) => theme.text};
+  outline: none;
+`;
