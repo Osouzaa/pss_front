@@ -39,8 +39,14 @@ export function ProcessoSeletivosDetalhes() {
 
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
+
+  // ===== PAGINAÇÃO INSCRIÇÕES =====
   const [pageInscricoes, setPageInscricoes] = useState(1);
   const [pageSizeInscricoes, setPageSizeInscricoes] = useState(20);
+
+  // ===== PAGINAÇÃO PERGUNTAS =====
+  const [pagePerguntas, setPagePerguntas] = useState(1);
+  const [pageSizePerguntas, setPageSizePerguntas] = useState(20);
 
   const {
     data: processo,
@@ -56,12 +62,18 @@ export function ProcessoSeletivosDetalhes() {
     enabled: !!id,
   });
 
+  // ✅ PERGUNTAS PAGINADAS
   const { data: perguntas, isLoading: isLoadingPerguntas } = useQuery({
-    queryKey: ["perguntas-processos", id],
-    queryFn: () => buscarPerguntasProcessos(id!),
+    queryKey: ["perguntas-processos", id, pagePerguntas, pageSizePerguntas],
+    queryFn: () =>
+      buscarPerguntasProcessos(id!, {
+        page: pagePerguntas,
+        limit: pageSizePerguntas,
+      }),
     enabled: !!id,
   });
 
+  // ✅ INSCRIÇÕES PAGINADAS
   const { data: resultAllInscricoes, isLoading: isLoadingInscricoes } =
     useQuery({
       queryKey: ["all-inscricoes", id, pageInscricoes, pageSizeInscricoes],
@@ -71,7 +83,6 @@ export function ProcessoSeletivosDetalhes() {
           limit: pageSizeInscricoes,
         }),
       enabled: !!id,
-      staleTime: 30_000,
     });
 
   const vagasFiltradas = useMemo(() => {
@@ -148,7 +159,9 @@ export function ProcessoSeletivosDetalhes() {
       </S.Container>
     );
   }
+
   const totalInscricoes = resultAllInscricoes?.total ?? 0;
+  const totalPerguntas = perguntas?.total ?? 0;
 
   return (
     <S.Container>
@@ -212,7 +225,7 @@ export function ProcessoSeletivosDetalhes() {
           aria-current={tab === "perguntas"}
           $active={tab === "perguntas"}
         >
-          Perguntas ({perguntas?.length ?? 0})
+          Perguntas ({totalPerguntas})
         </S.TabButton>
 
         <S.TabButton
@@ -227,6 +240,7 @@ export function ProcessoSeletivosDetalhes() {
 
       {tab === "vagas" && (
         <S.Section>
+          {/* ... seu bloco de vagas permanece igual ... */}
           <S.SectionHeader>
             <S.SectionTitle>Vagas</S.SectionTitle>
             <S.SectionHint>Gerencie as vagas deste processo.</S.SectionHint>
@@ -319,6 +333,13 @@ export function ProcessoSeletivosDetalhes() {
           setPerguntaToEdit={setPerguntaToEdit}
           perguntas={perguntas}
           isLoadingPerguntas={isLoadingPerguntas}
+          page={pagePerguntas}
+          pageSize={pageSizePerguntas}
+          onPageChange={setPagePerguntas}
+          onPageSizeChange={(s) => {
+            setPagePerguntas(1);
+            setPageSizePerguntas(s);
+          }}
         />
       )}
 

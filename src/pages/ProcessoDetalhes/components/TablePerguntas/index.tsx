@@ -1,7 +1,10 @@
 import { Pencil, Trash2 } from "lucide-react";
 import * as S from "./styles";
 import { useMutation } from "@tanstack/react-query";
-import { type IGetAllAnswers } from "../../../../api/buscar-perguntas-processos";
+import {
+  type IGetAllAnswers,
+  type BuscarPerguntasProcessoResponse,
+} from "../../../../api/buscar-perguntas-processos";
 import { formatDate } from "../../../../utils/fomartDate.utils";
 import { queryClient } from "../../../../lib/react-query";
 import { toast } from "sonner";
@@ -9,15 +12,21 @@ import { useState } from "react";
 import { ModalConfirmDelete } from "../../../../components/ModalConfirmDelete";
 import { ModalOpcoes } from "../ModalOpcoes";
 import { deletarPergunta } from "../../../../api/deletar-pergunta";
+import { Pagination } from "../../../../components/Pagination"; // ajuste o path
 
 interface ITablePerguntasProps {
-  perguntas: IGetAllAnswers[] | undefined;
+  perguntas: BuscarPerguntasProcessoResponse | undefined;
   processo_seletivo_id: string;
   isAdmin: boolean;
   isLoadingPerguntas: boolean;
 
   setPerguntaToEdit: React.Dispatch<React.SetStateAction<any>>;
   setOpenModalNovaPergunta: React.Dispatch<React.SetStateAction<boolean>>;
+
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 export function TablePerguntas({
@@ -27,6 +36,10 @@ export function TablePerguntas({
   isLoadingPerguntas,
   setPerguntaToEdit,
   setOpenModalNovaPergunta,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
 }: ITablePerguntasProps) {
   const [openModalOpcoes, setOpenModalOpcoes] = useState(false);
   const [perguntaSelecionada, setPerguntaSelecionada] = useState<{
@@ -35,6 +48,9 @@ export function TablePerguntas({
 
   const [openModalDelete, setOpenModalDelete] = useState(false);
   const [perguntaToDelete, setPerguntaToDelete] = useState<any>(null);
+
+  const rows: IGetAllAnswers[] = perguntas?.data ?? [];
+  const total = perguntas?.total ?? 0;
 
   function onEditarPergunta(pergunta: any) {
     if (!isAdmin) {
@@ -89,7 +105,7 @@ export function TablePerguntas({
           <S.EmptyTitle>Carregando perguntas...</S.EmptyTitle>
           <S.EmptyText>Aguarde um momento.</S.EmptyText>
         </S.EmptyState>
-      ) : !perguntas || perguntas.length === 0 ? (
+      ) : total === 0 ? (
         <S.EmptyState>
           <S.EmptyTitle>Nenhuma pergunta cadastrada</S.EmptyTitle>
           <S.EmptyText>
@@ -99,130 +115,143 @@ export function TablePerguntas({
           </S.EmptyText>
         </S.EmptyState>
       ) : (
-        <S.PerguntasTableWrap>
-          <S.PerguntasTable>
-            <thead>
-              <tr>
-                <S.Th style={{ width: 70 }}>Ordem</S.Th>
-                <S.Th>Pergunta</S.Th>
-                <S.Th style={{ width: 140 }}>Tipo</S.Th>
-                <S.Th style={{ width: 140 }}>Obrigatória</S.Th>
-                <S.Th style={{ width: 120 }}>Ativa</S.Th>
-                <S.Th style={{ width: 120 }}>Opções</S.Th>
-                <S.Th style={{ width: 160 }}>Criada</S.Th>
-                <S.Th style={{ width: 260, textAlign: "right" }}>Ações</S.Th>
-              </tr>
-            </thead>
+        <>
+          <S.PerguntasTableWrap>
+            <S.PerguntasTable>
+              <thead>
+                <tr>
+                  <S.Th style={{ width: 70 }}>Ordem</S.Th>
+                  <S.Th>Pergunta</S.Th>
+                  <S.Th style={{ width: 140 }}>Tipo</S.Th>
+                  <S.Th style={{ width: 140 }}>Obrigatória</S.Th>
+                  <S.Th style={{ width: 120 }}>Ativa</S.Th>
+                  <S.Th style={{ width: 120 }}>Opções</S.Th>
+                  <S.Th style={{ width: 160 }}>Criada</S.Th>
+                  <S.Th style={{ width: 260, textAlign: "right" }}>Ações</S.Th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {perguntas
-                .slice()
-                .sort((a, b) => a.orderm - b.orderm)
-                .map((pergunta, index) => {
-                  const hasOpcoes =
-                    Array.isArray(pergunta.opcoes) &&
-                    pergunta.opcoes.length > 0;
+              <tbody>
+                {rows
+                  .slice()
+                  .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+                  .map((pergunta, index) => {
+                    const hasOpcoes =
+                      Array.isArray(pergunta.opcoes) &&
+                      pergunta.opcoes.length > 0;
 
-                  const podeGerenciarOpcoes =
-                    pergunta.tipo === "SELECT" ||
-                    pergunta.tipo === "MULTISELECT";
+                    const podeGerenciarOpcoes =
+                      pergunta.tipo === "SELECT" ||
+                      pergunta.tipo === "MULTISELECT";
 
-                  return (
-                    <S.Tr key={pergunta.id_pergunta}>
-                      <S.Td>
-                        <S.PerguntaOrderPill title="Ordem">
-                          #{index + 1}
-                        </S.PerguntaOrderPill>
-                      </S.Td>
+                    return (
+                      <S.Tr key={pergunta.id_pergunta}>
+                        <S.Td>
+                          <S.PerguntaOrderPill title="Ordem">
+                            #{pergunta.ordem ?? index + 1}
+                          </S.PerguntaOrderPill>
+                        </S.Td>
 
-                      <S.Td>
-                        <S.PerguntaTitleCell title={pergunta.titulo}>
-                          {pergunta.titulo}
-                        </S.PerguntaTitleCell>
+                        <S.Td>
+                          <S.PerguntaTitleCell title={pergunta.titulo}>
+                            {pergunta.titulo}
+                          </S.PerguntaTitleCell>
 
-                        {pergunta.descrição && (
-                          <S.PerguntaDescCell title={pergunta.descrição}>
-                            {pergunta.descrição}
-                          </S.PerguntaDescCell>
-                        )}
-                      </S.Td>
+                          {!!pergunta.descricao && (
+                            <S.PerguntaDescCell title={pergunta.descricao}>
+                              {pergunta.descricao}
+                            </S.PerguntaDescCell>
+                          )}
+                        </S.Td>
 
-                      <S.Td>
-                        <S.PerguntaTipoPill $tipo={String(pergunta.tipo)} />
-                      </S.Td>
+                        <S.Td>
+                          <S.PerguntaTipoPill $tipo={String(pergunta.tipo)} />
+                        </S.Td>
 
-                      <S.Td>
-                        {pergunta.obrigatoria ? (
-                          <S.YesPill>Sim</S.YesPill>
-                        ) : (
-                          <S.NoPill>Não</S.NoPill>
-                        )}
-                      </S.Td>
+                        <S.Td>
+                          {pergunta.obrigatoria ? (
+                            <S.YesPill>Sim</S.YesPill>
+                          ) : (
+                            <S.NoPill>Não</S.NoPill>
+                          )}
+                        </S.Td>
 
-                      <S.Td>
-                        {pergunta.ativa ? (
-                          <S.YesPill>Sim</S.YesPill>
-                        ) : (
-                          <S.NoPill>Não</S.NoPill>
-                        )}
-                      </S.Td>
+                        <S.Td>
+                          {pergunta.ativa ? (
+                            <S.YesPill>Sim</S.YesPill>
+                          ) : (
+                            <S.NoPill>Não</S.NoPill>
+                          )}
+                        </S.Td>
 
-                      <S.Td>
-                        {podeGerenciarOpcoes ? (
-                          <S.OpcoesCountPill data-has={hasOpcoes}>
-                            {pergunta.opcoes?.length ?? 0}
-                          </S.OpcoesCountPill>
-                        ) : (
-                          <S.Muted>—</S.Muted>
-                        )}
-                      </S.Td>
-
-                      <S.Td>
-                        <S.Muted>{formatDate(pergunta.data_criacao)}</S.Muted>
-                      </S.Td>
-
-                      <S.Td style={{ textAlign: "right" }}>
-                        <S.RowActions>
-                          {isAdmin ? (
-                            <>
-                              <S.IconButton
-                                type="button"
-                                title="Editar"
-                                onClick={() => onEditarPergunta(pergunta)}
-                              >
-                                <Pencil size={16} />
-                              </S.IconButton>
-
-                              {podeGerenciarOpcoes && (
-                                <S.SecondaryButton
-                                  type="button"
-                                  onClick={() => onAbrirOpcoes(pergunta)}
-                                >
-                                  Opções
-                                </S.SecondaryButton>
-                              )}
-
-                              <S.IconButton
-                                type="button"
-                                title="Excluir"
-                                className="danger"
-                                onClick={() => onExcluirPergunta(pergunta)}
-                                disabled={deletePerguntaMut.isPending}
-                              >
-                                <Trash2 size={16} />
-                              </S.IconButton>
-                            </>
+                        <S.Td>
+                          {podeGerenciarOpcoes ? (
+                            <S.OpcoesCountPill data-has={hasOpcoes}>
+                              {pergunta.opcoes?.length ?? 0}
+                            </S.OpcoesCountPill>
                           ) : (
                             <S.Muted>—</S.Muted>
                           )}
-                        </S.RowActions>
-                      </S.Td>
-                    </S.Tr>
-                  );
-                })}
-            </tbody>
-          </S.PerguntasTable>
-        </S.PerguntasTableWrap>
+                        </S.Td>
+
+                        <S.Td>
+                          <S.Muted>{formatDate(pergunta.data_criacao)}</S.Muted>
+                        </S.Td>
+
+                        <S.Td style={{ textAlign: "right" }}>
+                          <S.RowActions>
+                            {isAdmin ? (
+                              <>
+                                <S.IconButton
+                                  type="button"
+                                  title="Editar"
+                                  onClick={() => onEditarPergunta(pergunta)}
+                                >
+                                  <Pencil size={16} />
+                                </S.IconButton>
+
+                                {podeGerenciarOpcoes && (
+                                  <S.SecondaryButton
+                                    type="button"
+                                    onClick={() => onAbrirOpcoes(pergunta)}
+                                  >
+                                    Opções
+                                  </S.SecondaryButton>
+                                )}
+
+                                <S.IconButton
+                                  type="button"
+                                  title="Excluir"
+                                  className="danger"
+                                  onClick={() => onExcluirPergunta(pergunta)}
+                                  disabled={deletePerguntaMut.isPending}
+                                >
+                                  <Trash2 size={16} />
+                                </S.IconButton>
+                              </>
+                            ) : (
+                              <S.Muted>—</S.Muted>
+                            )}
+                          </S.RowActions>
+                        </S.Td>
+                      </S.Tr>
+                    );
+                  })}
+              </tbody>
+            </S.PerguntasTable>
+          </S.PerguntasTableWrap>
+
+          <Pagination
+            page={page}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+            showPageSize
+            onPageSizeChange={onPageSizeChange}
+            pageSizeOptions={[10, 20, 50, 100]}
+            loading={isLoadingPerguntas}
+          />
+        </>
       )}
 
       <ModalOpcoes

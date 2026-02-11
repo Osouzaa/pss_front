@@ -3,6 +3,7 @@ import * as S from "./styles";
 import type { GetAllInscricoesByProcessoIdResponse } from "../../../../api/get-all-inscricoes-by-processoId";
 import { Pagination } from "../../../../components/Pagination"; // ajuste o path
 import { formatDate } from "../../../../utils/fomartDate.utils";
+import { formatPhoneBR } from "../../../../utils/formatPhoneBR";
 
 interface ITableInscricoesProps {
   resultAllInscricoes: GetAllInscricoesByProcessoIdResponse | undefined;
@@ -79,7 +80,7 @@ export function TableInscricoes({
 
                     <S.Td>
                       <S.CellMono title={i.usuario.candidato?.telefone ?? ""}>
-                        {i.usuario.candidato?.telefone ?? "—"}
+                        {formatPhoneBR(i.usuario.candidato?.telefone) ?? "—"}
                       </S.CellMono>
                     </S.Td>
 
