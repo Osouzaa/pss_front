@@ -12,6 +12,9 @@ import {
 } from "react-icons/fi";
 import * as S from "./styles";
 import { api } from "../../lib/axios";
+import { env } from "../../env";
+
+type StorageProvider = "LOCAL" | "S3" | "AZURE" | "GCS";
 
 type FullInscricaoResponse = {
   inscricao: {
@@ -75,7 +78,7 @@ type FullInscricaoResponse = {
     };
   }>;
 
-  // ✅ NOVO: documentos anexados
+  // ✅ documentos anexados (ajustado para os campos do backend novo)
   documentos: Array<{
     id_candidato_documento: string;
     tipo: string;
@@ -85,10 +88,18 @@ type FullInscricaoResponse = {
     data_atualizacao: string;
     arquivo: null | {
       id_arquivo: string;
-      nome: string | null;
-      mime: string | null;
-      tamanho: number | null;
-      url: string | null;
+
+      nome_original: string;
+      nome_armazenado: string;
+
+      mime_type: string | null;
+      tamanho_bytes: number;
+
+      provider: StorageProvider;
+      storage_key: string;
+      url_publica: string | null;
+
+      sha256?: string | null;
     };
   }>;
 };
@@ -124,12 +135,31 @@ function formatBytes(bytes?: number | null) {
   }
   return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
-
 function guessFileName(doc: FullInscricaoResponse["documentos"][number]) {
-  const nome = doc.arquivo?.nome?.trim();
+  const a = doc.arquivo;
+  if (!a) return doc.tipo;
+  const nome = (a.nome_original ?? "").trim();
   if (nome) return nome;
-  // fallback amigável
-  return `${doc.tipo}${doc.arquivo?.mime ? ` (${doc.arquivo.mime})` : ""}`;
+  const stored = (a.nome_armazenado ?? "").trim();
+  if (stored) return stored;
+  return doc.tipo;
+}
+
+function buildFileUrl(
+  arquivo: NonNullable<FullInscricaoResponse["documentos"][number]["arquivo"]>,
+) {
+  if (arquivo.url_publica) return arquivo.url_publica;
+
+  if (arquivo.provider === "LOCAL") {
+    const base = env.VITE_API_URL.replace(/\/api\/?$/, "");
+    const key = String(arquivo.storage_key || "")
+      .replace(/^\/+/, "")
+      .replace(/^uploads\/+/, "");
+
+    return `${base}/uploads/${key}`;
+  }
+
+  return null;
 }
 
 function renderResposta(item: FullInscricaoResponse["itens"][number]) {
@@ -327,7 +357,7 @@ export default function InscricaoDetalhePage() {
         )}
       </S.Header>
 
-      {/* ✅ NOVO CARD: DOCUMENTOS */}
+      {/* ✅ CARD: DOCUMENTOS */}
       {!isLoading && !isError ? (
         <S.Card>
           <S.CardHeader>
@@ -354,22 +384,26 @@ export default function InscricaoDetalhePage() {
           ) : (
             <S.DocList>
               {documentos.map((doc) => {
+                const a = doc.arquivo;
                 const nomeArquivo = guessFileName(doc);
-                const tamanho = formatBytes(doc.arquivo?.tamanho ?? null);
-                const url = doc.arquivo?.url;
+                const tamanho = formatBytes(a?.tamanho_bytes ?? null);
+                const mime = a?.mime_type ?? "—";
+                const url = a ? buildFileUrl(a) : null;
 
                 return (
                   <S.DocItem key={doc.id_candidato_documento}>
                     <S.DocLeft>
                       <S.DocType>{doc.tipo}</S.DocType>
                       <S.DocName title={nomeArquivo}>{nomeArquivo}</S.DocName>
+
                       <S.DocMeta>
-                        <span>{doc.arquivo?.mime ?? "—"}</span>
+                        <span>{mime}</span>
                         <S.Dot />
                         <span>{tamanho}</span>
                         <S.Dot />
                         <span>Enviado: {formatDateBR(doc.data_criacao)}</span>
                       </S.DocMeta>
+
                       {doc.descricao ? (
                         <S.DocDesc title={doc.descricao}>
                           {doc.descricao}

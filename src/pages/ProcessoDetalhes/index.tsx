@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import * as S from "./styles";
@@ -19,6 +19,7 @@ import { buscarPerguntasProcessos } from "../../api/buscar-perguntas-processos";
 import { getAllVagasProcessoId } from "../../api/get-all-vagas-processoId";
 
 import { Pagination } from "../../components/Pagination"; // ✅ ajuste o path conforme seu projeto
+import { TokenSistems } from "../../constants/env.constantes";
 
 function normalizeText(s: string) {
   return (s ?? "")
@@ -28,11 +29,30 @@ function normalizeText(s: string) {
     .trim();
 }
 
+const VALID_TABS = ["vagas", "perguntas", "inscricoes"] as const;
+type TabKey = (typeof VALID_TABS)[number];
+
+function getInitialTab(isAdmin: boolean): TabKey {
+  const raw = localStorage.getItem(TokenSistems.TAB_STORAGE_KEY);
+
+  if (!raw) return "vagas";
+
+  if (!VALID_TABS.includes(raw as TabKey)) {
+    return "vagas";
+  }
+
+  if (!isAdmin && raw === "inscricoes") {
+    return "vagas";
+  }
+
+  return raw as TabKey;
+}
+
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin } = useAuth();
 
-  const [tab, setTab] = useState("vagas");
+  const [tab, setTab] = useState<string>(() => getInitialTab(isAdmin));
   const [qVaga, setQVaga] = useState("");
 
   const [openModal, setOpenModal] = useState<boolean>(false);
@@ -56,6 +76,16 @@ export function ProcessoSeletivosDetalhes() {
   const [pageSizePerguntas, setPageSizePerguntas] = useState(20);
 
   const qVagaNormalized = useMemo(() => normalizeText(qVaga), [qVaga]);
+
+  useEffect(() => {
+    if (!isAdmin && tab === "inscricoes") {
+      setTab("vagas");
+      localStorage.setItem(TokenSistems.TAB_STORAGE_KEY, "vagas");
+      return;
+    }
+
+    localStorage.setItem(TokenSistems.TAB_STORAGE_KEY, tab);
+  }, [tab, isAdmin]);
 
   const { data: processo, isLoading } = useQuery({
     queryKey: ["processo", id],
