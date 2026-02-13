@@ -224,6 +224,9 @@ export const LogoutButton = styled.button`
 ========================= */
 
 export const BottomBar = styled.nav`
+  /* ✅ altura única e reutilizável (inclui safe-area) */
+  --bottom-bar-space: calc(${bottomBarH} + env(safe-area-inset-bottom));
+
   position: fixed;
   left: 0;
   right: 0;
@@ -231,18 +234,25 @@ export const BottomBar = styled.nav`
 
   z-index: 70;
 
+  height: var(--bottom-bar-space);
+  box-sizing: border-box;
+
   background: ${({ theme }) => theme.background};
   border-top: 1px solid ${({ theme }) => theme.border};
 
-  padding: 0.5rem 0.625rem calc(0.5rem + env(safe-area-inset-bottom));
+  /* padding “interno” sem estourar a altura */
+  padding: 0.5rem 0.625rem;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.5rem;
 
-  @media (min-width: ${bp.md}) {
+  @media (min-width: 48rem) {
     display: none;
   }
 `;
+
+/* ✅ exporta a var pra usar no layout */
+export const MOBILE_BOTTOM_BAR_SPACE = "var(--bottom-bar-space)";
 
 export const BottomItem = styled.a`
   text-decoration: none;

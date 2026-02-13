@@ -1,8 +1,9 @@
 import styled from "styled-components";
+import { MOBILE_BOTTOM_BAR_SPACE } from "../components/ProcessoSidebar/styles";
 
 const bp = {
-  md: "48rem", // 768px (tablet)
-  xl: "81.25rem", // 1300px (desktop grande)
+  md: "48rem",
+  xl: "81.25rem",
 };
 
 export const Layout = styled.div`
@@ -13,13 +14,11 @@ export const Layout = styled.div`
     grid-template-columns: 30% 70%;
   }
 
-  /* Tablet em paisagem */
   @media (min-width: ${bp.md}) and (orientation: landscape) {
     display: grid;
     grid-template-columns: 30% 70%;
   }
 
-  /* Desktop grande */
   @media (min-width: ${bp.xl}) {
     grid-template-columns: 20% 80%;
   }
@@ -27,7 +26,12 @@ export const Layout = styled.div`
 
 export const Content = styled.main`
   padding: 1rem;
-  min-width: 0; /* evita overflow em grids */
+  min-width: 0;
+
+  /* ✅ reserva espaço no MOBILE (sempre funciona) */
+  @media (max-width: ${bp.md}) {
+    padding-bottom: calc(${MOBILE_BOTTOM_BAR_SPACE} + 1rem);
+  }
 
   @media (min-width: ${bp.xl}) {
     padding: 1.25rem 1.5rem;
