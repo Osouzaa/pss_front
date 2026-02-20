@@ -1,3 +1,4 @@
+// index.tsx (COMPLETO) — com os ajustes: wrap da tabela + tooltip title no label/valor
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -19,6 +20,7 @@ import {
   Row,
   Footer,
   OptionsHeader,
+  OptionsTableWrap, // ✅ novo
   OptionsTable,
   OptionRow,
   EmptyState,
@@ -46,7 +48,6 @@ export type OpcaoPergunta = {
   ordem: number;
   ativa: boolean;
 
-  // ✅ NOVOS
   valor_fundamental?: number | null;
   valor_medio?: number | null;
   valor_superior?: number | null;
@@ -76,8 +77,9 @@ function makeValueFromLabel(label: string) {
     .replace(/^_+|_+$/g, "")
     .replace(/_+/g, "_");
 
-  return base.slice(0, 60); // ✅ limita automaticamente
+  return base.slice(0, 60);
 }
+
 import * as z from "zod";
 
 const opcaoSchema = z.object({
@@ -86,7 +88,6 @@ const opcaoSchema = z.object({
     .min(1, "Informe o label")
     .max(200, "O label deve ter no máximo 200 caracteres"),
 
-  // Mesmo sendo automático, vamos limitar a 60 caracteres
   valor: z
     .string()
     .max(60, "O valor gerado deve ter no máximo 60 caracteres")
@@ -148,7 +149,7 @@ export function ModalOpcoes({
     mode: "onChange",
     defaultValues: {
       label: "",
-      valor: "", // será preenchido automaticamente
+      valor: "",
       ordem: 0,
       ativa: true,
 
@@ -262,7 +263,7 @@ export function ModalOpcoes({
     try {
       const valorGerado = makeValueFromLabel(data.label);
 
-      // ✅ (opcional) valida duplicidade no front por pergunta
+      // ✅ valida duplicidade no front por pergunta
       const jaExiste = opcoes.some(
         (op) =>
           op.valor?.toLowerCase() === valorGerado.toLowerCase() &&
@@ -278,9 +279,9 @@ export function ModalOpcoes({
 
       const payload: any = {
         label: data.label.trim(),
-        valor: valorGerado, // ✅ SEMPRE automatizado
+        valor: valorGerado,
         ordem: data.ordem,
-        ativa: data.ativa,
+        ativa: true,
 
         valor_fundamental: data.valor_fundamental ?? null,
         valor_medio: data.valor_medio ?? null,
@@ -464,81 +465,86 @@ export function ModalOpcoes({
               ) : opcoes.length === 0 ? (
                 <EmptyState>Nenhuma opção cadastrada ainda.</EmptyState>
               ) : (
-                <OptionsTable>
-                  <thead>
-                    <tr>
-                      <th>Label</th>
-                      <th>Valor</th>
+                <OptionsTableWrap>
+                  <OptionsTable>
+                    <thead>
+                      <tr>
+                        <th>Label</th>
+                        <th>Valor</th>
 
-                      {/* ✅ NOVOS */}
-                      <th className="small">Fund.</th>
-                      <th className="small">Médio</th>
-                      <th className="small">Sup.</th>
+                        <th className="small">Fund.</th>
+                        <th className="small">Médio</th>
+                        <th className="small">Sup.</th>
 
-                      <th className="small">Ordem</th>
-                      <th className="small">Status</th>
-                      <th className="actions">Ações</th>
-                    </tr>
-                  </thead>
+                        <th className="small">Ordem</th>
+                        <th className="small">Status</th>
+                        <th className="actions">Ações</th>
+                      </tr>
+                    </thead>
 
-                  <tbody>
-                    {opcoes
-                      .slice()
-                      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-                      .map((op) => {
-                        const isEditingRow = editing?.id_opcao === op.id_opcao;
+                    <tbody>
+                      {opcoes
+                        .slice()
+                        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+                        .map((op) => {
+                          const isEditingRow =
+                            editing?.id_opcao === op.id_opcao;
 
-                        return (
-                          <OptionRow
-                            key={op.id_opcao}
-                            data-active={isEditingRow}
-                          >
-                            <td className="label">
-                              <div className="main">{op.label}</div>
-                            </td>
+                          return (
+                            <OptionRow
+                              key={op.id_opcao}
+                              data-active={isEditingRow}
+                            >
+                              {/* ✅ tooltip com texto completo */}
+                              <td className="label" title={op.label}>
+                                <div className="main">{op.label}</div>
+                              </td>
 
-                            <td className="value">{op.valor}</td>
+                              {/* ✅ tooltip com texto completo */}
+                              <td className="value" title={op.valor}>
+                                {op.valor}
+                              </td>
 
-                            {/* ✅ NOVOS */}
-                            <td className="small">
-                              {op.valor_fundamental ?? "-"}
-                            </td>
-                            <td className="small">{op.valor_medio ?? "-"}</td>
-                            <td className="small">
-                              {op.valor_superior ?? "-"}
-                            </td>
+                              <td className="small">
+                                {op.valor_fundamental ?? "-"}
+                              </td>
+                              <td className="small">{op.valor_medio ?? "-"}</td>
+                              <td className="small">
+                                {op.valor_superior ?? "-"}
+                              </td>
 
-                            <td className="small">{op.ordem}</td>
+                              <td className="small">{op.ordem}</td>
 
-                            <td className="small">
-                              <Badge data-on={op.ativa}>
-                                {op.ativa ? "Ativa" : "Inativa"}
-                              </Badge>
-                            </td>
+                              <td className="small">
+                                <Badge data-on={op.ativa}>
+                                  {op.ativa ? "Ativa" : "Inativa"}
+                                </Badge>
+                              </td>
 
-                            <td className="actions">
-                              <ActionButton
-                                type="button"
-                                onClick={() => setEditing(op)}
-                                title="Editar"
-                              >
-                                <Pencil size={16} />
-                              </ActionButton>
+                              <td className="actions">
+                                <ActionButton
+                                  type="button"
+                                  onClick={() => setEditing(op)}
+                                  title="Editar"
+                                >
+                                  <Pencil size={16} />
+                                </ActionButton>
 
-                              <ActionButton
-                                type="button"
-                                className="danger"
-                                onClick={() => handleDelete(op)}
-                                title="Excluir"
-                              >
-                                <Trash2 size={16} />
-                              </ActionButton>
-                            </td>
-                          </OptionRow>
-                        );
-                      })}
-                  </tbody>
-                </OptionsTable>
+                                <ActionButton
+                                  type="button"
+                                  className="danger"
+                                  onClick={() => handleDelete(op)}
+                                  title="Excluir"
+                                >
+                                  <Trash2 size={16} />
+                                </ActionButton>
+                              </td>
+                            </OptionRow>
+                          );
+                        })}
+                    </tbody>
+                  </OptionsTable>
+                </OptionsTableWrap>
               )}
             </RightCol>
           </Body>

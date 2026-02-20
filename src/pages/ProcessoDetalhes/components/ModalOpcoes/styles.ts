@@ -1,3 +1,4 @@
+// styles.ts (COMPLETO)
 import styled, { keyframes } from "styled-components";
 import * as Dialog from "@radix-ui/react-dialog";
 
@@ -33,7 +34,7 @@ export const Content = styled(Dialog.Content)`
   transform: translate(-50%, -50%);
 
   width: min(1220px, calc(100vw - 24px));
-  max-height: min(84vh, 920px);
+  max-height: min(86vh, 960px);
   overflow: hidden;
 
   background: ${({ theme }) => theme.background};
@@ -44,8 +45,14 @@ export const Content = styled(Dialog.Content)`
   z-index: 9000001;
   animation: ${contentIn} 220ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ✅ melhora: evita “tremor”/pixel ao animar no Chrome */
   will-change: transform, opacity;
+
+  /* ✅ mobile: ocupa praticamente a tela toda e não “sobra” embaixo */
+  @media (max-width: 520px) {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    border-radius: 16px;
+  }
 `;
 
 export const HeaderContent = styled.header`
@@ -105,29 +112,36 @@ export const HeaderContent = styled.header`
 export const Title = styled(Dialog.Title)`
   font-size: 1.15rem;
   color: ${({ theme }) => theme.text};
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -0.3px;
 `;
 
-/** ====== Layout 2 colunas ====== */
+/** ====== Layout 2 colunas (responsivo) ====== */
 export const Body = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
 
-  max-height: calc(84vh - 72px);
+  max-height: calc(86vh - 72px);
   overflow: auto;
 
-  /* ✅ melhora: scroll mais suave */
   -webkit-overflow-scrolling: touch;
+
+  /* ✅ melhora: não deixa “quebrar” conteúdo dentro do grid */
+  min-width: 0;
 
   @media (min-width: 880px) {
     grid-template-columns: 1fr 1px 1.1fr;
+  }
+
+  @media (max-width: 520px) {
+    max-height: calc(100vh - 86px);
   }
 `;
 
 export const LeftCol = styled.div`
   padding: 1rem;
+  min-width: 0;
 
   @media (min-width: 880px) {
     padding: 1.05rem 1.05rem 1.1rem;
@@ -136,6 +150,7 @@ export const LeftCol = styled.div`
 
 export const RightCol = styled.div`
   padding: 1rem;
+  min-width: 0; /* ✅ FUNDAMENTAL: permite ellipsis funcionar dentro do grid */
 
   @media (min-width: 880px) {
     padding: 1.05rem 1.05rem 1.1rem;
@@ -168,7 +183,7 @@ export const Row = styled.div`
     grid-template-columns: 1fr 1fr;
   }
 
-  /* ✅ NOVO: quando usar Row className="row-grid" vira 3 colunas */
+  /* ✅ 3 colunas (para os valores Fundamental/Médio/Superior) */
   &.row-grid {
     @media (min-width: 760px) {
       grid-template-columns: 1fr 1fr 1fr;
@@ -188,7 +203,7 @@ export const Footer = styled.div`
     padding: 0 14px;
     border-radius: 12px;
     font-size: 13px;
-    font-weight: 900;
+    font-weight: 700;
     border: 1px solid transparent;
 
     cursor: pointer;
@@ -266,6 +281,22 @@ export const EmptyState = styled.div`
   line-height: 1.35;
 `;
 
+/** ✅ Wrapper pra scroll horizontal só na tabela (não no modal todo) */
+export const OptionsTableWrap = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+
+  -webkit-overflow-scrolling: touch;
+
+  /* opcional: scrollbar discreta */
+  &::-webkit-scrollbar {
+    height: 10px;
+  }
+`;
+
+/** ✅ Tabela responsiva (label/valor grandes sem estourar) */
 export const OptionsTable = styled.table`
   width: 100%;
   border-collapse: separate;
@@ -274,6 +305,12 @@ export const OptionsTable = styled.table`
   border: 1px solid ${({ theme }) => theme.border};
   border-radius: 12px;
   overflow: hidden;
+
+  /* ✅ chave: impede colunas crescerem infinito */
+  table-layout: fixed;
+
+  /* ✅ no desktop ela tem espaço “ideal”; no mobile pode rolar */
+  min-width: 760px;
 
   thead th {
     text-align: left;
@@ -286,23 +323,10 @@ export const OptionsTable = styled.table`
     color: ${({ theme }) => theme.text};
     border-bottom: 1px solid ${({ theme }) => theme.border};
 
-    /* ✅ melhora leitura do header ao rolar */
     position: sticky;
     top: 0;
     z-index: 2;
-  }
 
-  th.small,
-  td.small {
-    width: 86px;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  th.actions,
-  td.actions {
-    width: 120px;
-    text-align: right;
     white-space: nowrap;
   }
 
@@ -312,23 +336,116 @@ export const OptionsTable = styled.table`
     color: ${({ theme }) => theme.text};
     font-size: 0.92rem;
     vertical-align: middle;
+
+    /* ✅ evita “estouro” por texto grande */
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   tbody tr:last-child td {
     border-bottom: none;
   }
 
-  .value {
+  /* ✅ larguras por coluna (equilíbrio geral) */
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: 42%;
+  }
+
+  th:nth-child(2),
+  td:nth-child(2) {
+    width: 30%;
+  }
+
+  /* Fund / Médio / Sup */
+  th:nth-child(3),
+  td:nth-child(3),
+  th:nth-child(4),
+  td:nth-child(4),
+  th:nth-child(5),
+  td:nth-child(5) {
+    width: 88px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Ordem */
+  th:nth-child(6),
+  td:nth-child(6) {
+    width: 82px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Status */
+  th:nth-child(7),
+  td:nth-child(7) {
+    width: 100px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* Ações */
+  th:nth-child(8),
+  td:nth-child(8) {
+    width: 120px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* ✅ Label: até 2 linhas, corta com reticências */
+  td.label .main {
+    font-weight: 700;
+    line-height: 1.2;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ✅ Valor: 1 linha, monospace, ellipsis */
+  td.value {
     font-family:
       ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     font-size: 0.85rem;
     opacity: 0.92;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .label .main {
-    font-weight: 900;
-    line-height: 1.2;
+  /* ✅ Mobile: some colunas menos importantes e compacta */
+  @media (max-width: 720px) {
+    min-width: 0;
+
+    thead th,
+    tbody td {
+      padding: 10px 10px;
+    }
+
+    /* esconde Fund/Médio/Sup no mobile */
+    th:nth-child(3),
+    td:nth-child(3),
+    th:nth-child(4),
+    td:nth-child(4),
+    th:nth-child(5),
+    td:nth-child(5) {
+      display: none;
+    }
+
+    /* reequilibra */
+    th:nth-child(1),
+    td:nth-child(1) {
+      width: 55%;
+    }
+
+    th:nth-child(2),
+    td:nth-child(2) {
+      width: 45%;
+    }
   }
 `;
 
@@ -357,7 +474,7 @@ export const Badge = styled.span<{ "data-on"?: boolean }>`
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.78rem;
-  font-weight: 900;
+  font-weight: 700;
 
   color: ${({ theme }) => theme.text};
   border: 1px solid ${({ theme }) => theme.border};
