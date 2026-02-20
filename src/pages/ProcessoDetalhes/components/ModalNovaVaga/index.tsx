@@ -97,6 +97,9 @@ export function ModalNovaVaga({
       queryClient.invalidateQueries({
         queryKey: ["processo-id", id_processo_seletivo],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["vagas-processo"],
+      });
     },
   });
 
