@@ -15,7 +15,12 @@ import { SelectBase } from "../../../../components/SelectBase";
 import { TextAreaBase } from "../../../../components/TextAreaBase";
 
 import { useEffect, useMemo } from "react";
-import { useForm, type Resolver, type SubmitHandler } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  type Resolver,
+  type SubmitHandler,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -63,14 +68,15 @@ interface IModalNovaPergunta {
   id_processo_seletivo: string;
   perguntaToEdit?: PerguntaToEdit | null;
 }
+
 type FaixaForm = { ate: number; medio: number | null; superior: number | null };
 
 const DEFAULT_FAIXAS: FaixaForm[] = [
-  { ate: 365, medio: null, superior: null }, // 0..365
-  { ate: 730, medio: null, superior: null }, // 366..730
-  { ate: 1095, medio: null, superior: null }, // 731..1095
-  { ate: 1460, medio: null, superior: null }, // 1096..1460
-  { ate: 999999, medio: null, superior: null }, // acima de 1460
+  { ate: 365, medio: null, superior: null },
+  { ate: 730, medio: null, superior: null },
+  { ate: 1095, medio: null, superior: null },
+  { ate: 1460, medio: null, superior: null },
+  { ate: 999999, medio: null, superior: null },
 ];
 
 function safeParseRegraJson(v?: string | null) {
@@ -121,6 +127,7 @@ export function ModalNovaPergunta({
     reset,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateNovaPerguntaFormData>({
     resolver: zodResolver(
@@ -141,14 +148,13 @@ export function ModalNovaPergunta({
 
       faixas: DEFAULT_FAIXAS,
 
-      // ✅ NOVO
       exige_comprovante: false,
       label_comprovante: null,
     },
   });
 
   const tipo = watch("tipo");
-  const exigeComprovante = watch("exige_comprovante");
+  const exigeComprovante = watch("exige_comprovante"); // ✅ agora vai ser boolean estável
   const faixasWatch = watch("faixas") ?? [];
 
   useEffect(() => {
@@ -157,6 +163,9 @@ export function ModalNovaPergunta({
     if (perguntaToEdit) {
       const regra = safeParseRegraJson(perguntaToEdit.regra_json);
       const faixasFromEdit = normalizeFaixasFromEdit(regra);
+
+      const exige = !!perguntaToEdit.exige_comprovante;
+      const doc = perguntaToEdit.label_comprovante ?? null;
 
       reset({
         titulo: perguntaToEdit.titulo ?? "",
@@ -172,9 +181,16 @@ export function ModalNovaPergunta({
 
         faixas: faixasFromEdit ?? DEFAULT_FAIXAS,
 
-        // ✅ NOVO
-        exige_comprovante: !!perguntaToEdit.exige_comprovante,
-        label_comprovante: perguntaToEdit.label_comprovante ?? null,
+        exige_comprovante: exige,
+        label_comprovante: exige ? doc : null,
+      });
+
+      // ✅ reforço
+      queueMicrotask(() => {
+        setValue("exige_comprovante", exige, { shouldValidate: true });
+        setValue("label_comprovante", exige ? doc : null, {
+          shouldValidate: true,
+        });
       });
 
       return;
@@ -194,11 +210,10 @@ export function ModalNovaPergunta({
 
       faixas: DEFAULT_FAIXAS,
 
-      // ✅ NOVO
       exige_comprovante: false,
       label_comprovante: null,
     });
-  }, [open, perguntaToEdit, reset]);
+  }, [open, perguntaToEdit, reset, setValue]);
 
   // ✅ limpa pontuação se não for BOOLEAN
   useEffect(() => {
@@ -275,14 +290,12 @@ export function ModalNovaPergunta({
         pontuacao_medio: data.pontuacao_medio ?? null,
         pontuacao_superior: data.pontuacao_superior ?? null,
 
-        // ✅ NOVO: anexo
         exige_comprovante: data.exige_comprovante ?? false,
         label_comprovante: data.exige_comprovante
           ? (data.label_comprovante ?? null)
           : null,
       };
 
-      // ✅ regra_json para experiência
       if (data.tipo === "EXPERIENCIA_DIAS") {
         payload.regra_json = JSON.stringify({
           tipo: "FAIXAS_DIAS",
@@ -403,33 +416,43 @@ export function ModalNovaPergunta({
               </SelectBase>
             </Row>
 
-            {/* ✅ NOVO: anexo */}
+            {/* ✅ anexo (Controller nos DOIS campos) */}
             <Row>
-              <SelectBase
-                label="Precisa de anexo?"
-                {...register("exige_comprovante", {
-                  setValueAs: (v) => v === true || v === "true",
-                })}
-              >
-                <option value="false">Não</option>
-                <option value="true">Sim</option>
-              </SelectBase>
+              <Controller
+                control={control}
+                name="exige_comprovante"
+                render={({ field }) => (
+                  <SelectBase
+                    label="Precisa de anexo?"
+                    value={field.value ? "true" : "false"}
+                    onChange={(e) => field.onChange(e.target.value === "true")}
+                  >
+                    <option value="false">Não</option>
+                    <option value="true">Sim</option>
+                  </SelectBase>
+                )}
+              />
 
               {exigeComprovante ? (
-                <SelectBase
-                  label="Qual documento?"
-                  {...register("label_comprovante", {
-                    setValueAs: (v) => (v === "" ? null : String(v)),
-                  })}
-                  error={errors.label_comprovante?.message as any}
-                >
-                  <option value="">Selecione</option>
-                  {DOCUMENTO_TIPO_OPTIONS.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </SelectBase>
+                <Controller
+                  control={control}
+                  name="label_comprovante"
+                  render={({ field }) => (
+                    <SelectBase
+                      label="Qual documento?"
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value || null)}
+                      error={errors.label_comprovante?.message as any}
+                    >
+                      <option value="">Selecione</option>
+                      {DOCUMENTO_TIPO_OPTIONS.map((d) => (
+                        <option key={d.value} value={d.value}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </SelectBase>
+                  )}
+                />
               ) : (
                 <div />
               )}
@@ -442,7 +465,6 @@ export function ModalNovaPergunta({
               </p>
             ) : null}
 
-            {/* ✅ Pontuação por nível (BOOLEAN) */}
             {showPontuacaoPorNivel ? (
               <>
                 <Row className="row-grid">
@@ -463,13 +485,12 @@ export function ModalNovaPergunta({
                     {...register("pontuacao_medio", { valueAsNumber: true })}
                     error={errors.pontuacao_medio?.message}
                   />
+
                   <InputBase
                     label="Pontuação (Superior)"
                     type="number"
                     placeholder="Ex: 5"
-                    {...register("pontuacao_superior", {
-                      valueAsNumber: true,
-                    })}
+                    {...register("pontuacao_superior", { valueAsNumber: true })}
                     error={errors.pontuacao_superior?.message}
                   />
                 </Row>
@@ -481,7 +502,6 @@ export function ModalNovaPergunta({
               </>
             ) : null}
 
-            {/* ✅ Experiência (faixas) */}
             {showExperiencia ? (
               <>
                 <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600 }}>
@@ -565,7 +585,7 @@ export function ModalNovaPergunta({
                 title={
                   !isValid ? "Preencha os campos corretamente" : submitText
                 }
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isValid}
               >
                 {isSubmitting ? "Salvando..." : submitText}
               </button>
