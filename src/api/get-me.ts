@@ -34,6 +34,7 @@ export type UsuarioComCandidatoDTO = {
 
   tipo: UsuarioTipo;
   ativo: boolean;
+  secretaria: string;
   fl_primeiro_acesso: boolean;
 
   id_candidato: string | null; // no seu retorno veio null (porque você tá mudando o vínculo)

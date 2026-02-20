@@ -29,6 +29,7 @@ import type { ProcessoSeletivoResponse } from "../../../../api/get-processo-id";
 import { creatProcessoError } from "../../../../errs/create-processo.erro copy";
 import { editProcessoError } from "../../../../errs/edit-processo.error";
 import { SECRETARIAS } from "../../../../utils/secreatias.map.utils";
+import { useAuth } from "../../../../contexts/auth-context";
 
 interface IModalNovoProcesso {
   open: boolean;
@@ -41,7 +42,6 @@ function isoToInputDate(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  // YYYY-MM-DD (input type="date")
   return d.toISOString().slice(0, 10);
 }
 
@@ -51,8 +51,16 @@ export function ModalNovoProcesso({
   processoToEdit,
 }: IModalNovoProcesso) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const isEdit = !!processoToEdit?.id_processo_seletivo;
+  const isAdmin = user?.tipo === "ADMIN";
+
+  const secretariasOptions = useMemo(() => {
+    if (isAdmin) return SECRETARIAS;
+    if (user?.secretaria) return [user.secretaria];
+    return [];
+  }, [isAdmin, user?.secretaria]);
 
   const {
     register,
@@ -64,7 +72,7 @@ export function ModalNovoProcesso({
     mode: "onChange",
     defaultValues: {
       titulo: "",
-      secretaria: "",
+      secretaria: isAdmin ? "" : (user?.secretaria ?? ""),
       ano: new Date().getFullYear(),
       status: "ABERTO",
       data_inicio_inscricoes: "",
@@ -78,7 +86,9 @@ export function ModalNovoProcesso({
     if (processoToEdit) {
       reset({
         titulo: processoToEdit.titulo ?? "",
-        secretaria: processoToEdit.secretaria ?? "",
+        secretaria: isAdmin
+          ? (processoToEdit.secretaria ?? "")
+          : (user?.secretaria ?? processoToEdit.secretaria ?? ""),
         ano: processoToEdit.ano ?? new Date().getFullYear(),
         status: (processoToEdit.status ?? "ABERTO") as any,
         data_inicio_inscricoes: isoToInputDate(
@@ -91,13 +101,13 @@ export function ModalNovoProcesso({
 
     reset({
       titulo: "",
-      secretaria: "",
+      secretaria: isAdmin ? "" : (user?.secretaria ?? ""),
       ano: new Date().getFullYear(),
       status: "ABERTO",
       data_inicio_inscricoes: "",
       data_fim_inscricoes: "",
     });
-  }, [open, processoToEdit, reset]);
+  }, [open, processoToEdit, reset, isAdmin, user?.secretaria]);
 
   function handleClose() {
     onOpenChange(false);
@@ -134,12 +144,16 @@ export function ModalNovoProcesso({
 
   const onSubmit = async (data: CreateNovoProcessoFormData) => {
     try {
+      const secretariaFinal = isAdmin
+        ? data.secretaria
+        : (user?.secretaria ?? data.secretaria);
+
       if (isEdit && processoToEdit?.id_processo_seletivo) {
         await editarProcessoFn({
           id_processo_seletivo: processoToEdit.id_processo_seletivo,
           payload: {
             titulo: data.titulo,
-            secretaria: data.secretaria,
+            secretaria: secretariaFinal,
             ano: data.ano,
             status: data.status,
             data_inicio_inscricoes: data.data_inicio_inscricoes,
@@ -154,7 +168,7 @@ export function ModalNovoProcesso({
 
       await criarNovoProcessoFn({
         titulo: data.titulo,
-        secretaria: data.secretaria,
+        secretaria: secretariaFinal,
         ano: data.ano,
         status: data.status,
         data_inicio_inscricoes: data.data_inicio_inscricoes,
@@ -164,9 +178,7 @@ export function ModalNovoProcesso({
       toast.success("Processo criado com sucesso!");
       handleClose();
     } catch (error) {
-      // ✅ aqui entra o tratamento correto
       if (isEdit) {
-        // se não tiver editProcessoError ainda, pode trocar por creatProcessoError
         const msg =
           typeof editProcessoError === "function"
             ? editProcessoError(error)
@@ -204,9 +216,14 @@ export function ModalNovoProcesso({
               error={errors.titulo?.message}
             />
 
-            <SelectBase {...register("secretaria")} label="Secretaria">
-              <option value="">Selecione</option>
-              {SECRETARIAS.map((nome) => (
+            <SelectBase
+              {...register("secretaria")}
+              label="Secretaria"
+              disabled={!isAdmin} // ✅ não-admin não altera
+            >
+              {isAdmin && <option value="">Selecione</option>}
+
+              {secretariasOptions.map((nome) => (
                 <option key={nome} value={nome}>
                   {nome}
                 </option>
