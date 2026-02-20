@@ -23,6 +23,16 @@ export const DOCUMENTO_TIPO_OPTIONS = [
   { value: "DOUTORADO", label: "DOUTORADO" },
   { value: "CURSO", label: "CURSOS / CERTIFICADOS" },
 
+  // ✅ Especialização (máx. 2)
+  {
+    value: "COMPROVANTE_ESPECIALIZACAO_1",
+    label: "COMPROVANTE DE ESPECIALIZAÇÃO (1)",
+  },
+  {
+    value: "COMPROVANTE_ESPECIALIZACAO_2",
+    label: "COMPROVANTE DE ESPECIALIZAÇÃO (2)",
+  },
+
   // Experiência profissional
   { value: "EXPERIENCIA_PROFISSIONAL", label: "EXPERIÊNCIA PROFISSIONAL" },
   { value: "CTPS", label: "CTPS" },

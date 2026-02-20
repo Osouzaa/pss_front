@@ -71,14 +71,13 @@ function makeValueFromLabel(label: string) {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove acentos
-    .replace(/[^a-z0-9]+/g, "_") // tudo que não for [a-z0-9] vira _
-    .replace(/^_+|_+$/g, "") // remove _ no começo/fim
-    .replace(/_+/g, "_"); // colapsa ____
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
 
-  return base;
+  return base.slice(0, 60); // ✅ limita automaticamente
 }
-
 import * as z from "zod";
 
 const opcaoSchema = z.object({

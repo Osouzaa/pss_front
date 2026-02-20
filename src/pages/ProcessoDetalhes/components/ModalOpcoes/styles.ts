@@ -32,7 +32,7 @@ export const Content = styled(Dialog.Content)`
   top: 50%;
   transform: translate(-50%, -50%);
 
-  width: min(1020px, calc(100vw - 24px));
+  width: min(1220px, calc(100vw - 24px));
   max-height: min(84vh, 920px);
   overflow: hidden;
 
