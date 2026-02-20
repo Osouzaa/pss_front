@@ -19,7 +19,7 @@ export const DOCUMENTO_TIPO_OPTIONS = [
   { value: "DIPLOMA", label: "DIPLOMA" },
   { value: "HISTORICO_ESCOLAR", label: "HISTÓRICO ESCOLAR" },
   { value: "ENSINO_SUPERIOR", label: "ENSINO SUPERIOR" },
-  { value: "MESTRADO", label: "MESTRADO (ATÉ 2)" },
+  { value: "MESTRADO", label: "MESTRADO" },
   { value: "DOUTORADO", label: "DOUTORADO" },
   { value: "CURSO", label: "CURSOS / CERTIFICADOS" },
 

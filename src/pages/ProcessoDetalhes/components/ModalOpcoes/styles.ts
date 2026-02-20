@@ -20,8 +20,8 @@ const contentIn = keyframes`
 export const Overlay = styled(Dialog.Overlay)`
   position: fixed;
   inset: 0;
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(2px);
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(3px);
   z-index: 9000000;
   animation: ${overlayIn} 160ms ease-out;
 `;
@@ -32,56 +32,81 @@ export const Content = styled(Dialog.Content)`
   top: 50%;
   transform: translate(-50%, -50%);
 
-  width: min(980px, calc(100vw - 28px));
-  max-height: min(82vh, 900px);
+  width: min(1020px, calc(100vw - 24px));
+  max-height: min(84vh, 920px);
   overflow: hidden;
 
   background: ${({ theme }) => theme.background};
   border: 1px solid ${({ theme }) => theme.border};
-  border-radius: 14px;
-  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.28);
+  border-radius: 18px;
+
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.35);
   z-index: 9000001;
   animation: ${contentIn} 220ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ✅ melhora: evita “tremor”/pixel ao animar no Chrome */
+  will-change: transform, opacity;
 `;
 
 export const HeaderContent = styled.header`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 
-  padding: 0.85rem 0.9rem;
-  border-bottom: 1px solid ${(props) => props.theme["border"]};
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
 
   .subtitle {
     display: block;
-    font-size: 0.8rem;
-    opacity: 0.75;
-    margin-top: 2px;
-    color: ${(props) => props.theme["text"]};
+    font-size: 0.82rem;
+    line-height: 1.2;
+    opacity: 0.78;
+    margin-top: 4px;
+    color: ${({ theme }) => theme.description ?? theme.text};
   }
 
   button {
-    padding: 0.625rem;
-    border: 1px solid ${(props) => props.theme["border"]};
-    color: ${(props) => props.theme["text"]};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 38px;
+    width: 40px;
+
+    border: 1px solid ${({ theme }) => theme.border};
+    color: ${({ theme }) => theme.text};
     background: transparent;
-    font-size: 0.75rem;
+
     cursor: pointer;
-    border-radius: 14px;
+    border-radius: 12px;
+    transition:
+      background 0.12s ease,
+      border-color 0.12s ease,
+      transform 0.12s ease,
+      color 0.12s ease;
 
     &:hover {
-      background-color: ${(props) => props.theme["link"]};
-      color: ${(props) => props.theme["text-white"]};
-      transition: 0.5s all;
+      background: ${({ theme }) => theme.BGlink};
+      border-color: ${({ theme }) => theme.link};
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.active};
     }
   }
 `;
 
 export const Title = styled(Dialog.Title)`
-  font-size: 1.2rem;
-  color: ${(props) => props.theme["text"]};
+  font-size: 1.15rem;
+  color: ${({ theme }) => theme.text};
   font-weight: 900;
+  letter-spacing: -0.3px;
 `;
 
 /** ====== Layout 2 colunas ====== */
@@ -90,25 +115,36 @@ export const Body = styled.div`
   grid-template-columns: 1fr;
   gap: 0;
 
-  max-height: calc(82vh - 70px);
+  max-height: calc(84vh - 72px);
   overflow: auto;
 
+  /* ✅ melhora: scroll mais suave */
+  -webkit-overflow-scrolling: touch;
+
   @media (min-width: 880px) {
-    grid-template-columns: 1fr 1px 1.15fr;
+    grid-template-columns: 1fr 1px 1.1fr;
   }
 `;
 
 export const LeftCol = styled.div`
   padding: 1rem;
+
+  @media (min-width: 880px) {
+    padding: 1.05rem 1.05rem 1.1rem;
+  }
 `;
 
 export const RightCol = styled.div`
   padding: 1rem;
+
+  @media (min-width: 880px) {
+    padding: 1.05rem 1.05rem 1.1rem;
+  }
 `;
 
 export const Divider = styled.div`
   display: none;
-  background: ${(props) => props.theme["border"]};
+  background: ${({ theme }) => theme.border};
 
   @media (min-width: 880px) {
     display: block;
@@ -122,6 +158,7 @@ export const FormStyles = styled.form`
   gap: 1rem;
 `;
 
+/* ✅ Row padrão: 1 coluna no mobile, 2 no desktop */
 export const Row = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -130,46 +167,69 @@ export const Row = styled.div`
   @media (min-width: 560px) {
     grid-template-columns: 1fr 1fr;
   }
+
+  /* ✅ NOVO: quando usar Row className="row-grid" vira 3 colunas */
+  &.row-grid {
+    @media (min-width: 760px) {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+  }
 `;
 
 export const Footer = styled.div`
-  margin-top: 6px;
+  margin-top: 8px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
 
   button {
     height: 42px;
     padding: 0 14px;
     border-radius: 12px;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 900;
     border: 1px solid transparent;
+
     cursor: pointer;
-    transition: 0.12s ease;
+    transition:
+      background 0.12s ease,
+      border-color 0.12s ease,
+      transform 0.12s ease,
+      opacity 0.12s ease;
 
     &:disabled {
       opacity: 0.55;
       cursor: not-allowed;
+      transform: none;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.active};
     }
   }
 
   .secondary {
-    background: ${(props) => props.theme.lightPrimary};
-    color: ${(props) => props.theme.primary};
-    border-color: ${(props) => props.theme.active};
+    background: ${({ theme }) => theme.lightPrimary};
+    color: ${({ theme }) => theme.primary};
+    border-color: ${({ theme }) => theme.active};
 
     &:hover:not(:disabled) {
-      background: ${(props) => props.theme.active};
+      background: ${({ theme }) => theme.active};
     }
   }
 
   .primary {
-    background: ${(props) => props.theme.primary};
-    color: ${(props) => props.theme["text-white"]};
+    background: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme["text-white"]};
 
     &:hover:not(:disabled) {
-      background: ${(props) => props.theme.primaryHover};
+      background: ${({ theme }) => theme.primaryHover};
     }
   }
 `;
@@ -184,25 +244,26 @@ export const OptionsHeader = styled.div`
   margin-bottom: 0.75rem;
 
   strong {
-    color: ${(props) => props.theme.text};
+    color: ${({ theme }) => theme.text};
     font-size: 0.95rem;
   }
 
   .meta {
     font-size: 0.8rem;
-    opacity: 0.75;
-    color: ${(props) => props.theme.text};
+    opacity: 0.78;
+    color: ${({ theme }) => theme.description ?? theme.text};
   }
 `;
 
 export const EmptyState = styled.div`
-  border: 1px dashed ${(props) => props.theme.border};
-  background: ${(props) => props.theme.bodyBg};
+  border: 1px dashed ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.bodyBg};
   border-radius: 12px;
   padding: 14px;
-  color: ${(props) => props.theme.text};
-  opacity: 0.8;
+  color: ${({ theme }) => theme.text};
+  opacity: 0.9;
   font-size: 0.9rem;
+  line-height: 1.35;
 `;
 
 export const OptionsTable = styled.table`
@@ -210,38 +271,45 @@ export const OptionsTable = styled.table`
   border-collapse: separate;
   border-spacing: 0;
 
-  border: 1px solid ${(props) => props.theme.border};
+  border: 1px solid ${({ theme }) => theme.border};
   border-radius: 12px;
   overflow: hidden;
 
   thead th {
     text-align: left;
-    font-size: 0.78rem;
-    letter-spacing: 0.3px;
+    font-size: 0.75rem;
+    letter-spacing: 0.35px;
     text-transform: uppercase;
     padding: 10px 12px;
 
-    background: ${(props) => props.theme.bodyBg};
-    color: ${(props) => props.theme.text};
-    border-bottom: 1px solid ${(props) => props.theme.border};
+    background: ${({ theme }) => theme.bodyBg};
+    color: ${({ theme }) => theme.text};
+    border-bottom: 1px solid ${({ theme }) => theme.border};
+
+    /* ✅ melhora leitura do header ao rolar */
+    position: sticky;
+    top: 0;
+    z-index: 2;
   }
 
   th.small,
   td.small {
-    width: 90px;
+    width: 86px;
     text-align: center;
+    white-space: nowrap;
   }
 
   th.actions,
   td.actions {
     width: 120px;
     text-align: right;
+    white-space: nowrap;
   }
 
   tbody td {
     padding: 10px 12px;
-    border-bottom: 1px solid ${(props) => props.theme.border};
-    color: ${(props) => props.theme.text};
+    border-bottom: 1px solid ${({ theme }) => theme.border};
+    color: ${({ theme }) => theme.text};
     font-size: 0.92rem;
     vertical-align: middle;
   }
@@ -255,19 +323,29 @@ export const OptionsTable = styled.table`
       ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     font-size: 0.85rem;
-    opacity: 0.9;
+    opacity: 0.92;
   }
 
   .label .main {
-    font-weight: 800;
+    font-weight: 900;
+    line-height: 1.2;
   }
 `;
 
+/** ✅ hover + destaque de linha editando */
 export const OptionRow = styled.tr<{ "data-active"?: boolean }>`
   background: transparent;
 
+  td {
+    transition: background 0.12s ease;
+  }
+
+  &:hover td {
+    background: ${({ theme }) => theme.bodyBg};
+  }
+
   &[data-active="true"] td {
-    background: ${(props) => props.theme.BGlink};
+    background: ${({ theme }) => theme.BGlink};
   }
 `;
 
@@ -281,12 +359,13 @@ export const Badge = styled.span<{ "data-on"?: boolean }>`
   font-size: 0.78rem;
   font-weight: 900;
 
-  color: ${(props) => props.theme.text};
-  border: 1px solid ${(props) => props.theme.border};
-  background: ${(props) => props.theme.background};
+  color: ${({ theme }) => theme.text};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
 
   &[data-on="true"] {
-    border-color: ${(props) => props.theme.secondary};
+    border-color: ${({ theme }) => theme.secondary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.lightSuccess ?? theme.active};
   }
 `;
 
@@ -294,22 +373,35 @@ export const ActionButton = styled.button`
   height: 34px;
   width: 38px;
   border-radius: 10px;
-  border: 1px solid ${(props) => props.theme.border};
+  border: 1px solid ${({ theme }) => theme.border};
   background: transparent;
-  color: ${(props) => props.theme.text};
+  color: ${({ theme }) => theme.text};
   cursor: pointer;
-  transition: 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.12s ease,
+    color 0.12s ease;
+
   margin-left: 8px;
 
   &:hover {
-    background: ${(props) => props.theme.link};
-    color: ${(props) => props.theme["text-white"]};
-    border-color: ${(props) => props.theme.link};
+    background: ${({ theme }) => theme.BGlink};
+    border-color: ${({ theme }) => theme.link};
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.active};
   }
 
   &.danger:hover {
-    background: ${(props) => props.theme.danger};
-    border-color: ${(props) => props.theme.danger};
-    color: ${(props) => props.theme["text-white"]};
+    background: ${({ theme }) => theme.danger};
+    border-color: ${({ theme }) => theme.danger};
+    color: ${({ theme }) => theme["text-white"]};
   }
 `;

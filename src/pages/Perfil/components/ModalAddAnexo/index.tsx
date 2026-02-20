@@ -1,7 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, UploadCloud, FileText } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,9 +27,12 @@ import {
 } from "./styles";
 
 import { InputBase } from "../../../../components/InputBase";
-import { SelectBase } from "../../../../components/SelectBase";
 import { uploadDocumentoMe } from "../../../../api/upload-documento-me";
 import { DOCUMENTO_TIPO_OPTIONS } from "../../../../utils/documentoTipos";
+import {
+  InputSelectFilter,
+  type OptionBase,
+} from "../../../../components/InputSelectFilter";
 
 const DocumentoTipoEnum = z.enum(
   [
@@ -149,6 +152,7 @@ export function ModalAddAnexo({
     handleSubmit,
     reset,
     watch,
+    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<UploadDocumentoFormData>({
     resolver: zodResolver(uploadDocumentoSchema),
@@ -289,19 +293,39 @@ export function ModalAddAnexo({
                 <SectionTitle>Detalhes do documento</SectionTitle>
 
                 <FieldGrid>
-                  <SelectBase
-                    label="Tipo do documento"
-                    {...register("tipo")}
-                    error={errors.tipo?.message}
-                  >
-                    <option value="">Selecione</option>
+                  <Controller
+                    control={control}
+                    name="tipo"
+                    render={({ field }) => {
+                      const options = DOCUMENTO_TIPO_OPTIONS.map((t) => ({
+                        value: t.value, // string
+                        label: t.label,
+                        // description: t.description, // se existir
+                      })) as OptionBase[];
 
-                    {DOCUMENTO_TIPO_OPTIONS.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </SelectBase>
+                      const selected =
+                        options.find((o) => o.value === field.value) ?? null;
+
+                      return (
+                        <InputSelectFilter
+                          id="tipo_documento"
+                          label="Tipo do documento"
+                          placeholder="Digite para buscar (ex: CPF, diploma...)"
+                          options={options}
+                          value={(selected?.value ?? null) as any}
+                          onChange={(val) =>
+                            field.onChange((val ?? "OUTROS") as any)
+                          }
+                          clearable
+                          showCount
+                          loading={false}
+                          disabled={isSubmitting}
+                          error={errors.tipo?.message as any}
+                          helperText="Digite para filtrar e selecione um tipo."
+                        />
+                      );
+                    }}
+                  />
 
                   <InputBase
                     label="Descrição (opcional)"

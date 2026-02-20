@@ -29,18 +29,7 @@ import {
 import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
 
-export type OpcaoPergunta = {
-  id_opcao: string;
-  label: string;
-  valor: string;
-  ordem: number;
-  ativa: boolean;
-  data_criacao?: string;
-  data_atualizacao?: string;
-};
-
-/** ========= Zod (simples e direto) ========= */
-import * as z from "zod";
+/** ========= API ========= */
 import { buscarOpcoesPerguntas } from "../../../../api/buscar-opcoes-perguntas";
 import {
   criarOpcaoPergunta,
@@ -48,14 +37,72 @@ import {
 } from "../../../../api/criar-opcoes-perguntas";
 import { atualizarOpcaoPergunta } from "../../../../api/atualizar-opcoes-perguntas copy";
 import { excluirOpcaoPergunta } from "../../../../api/deletar-opcoes-pergunta";
+
+/** ========= Types ========= */
+export type OpcaoPergunta = {
+  id_opcao: string;
+  label: string;
+  valor: string;
+  ordem: number;
+  ativa: boolean;
+
+  // ✅ NOVOS
+  valor_fundamental?: number | null;
+  valor_medio?: number | null;
+  valor_superior?: number | null;
+
+  data_criacao?: string;
+  data_atualizacao?: string;
+};
+
+// ✅ garante tipagem local mesmo que o type do api ainda não tenha sido atualizado
+type OpcaoFormDataExt = OpcaoFormData & {
+  valor_fundamental?: number | null;
+  valor_medio?: number | null;
+  valor_superior?: number | null;
+
+  // ✅ vamos manter no form, mas ele será automatizado
+  valor?: string;
+};
+
+/** ========= Helpers ========= */
+function makeValueFromLabel(label: string) {
+  const base = (label ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[^a-z0-9]+/g, "_") // tudo que não for [a-z0-9] vira _
+    .replace(/^_+|_+$/g, "") // remove _ no começo/fim
+    .replace(/_+/g, "_"); // colapsa ____
+
+  return base;
+}
+
+import * as z from "zod";
+
 const opcaoSchema = z.object({
-  label: z.string().min(1, "Informe o label"),
-  valor: z.string().min(1, "Informe o valor"),
+  label: z
+    .string()
+    .min(1, "Informe o label")
+    .max(200, "O label deve ter no máximo 200 caracteres"),
+
+  // Mesmo sendo automático, vamos limitar a 60 caracteres
+  valor: z
+    .string()
+    .max(60, "O valor gerado deve ter no máximo 60 caracteres")
+    .optional(),
+
   ordem: z
     .number({ invalid_type_error: "Informe um número válido" })
     .int("A ordem deve ser um número inteiro")
     .min(0, "A ordem deve ser >= 0"),
+
   ativa: z.boolean(),
+
+  valor_fundamental: z.number().min(0, ">= 0").nullable().optional(),
+  valor_medio: z.number().min(0, ">= 0").nullable().optional(),
+  valor_superior: z.number().min(0, ">= 0").nullable().optional(),
 });
 
 interface IModalOpcoesPergunta {
@@ -88,25 +135,43 @@ export function ModalOpcoes({
     enabled: !!id_pergunta && open,
   });
 
-  const opcoes = opcoesQuery.data ?? [];
+  const opcoes: OpcaoPergunta[] = (opcoesQuery.data ?? []) as any;
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isValid },
-  } = useForm<OpcaoFormData>({
-    resolver: zodResolver(opcaoSchema) as unknown as Resolver<OpcaoFormData>,
+  } = useForm<OpcaoFormDataExt>({
+    resolver: zodResolver(opcaoSchema) as unknown as Resolver<OpcaoFormDataExt>,
     mode: "onChange",
     defaultValues: {
       label: "",
-      valor: "",
+      valor: "", // será preenchido automaticamente
       ordem: 0,
       ativa: true,
+
+      valor_fundamental: null,
+      valor_medio: null,
+      valor_superior: null,
     },
   });
 
   const isEdit = !!editing?.id_opcao;
+
+  const labelValue = watch("label");
+  const autoValor = useMemo(
+    () => makeValueFromLabel(labelValue ?? ""),
+    [labelValue],
+  );
+
+  // ✅ mantém o "valor" do form sempre sincronizado com o label
+  useEffect(() => {
+    if (!open) return;
+    setValue("valor", autoValor, { shouldValidate: true, shouldDirty: true });
+  }, [autoValor, open, setValue]);
 
   useEffect(() => {
     if (!open) {
@@ -116,6 +181,10 @@ export function ModalOpcoes({
         valor: "",
         ordem: 0,
         ativa: true,
+
+        valor_fundamental: null,
+        valor_medio: null,
+        valor_superior: null,
       });
       return;
     }
@@ -123,9 +192,13 @@ export function ModalOpcoes({
     if (editing) {
       reset({
         label: editing.label,
-        valor: editing.valor,
+        valor: makeValueFromLabel(editing.label),
         ordem: editing.ordem,
         ativa: editing.ativa,
+
+        valor_fundamental: editing.valor_fundamental ?? null,
+        valor_medio: editing.valor_medio ?? null,
+        valor_superior: editing.valor_superior ?? null,
       });
     }
   }, [open, editing, reset]);
@@ -141,13 +214,16 @@ export function ModalOpcoes({
       valor: "",
       ordem: 0,
       ativa: true,
+
+      valor_fundamental: null,
+      valor_medio: null,
+      valor_superior: null,
     });
   }
 
   function invalidateAll() {
     queryClient.invalidateQueries({ queryKey: optionsQueryKey });
 
-    // se você quiser, invalida também a lista de perguntas/processo
     if (id_processo_seletivo) {
       queryClient.invalidateQueries({
         queryKey: ["perguntas-processo", id_processo_seletivo],
@@ -183,13 +259,33 @@ export function ModalOpcoes({
     [isEdit],
   );
 
-  const onSubmit: SubmitHandler<OpcaoFormData> = async (data) => {
+  const onSubmit: SubmitHandler<OpcaoFormDataExt> = async (data) => {
     try {
-      const payload = {
+      const valorGerado = makeValueFromLabel(data.label);
+
+      // ✅ (opcional) valida duplicidade no front por pergunta
+      const jaExiste = opcoes.some(
+        (op) =>
+          op.valor?.toLowerCase() === valorGerado.toLowerCase() &&
+          (!isEdit || op.id_opcao !== editing?.id_opcao),
+      );
+
+      if (jaExiste) {
+        toast.error(
+          "Já existe uma opção com esse label (valor gerado repetido).",
+        );
+        return;
+      }
+
+      const payload: any = {
         label: data.label.trim(),
-        valor: data.valor.trim(),
+        valor: valorGerado, // ✅ SEMPRE automatizado
         ordem: data.ordem,
         ativa: data.ativa,
+
+        valor_fundamental: data.valor_fundamental ?? null,
+        valor_medio: data.valor_medio ?? null,
+        valor_superior: data.valor_superior ?? null,
       };
 
       if (isEdit && editing?.id_opcao) {
@@ -206,6 +302,7 @@ export function ModalOpcoes({
         id_pergunta,
         payload,
       });
+
       toast.success("Opção adicionada com sucesso!");
       clearForm();
     } catch (e: any) {
@@ -249,17 +346,60 @@ export function ModalOpcoes({
               <FormStyles onSubmit={handleSubmit(onSubmit)}>
                 <InputBase
                   label="Label"
-                  placeholder="Ex: Ensino superior completo"
+                  placeholder="Ex: 1 Especialização"
                   {...register("label")}
                   error={errors.label?.message}
                 />
 
+                {/* ✅ Valor automático (desabilitado) */}
                 <InputBase
-                  label="Valor"
-                  placeholder="Ex: SUPERIOR_COMPLETO"
-                  {...register("valor")}
-                  error={errors.valor?.message}
+                  label="Valor (gerado automaticamente)"
+                  placeholder="Ex: 1_especializacao"
+                  value={autoValor}
+                  disabled
                 />
+
+                {/* ✅ NOVOS CAMPOS */}
+                <Row className="row-grid">
+                  <InputBase
+                    label="Valor (Fundamental)"
+                    type="number"
+                    placeholder="Ex: 0"
+                    {...register("valor_fundamental", {
+                      setValueAs: (v) =>
+                        v === "" || v === null || v === undefined
+                          ? null
+                          : Number(v),
+                    })}
+                    error={(errors as any).valor_fundamental?.message}
+                  />
+
+                  <InputBase
+                    label="Valor (Médio)"
+                    type="number"
+                    placeholder="Ex: 10"
+                    {...register("valor_medio", {
+                      setValueAs: (v) =>
+                        v === "" || v === null || v === undefined
+                          ? null
+                          : Number(v),
+                    })}
+                    error={(errors as any).valor_medio?.message}
+                  />
+
+                  <InputBase
+                    label="Valor (Superior)"
+                    type="number"
+                    placeholder="Ex: 15"
+                    {...register("valor_superior", {
+                      setValueAs: (v) =>
+                        v === "" || v === null || v === undefined
+                          ? null
+                          : Number(v),
+                    })}
+                    error={(errors as any).valor_superior?.message}
+                  />
+                </Row>
 
                 <Row>
                   <InputBase
@@ -330,11 +470,18 @@ export function ModalOpcoes({
                     <tr>
                       <th>Label</th>
                       <th>Valor</th>
+
+                      {/* ✅ NOVOS */}
+                      <th className="small">Fund.</th>
+                      <th className="small">Médio</th>
+                      <th className="small">Sup.</th>
+
                       <th className="small">Ordem</th>
                       <th className="small">Status</th>
                       <th className="actions">Ações</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {opcoes
                       .slice()
@@ -350,13 +497,26 @@ export function ModalOpcoes({
                             <td className="label">
                               <div className="main">{op.label}</div>
                             </td>
+
                             <td className="value">{op.valor}</td>
+
+                            {/* ✅ NOVOS */}
+                            <td className="small">
+                              {op.valor_fundamental ?? "-"}
+                            </td>
+                            <td className="small">{op.valor_medio ?? "-"}</td>
+                            <td className="small">
+                              {op.valor_superior ?? "-"}
+                            </td>
+
                             <td className="small">{op.ordem}</td>
+
                             <td className="small">
                               <Badge data-on={op.ativa}>
                                 {op.ativa ? "Ativa" : "Inativa"}
                               </Badge>
                             </td>
+
                             <td className="actions">
                               <ActionButton
                                 type="button"

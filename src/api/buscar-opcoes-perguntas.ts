@@ -1,4 +1,5 @@
 import { api } from "../lib/axios";
+
 export type OpcaoPergunta = {
   id_opcao: string;
   id_pergunta: string;
@@ -6,7 +7,11 @@ export type OpcaoPergunta = {
   label: string;
   valor: string;
 
-  pontos: number;
+  // ✅ NOVOS CAMPOS DE PONTUAÇÃO POR NÍVEL
+  valor_fundamental: number | null;
+  valor_medio: number | null;
+  valor_superior: number | null;
+
   ordem: number;
   ativa: boolean;
 
@@ -18,5 +23,6 @@ export async function buscarOpcoesPerguntas(id_pergunta: string) {
   const res = await api.get<OpcaoPergunta[]>(
     `/perguntas/${id_pergunta}/opcoes`,
   );
+
   return res.data;
 }

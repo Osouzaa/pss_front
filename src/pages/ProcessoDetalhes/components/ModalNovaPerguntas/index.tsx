@@ -33,6 +33,7 @@ import {
 import { criarPergunta } from "../../../../api/criar-pergunta";
 import { editarPergunta } from "../../../../api/editar-pergunta";
 import { DOCUMENTO_TIPO_OPTIONS } from "../../../../utils/documentoTipos";
+import { InputSelectFilter } from "../../../../components/InputSelectFilter";
 
 type PerguntaTipo =
   | "BOOLEAN"
@@ -437,21 +438,40 @@ export function ModalNovaPergunta({
                 <Controller
                   control={control}
                   name="label_comprovante"
-                  render={({ field }) => (
-                    <SelectBase
-                      label="Qual documento?"
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value || null)}
-                      error={errors.label_comprovante?.message as any}
-                    >
-                      <option value="">Selecione</option>
-                      {DOCUMENTO_TIPO_OPTIONS.map((d) => (
-                        <option key={d.value} value={d.value}>
-                          {d.label}
-                        </option>
-                      ))}
-                    </SelectBase>
-                  )}
+                  render={({ field }) => {
+                    // ✅ transforma suas options pra o formato do InputSelectFilter
+                    const documentoOptions = DOCUMENTO_TIPO_OPTIONS.map(
+                      (d) => ({
+                        value: d.value,
+                        label: d.label,
+                        // se quiser: description: d.description
+                      }),
+                    );
+
+                    // ✅ acha a option atual (pra controlar o value)
+                    const selected =
+                      documentoOptions.find(
+                        (o) => o.value === (field.value ?? ""),
+                      ) ?? null;
+
+                    return (
+                      <InputSelectFilter
+                        id="label_comprovante"
+                        label="Qual documento?"
+                        placeholder="Digite para buscar..."
+                        options={documentoOptions}
+                        value={selected?.value ?? null}
+                        onChange={(val) => field.onChange(val ?? null)}
+                        clearable
+                        loading={false}
+                        error={errors.label_comprovante?.message as any}
+                        helperText="Digite para filtrar e selecione um documento."
+                        showCount
+                        // ✅ opcional: se você quiser busca remota no backend
+                        // onSearch={(term) => setDocumentoTerm(term)}
+                      />
+                    );
+                  }}
                 />
               ) : (
                 <div />
