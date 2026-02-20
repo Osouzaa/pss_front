@@ -90,6 +90,12 @@ export function PerguntaField({
   const attachmentLabel =
     attachmentLabelFromApi ?? "Esta pergunta exige anexo de confirmação.";
 
+  // ✅ Descrição segura
+  const descricao =
+    typeof p.descricao === "string" && p.descricao.trim()
+      ? p.descricao.trim()
+      : null;
+
   return (
     <S.FieldCard>
       <S.HeaderPerguntas>
@@ -104,10 +110,13 @@ export function PerguntaField({
             </S.AttachmentBadge>
           ) : null}
         </S.TitleRow>
+
+        {/* ✅ Descrição (aparece somente se existir) */}
+        {descricao ? <S.Description>{descricao}</S.Description> : null}
       </S.HeaderPerguntas>
 
       <S.Body>
-        {p.tipo === "BOOLEAN" ? (
+        {p.tipo === "BOOLEAN" && (
           <S.BooleanGroup>
             <S.BooleanOption
               $disabled={disabled}
@@ -137,9 +146,9 @@ export function PerguntaField({
               <span>Não</span>
             </S.BooleanOption>
           </S.BooleanGroup>
-        ) : null}
+        )}
 
-        {p.tipo === "NUMERO" ? (
+        {p.tipo === "NUMERO" && (
           <InputBase
             id={`p_${idPergunta}`}
             type="number"
@@ -150,9 +159,9 @@ export function PerguntaField({
               onChangeValue(n);
             }}
           />
-        ) : null}
+        )}
 
-        {p.tipo === "EXPERIENCIA_DIAS" ? (
+        {p.tipo === "EXPERIENCIA_DIAS" && (
           <InputBase
             id={`p_${idPergunta}`}
             type="number"
@@ -164,9 +173,9 @@ export function PerguntaField({
               onChangeValue(n);
             }}
           />
-        ) : null}
+        )}
 
-        {p.tipo === "TEXTO" ? (
+        {p.tipo === "TEXTO" && (
           <InputBase
             value={valueAsString}
             disabled={disabled}
@@ -175,9 +184,9 @@ export function PerguntaField({
             }
             maxLength={500}
           />
-        ) : null}
+        )}
 
-        {p.tipo === "SELECT" ? (
+        {p.tipo === "SELECT" && (
           <SelectBase
             id={`p_${idPergunta}`}
             value={valueAsString}
@@ -193,12 +202,11 @@ export function PerguntaField({
               </option>
             ))}
           </SelectBase>
-        ) : null}
+        )}
 
-        {p.tipo === "DATA" ? (
+        {p.tipo === "DATA" && (
           <InputBase
             id={`p_${idPergunta}`}
-            label=""
             type="date"
             value={
               typeof value === "string" ? (toDateInputValue(value) ?? "") : ""
@@ -208,7 +216,7 @@ export function PerguntaField({
               onChangeValue(safeString(e.target.value) || null)
             }
           />
-        ) : null}
+        )}
       </S.Body>
     </S.FieldCard>
   );

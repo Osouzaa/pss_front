@@ -18,6 +18,7 @@ const ui = {
   shadow: "0 10px 30px rgba(0,0,0,.06)",
   shadowSoft: "0 6px 20px rgba(0,0,0,.05)",
   controlH: "44px", // um pouco mais confortável no mobile
+  mobileBottomBar: "78px",
 };
 
 const fluid = {
@@ -26,7 +27,19 @@ const fluid = {
   cardPad: "clamp(14px, 2.2vw, 18px)",
 };
 
-export const Page = styled.div``;
+export const Page = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  /* ✅ evita que a barra fixa (sidebar/bottombar) sobreponha o fim da tela */
+  @media (max-width: 768px) {
+    padding-bottom: calc(
+      ${ui.mobileBottomBar} + env(safe-area-inset-bottom, 0px)
+    );
+  }
+`;
 
 export const Header = styled.header`
   display: flex;
