@@ -1,6 +1,7 @@
+// ProcessoSeletivosDetalhes.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as S from "./styles";
 
 import { getProcessoId } from "../../api/get-processo-id";
@@ -18,8 +19,9 @@ import { ModalNovaPergunta } from "./components/ModalNovaPerguntas";
 import { buscarPerguntasProcessos } from "../../api/buscar-perguntas-processos";
 import { getAllVagasProcessoId } from "../../api/get-all-vagas-processoId";
 
-import { Pagination } from "../../components/Pagination"; // ✅ ajuste o path conforme seu projeto
+import { Pagination } from "../../components/Pagination";
 import { TokenSistems } from "../../constants/env.constantes";
+import { excluirVaga } from "../../api/deleta-vaga";
 
 function normalizeText(s: string) {
   return (s ?? "")
@@ -51,6 +53,7 @@ function getInitialTab(isAdmin: boolean): TabKey {
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin } = useAuth();
+  const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<string>(() => getInitialTab(isAdmin));
   const [qVaga, setQVaga] = useState("");
@@ -131,6 +134,22 @@ export function ProcessoSeletivosDetalhes() {
       staleTime: 30_000,
     });
 
+  // ✅ MUTATION EXCLUIR VAGA
+  const { mutateAsync: excluirVagaAsync, isPending: isDeletingVaga } =
+    useMutation({
+      mutationFn: (id_vaga: string) => excluirVaga({ id_vaga }),
+      onSuccess: async () => {
+        toast.success("Vaga apagada com sucesso.");
+        // invalida tudo que começa com "vagas-processo" para recarregar página/busca
+        await queryClient.invalidateQueries({
+          queryKey: ["vagas-processo", id],
+        });
+      },
+      onError: () => {
+        toast.error("Não foi possível apagar a vaga.");
+      },
+    });
+
   function onEditarVaga(v: any) {
     if (!isAdmin) {
       toast.error("Apenas administradores podem editar vaga.");
@@ -163,6 +182,20 @@ export function ProcessoSeletivosDetalhes() {
     }
     setPerguntaToEdit(null);
     setOpenModalNovaPergunta(true);
+  }
+
+  async function onApagarVaga(v: any) {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem apagar vaga.");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Tem certeza que deseja apagar a vaga "${v?.nome}"?\n\nEssa ação não pode ser desfeita.`,
+    );
+    if (!ok) return;
+
+    await excluirVagaAsync(v.id_vaga);
   }
 
   if (isLoading) {
@@ -276,7 +309,7 @@ export function ProcessoSeletivosDetalhes() {
                 value={qVaga}
                 onChange={(e) => {
                   setQVaga(e.target.value);
-                  setPageVagas(1); // ✅ quando busca muda, volta pra 1
+                  setPageVagas(1);
                 }}
                 placeholder="Buscar por nome, nível..."
               />
@@ -336,12 +369,24 @@ export function ProcessoSeletivosDetalhes() {
                         <S.Td style={{ textAlign: "right" }}>
                           <S.RowActions>
                             {isAdmin ? (
-                              <S.SecondaryButton
-                                type="button"
-                                onClick={() => onEditarVaga(v)}
-                              >
-                                Editar
-                              </S.SecondaryButton>
+                              <>
+                                <S.SecondaryButton
+                                  type="button"
+                                  onClick={() => onEditarVaga(v)}
+                                  disabled={isDeletingVaga}
+                                >
+                                  Editar
+                                </S.SecondaryButton>
+
+                                {/* ✅ NOVO BOTÃO */}
+                                <S.DangerButton
+                                  type="button"
+                                  onClick={() => onApagarVaga(v)}
+                                  disabled={isDeletingVaga}
+                                >
+                                  Apagar
+                                </S.DangerButton>
+                              </>
                             ) : (
                               <S.Muted>—</S.Muted>
                             )}
@@ -353,7 +398,6 @@ export function ProcessoSeletivosDetalhes() {
                 </S.VagasTable>
               </S.VagasTableWrap>
 
-              {/* ✅ PAGINAÇÃO */}
               <Pagination
                 page={pageVagas}
                 total={vagasTotal}

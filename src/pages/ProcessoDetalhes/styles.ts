@@ -1108,3 +1108,26 @@ export const Select = styled.select`
   color: ${({ theme }) => theme.text};
   outline: none;
 `;
+
+export const DangerButton = styled.button`
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+
+  border: 1px solid ${({ theme }) => theme.danger};
+  background: transparent;
+  color: ${({ theme }) => theme.danger};
+
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.danger};
+    color: ${({ theme }) => theme["text-white"]};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
