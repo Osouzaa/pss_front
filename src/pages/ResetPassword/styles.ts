@@ -83,7 +83,10 @@ export const BackBtn = styled.button`
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  transition:
+    transform 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease;
 
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.active};
@@ -114,7 +117,6 @@ export const Form = styled.form`
 
   /* melhor “respiro” no último botão */
   padding-top: 0.15rem;
-
 `;
 
 export const Hint = styled.div`
@@ -162,7 +164,7 @@ export const Alert = styled.div`
 `;
 
 export const Primary = styled.button`
-   height: 48px;
+  height: 48px;
   border-radius: 14px;
   border: 0;
   cursor: pointer;
@@ -174,11 +176,11 @@ export const Primary = styled.button`
   gap: 1rem;
 
   background: ${({ theme }) => theme.primary};
-     color: ${({ theme }) => theme["text-white"]};
+  color: ${({ theme }) => theme["text-white"]};
 
   &:hover {
     background: ${({ theme }) => theme.primaryHover};
-     color: ${({ theme }) => theme["text-white"]};
+    color: ${({ theme }) => theme["text-white"]};
   }
 
   &:disabled {

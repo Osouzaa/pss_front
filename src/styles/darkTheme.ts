@@ -1,66 +1,80 @@
+// darkTheme.ts
 export const darkTheme = {
-  // BRAND (oficial)
-  primary: "#6699FF", // no dark, o azul claro vira o “primary” pra contraste
-  primaryHover: "#4D86FF",
-  secondary: "#33CC99",
-  highlight: "#FFC300",
-  link: "#6699FF",
-  "text-white": "#FFFFFF",
+  // BASE
+  background: "#0B1220", // fundo geral (dark azul petróleo)
+  bodyBg: "#070B14", // fundo “por trás” (mais escuro)
+  card: "#0F172A", // cards
+  surface: "rgba(15, 23, 42, 0.72)",
+  surfaceBorder: "rgba(255,255,255,0.08)",
+  border: "rgba(255,255,255,0.10)",
+  shadowSoft: "0 18px 50px rgba(0,0,0,0.55)",
 
-  // SURFACES
-  background: "#0B1020",
-  bodyBg: "#0F1730",
-  backgroundInput: "#121D3A",
+  // BRAND
+  primary: "#4C6FFF", // azul vivo no dark (mantém identidade do #00009B)
+  primaryHover: "#3B5BFF",
+  secondary: "#33CC99",
 
   // TEXT
   text: "#E5E7EB",
-  description: "#A3B1CC",
-  textSmall: "#CBD5E1",
+  textMuted: "rgba(229,231,235,0.72)",
+  description: "rgba(229,231,235,0.62)",
+  "text-white": "#FFFFFF",
+  textSmall: "#0B1220", // (se você usa como “badge” em fundo claro, no dark vira texto escuro)
+  textOnDark: "#FFFFFF",
+  descriptionOnDark: "rgba(255,255,255,0.82)",
 
-  // UI STATES
-  border: "rgba(255,255,255,0.12)",
-  BGlink: "rgba(102, 153, 255, 0.14)",
-  active: "rgba(102, 153, 255, 0.16)",
+  // LINKS / HIGHLIGHTS
+  link: "#8AB4FF",
+  BGlink: "rgba(76, 111, 255, 0.18)",
+  highlight: "#FFC300", // amarelo continua como destaque
 
-  // FEEDBACK
-  danger: "#F87171",
-  hoverDanger: "#EF4444",
-
-  // LOGOUT
-  logoutBg: "#EF4444",
-  logoutBgHover: "#DC2626",
-
-  // ICON BACKGROUNDS
-  lightPrimary: "rgba(102, 153, 255, 0.18)",
+  // STATES / BACKGROUNDS ÚTEIS
+  active: "rgba(76, 111, 255, 0.18)", // “selecionado” no dark
+  lightPrimary: "rgba(76, 111, 255, 0.18)",
   lightSuccess: "rgba(51, 204, 153, 0.16)",
-  lightDanger: "rgba(248, 113, 113, 0.16)",
-  lightDefault: "rgba(255,255,255,0.08)",
+  lightDanger: "rgba(229, 62, 62, 0.18)",
+  lightDefault: "rgba(255,255,255,0.06)",
 
-  // STATUS
-  statusOpenBg: "#FFC300",
-  statusOpenText: "#0B1020",
-  statusAnalyzeBg: "#FFD54F",
-  statusAnalyzeText: "#0B1020",
-  statusExecutionBg: "rgba(102, 153, 255, 0.22)",
-  statusExecutionText: "#6699FF",
-  statusDoneBg: "rgba(51, 204, 153, 0.16)",
-  statusDoneText: "#33CC99",
-  statusCancelBg: "rgba(248, 113, 113, 0.16)",
-  statusCancelText: "#FCA5A5",
+  // INPUTS
+  backgroundInput: "rgba(255,255,255,0.06)",
+  placeholder: "rgba(229,231,235,0.55)",
 
-  // PRIORITY
-  priorityCriticalBg: "#EF4444",
-  priorityCriticalText: "#FFFFFF",
-  priorityHighBg: "#FF6B35",
-  priorityHighText: "#FFFFFF",
-  priorityMediumBg: "#FFC300",
-  priorityMediumText: "#0B1020",
-  priorityLowBg: "#33CC99",
-  priorityLowText: "#0B1020",
-  priorityNoneBg: "#6699FF",
-  priorityNoneText: "#0B1020",
+  // DANGER / LOGOUT
+  danger: "#FF4D4D",
+  hoverDanger: "#FF2D2D",
+  logoutBg: "#B91C1C",
+  logoutBgHover: "#991B1B",
 
-  // WARNING
+  // STATUS COLORS (mais “premium” no dark)
+  statusOpenBg: "rgba(255, 145, 0, 0.18)",
+  statusOpenText: "#FFD19A",
+  statusAnalyzeBg: "rgba(255, 196, 0, 0.18)",
+  statusAnalyzeText: "#FFE58A",
+  statusExecutionBg: "rgba(189, 202, 209, 0.14)",
+  statusExecutionText: "#7DD3FC",
+  statusDoneBg: "rgba(51, 204, 153, 0.18)",
+  statusDoneText: "#7CF2C6",
+  statusCancelBg: "rgba(255, 77, 77, 0.16)",
+  statusCancelText: "#FF9B9B",
+
+  // PRIORITY (ajustadas pro dark sem “estourar”)
+  priorityCriticalBg: "rgba(244, 67, 54, 0.22)",
+  priorityCriticalText: "#FFB4AE",
+  priorityHighBg: "rgba(251, 140, 0, 0.22)",
+  priorityHighText: "#FFD0A1",
+  priorityMediumBg: "rgba(253, 216, 53, 0.20)",
+  priorityMediumText: "#FFE58A",
+  priorityLowBg: "rgba(76, 175, 80, 0.20)",
+  priorityLowText: "#B9F6CA",
+  priorityNoneBg: "rgba(3, 169, 244, 0.20)",
+  priorityNoneText: "#A5E7FF",
+
+  // SCROLLBAR
+  scrollbarTrack: "rgba(255,255,255,0.06)",
+  scrollbarThumb: "rgba(255,255,255,0.18)",
+  scrollbarThumbHover: "rgba(255,255,255,0.26)",
+  scrollbarThumbActive: "rgba(255,255,255,0.34)",
+
   warning: "#FFC300",
   warningBg: "rgba(255, 195, 0, 0.16)",
   warningText: "#FFE8A3",
