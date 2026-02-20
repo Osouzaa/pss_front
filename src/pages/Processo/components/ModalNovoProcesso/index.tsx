@@ -1,3 +1,4 @@
+// ModalNovoProcesso/index.tsx
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   Content,
@@ -54,13 +55,23 @@ export function ModalNovoProcesso({
   const { user } = useAuth();
 
   const isEdit = !!processoToEdit?.id_processo_seletivo;
-  const isAdmin = user?.tipo === "ADMIN";
+
+  // ✅ REGRA NOVA:
+  // - se user.secretaria === "All" -> pode ver/selecionar todas
+  // - se não -> só a secretaria registrada e travado
+  const canPickSecretaria = user?.secretaria === "all";
+
+  // ✅ Evita "All" aparecer como opção de secretaria
+  const secretariasList = useMemo(
+    () => SECRETARIAS.filter((s) => s !== "all"),
+    [],
+  );
 
   const secretariasOptions = useMemo(() => {
-    if (isAdmin) return SECRETARIAS;
-    if (user?.secretaria) return [user.secretaria];
+    if (canPickSecretaria) return secretariasList;
+    if (user?.secretaria && user.secretaria !== "all") return [user.secretaria];
     return [];
-  }, [isAdmin, user?.secretaria]);
+  }, [canPickSecretaria, secretariasList, user?.secretaria]);
 
   const {
     register,
@@ -72,7 +83,7 @@ export function ModalNovoProcesso({
     mode: "onChange",
     defaultValues: {
       titulo: "",
-      secretaria: isAdmin ? "" : (user?.secretaria ?? ""),
+      secretaria: canPickSecretaria ? "" : (user?.secretaria ?? ""),
       ano: new Date().getFullYear(),
       status: "ABERTO",
       data_inicio_inscricoes: "",
@@ -86,7 +97,7 @@ export function ModalNovoProcesso({
     if (processoToEdit) {
       reset({
         titulo: processoToEdit.titulo ?? "",
-        secretaria: isAdmin
+        secretaria: canPickSecretaria
           ? (processoToEdit.secretaria ?? "")
           : (user?.secretaria ?? processoToEdit.secretaria ?? ""),
         ano: processoToEdit.ano ?? new Date().getFullYear(),
@@ -101,13 +112,13 @@ export function ModalNovoProcesso({
 
     reset({
       titulo: "",
-      secretaria: isAdmin ? "" : (user?.secretaria ?? ""),
+      secretaria: canPickSecretaria ? "" : (user?.secretaria ?? ""),
       ano: new Date().getFullYear(),
       status: "ABERTO",
       data_inicio_inscricoes: "",
       data_fim_inscricoes: "",
     });
-  }, [open, processoToEdit, reset, isAdmin, user?.secretaria]);
+  }, [open, processoToEdit, reset, canPickSecretaria, user?.secretaria]);
 
   function handleClose() {
     onOpenChange(false);
@@ -144,7 +155,8 @@ export function ModalNovoProcesso({
 
   const onSubmit = async (data: CreateNovoProcessoFormData) => {
     try {
-      const secretariaFinal = isAdmin
+      // ✅ força secretaria do user se não for "All"
+      const secretariaFinal = canPickSecretaria
         ? data.secretaria
         : (user?.secretaria ?? data.secretaria);
 
@@ -219,9 +231,10 @@ export function ModalNovoProcesso({
             <SelectBase
               {...register("secretaria")}
               label="Secretaria"
-              disabled={!isAdmin} // ✅ não-admin não altera
+              disabled={!canPickSecretaria}
+              error={errors.secretaria?.message}
             >
-              {isAdmin && <option value="">Selecione</option>}
+              {canPickSecretaria && <option value="">Selecione</option>}
 
               {secretariasOptions.map((nome) => (
                 <option key={nome} value={nome}>
