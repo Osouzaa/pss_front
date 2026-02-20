@@ -59,7 +59,7 @@ export function ModalNovoProcesso({
   // ✅ REGRA NOVA:
   // - se user.secretaria === "All" -> pode ver/selecionar todas
   // - se não -> só a secretaria registrada e travado
-  const canPickSecretaria = user?.secretaria === "all";
+  const canPickSecretaria = user?.secretaria_usuario === "all";
 
   // ✅ Evita "All" aparecer como opção de secretaria
   const secretariasList = useMemo(
@@ -69,9 +69,10 @@ export function ModalNovoProcesso({
 
   const secretariasOptions = useMemo(() => {
     if (canPickSecretaria) return secretariasList;
-    if (user?.secretaria && user.secretaria !== "all") return [user.secretaria];
+    if (user?.secretaria_usuario && user.secretaria_usuario !== "all")
+      return [user.secretaria_usuario];
     return [];
-  }, [canPickSecretaria, secretariasList, user?.secretaria]);
+  }, [canPickSecretaria, secretariasList, user?.secretaria_usuario]);
 
   const {
     register,
@@ -83,7 +84,7 @@ export function ModalNovoProcesso({
     mode: "onChange",
     defaultValues: {
       titulo: "",
-      secretaria: canPickSecretaria ? "" : (user?.secretaria ?? ""),
+      secretaria: canPickSecretaria ? "" : (user?.secretaria_usuario ?? ""),
       ano: new Date().getFullYear(),
       status: "ABERTO",
       data_inicio_inscricoes: "",
@@ -99,7 +100,7 @@ export function ModalNovoProcesso({
         titulo: processoToEdit.titulo ?? "",
         secretaria: canPickSecretaria
           ? (processoToEdit.secretaria ?? "")
-          : (user?.secretaria ?? processoToEdit.secretaria ?? ""),
+          : (user?.secretaria_usuario ?? processoToEdit.secretaria ?? ""),
         ano: processoToEdit.ano ?? new Date().getFullYear(),
         status: (processoToEdit.status ?? "ABERTO") as any,
         data_inicio_inscricoes: isoToInputDate(
@@ -112,13 +113,19 @@ export function ModalNovoProcesso({
 
     reset({
       titulo: "",
-      secretaria: canPickSecretaria ? "" : (user?.secretaria ?? ""),
+      secretaria: canPickSecretaria ? "" : (user?.secretaria_usuario ?? ""),
       ano: new Date().getFullYear(),
       status: "ABERTO",
       data_inicio_inscricoes: "",
       data_fim_inscricoes: "",
     });
-  }, [open, processoToEdit, reset, canPickSecretaria, user?.secretaria]);
+  }, [
+    open,
+    processoToEdit,
+    reset,
+    canPickSecretaria,
+    user?.secretaria_usuario,
+  ]);
 
   function handleClose() {
     onOpenChange(false);
@@ -158,7 +165,7 @@ export function ModalNovoProcesso({
       // ✅ força secretaria do user se não for "All"
       const secretariaFinal = canPickSecretaria
         ? data.secretaria
-        : (user?.secretaria ?? data.secretaria);
+        : (user?.secretaria_usuario ?? data.secretaria);
 
       if (isEdit && processoToEdit?.id_processo_seletivo) {
         await editarProcessoFn({
