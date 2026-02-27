@@ -14,7 +14,7 @@ const ui = {
   },
 
   // ✅ altura aproximada da sua barra fixa no mobile (ajuste se preciso)
-  mobileBottomBar: "78px",
+  mobileBottomBar: "90px",
 };
 
 /* =========================
