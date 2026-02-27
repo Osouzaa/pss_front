@@ -1,12 +1,49 @@
 import styled, { css } from "styled-components";
 
+/* ===== Layout Base ===== */
 export const Page = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 14px;
-
-  /* evita “estourar” width com textos grandes */
+  gap: 16px;
   min-width: 0;
+`;
+
+/* ===== Skeleton ===== */
+const shimmer = css`
+  background: linear-gradient(
+    90deg,
+    ${({ theme }) => theme.border} 25%,
+    ${({ theme }) => theme.bodyBg} 50%,
+    ${({ theme }) => theme.border} 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+export const SkeletonHeader = styled.div`
+  ${shimmer}
+  height: 200px;
+  border-radius: 18px;
+`;
+
+export const SkeletonCard = styled.div`
+  ${shimmer}
+  height: 120px;
+  border-radius: 18px;
+`;
+
+export const ErrorBox = styled.div`
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid ${({ theme }) => theme.danger};
+  background: ${({ theme }) => theme.lightDanger};
+  color: ${({ theme }) => theme.danger};
+  text-align: center;
+  font-size: 14px;
 `;
 
 /* ===== Header ===== */
@@ -14,42 +51,35 @@ export const Header = styled.header`
   background: ${({ theme }) => theme.background};
   border: 1px solid ${({ theme }) => theme.border};
   border-radius: 18px;
-  padding: 14px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  padding: 16px;
   min-width: 0;
 `;
 
 export const HeaderTop = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 
   @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
   }
 `;
 
 export const BackButton = styled.button`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.bodyBg};
-  color: ${({ theme }) => theme.text};
-  border-radius: 12px;
-  padding: 10px 12px;
-  cursor: pointer;
-
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.bodyBg};
+  color: ${({ theme }) => theme.text};
+  font-size: 13px;
+  cursor: pointer;
   transition: 0.15s ease;
-
-  /* mobile: botão ocupa a largura toda */
-  @media (max-width: 640px) {
-    width: 100%;
-    justify-content: center;
-  }
+  white-space: nowrap;
 
   &:hover {
     background: ${({ theme }) => theme.active};
@@ -57,461 +87,228 @@ export const BackButton = styled.button`
   }
 `;
 
-export const HeaderTitleArea = styled.div`
+export const TitleArea = styled.div`
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   min-width: 0;
 `;
 
 export const Title = styled.h1`
   margin: 0;
   font-size: 18px;
+  font-weight: 700;
   line-height: 1.2;
   color: ${({ theme }) => theme.text};
-
-  @media (max-width: 640px) {
-    font-size: 16px;
-  }
 `;
 
 export const Subtitle = styled.p`
-  margin: 0;
+  margin: 4px 0 0;
   font-size: 13px;
   color: ${({ theme }) => theme.description};
-
-  @media (max-width: 640px) {
-    font-size: 12.5px;
-    line-height: 1.35;
-  }
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
-export const StateBox = styled.div<{ $variant?: "danger" }>`
-  margin-top: 12px;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.bodyBg};
-  border-radius: 14px;
-  padding: 12px;
-
-  ${({ $variant, theme }) =>
-    $variant === "danger" &&
-    css`
-      border-color: ${theme.lightDanger};
-      background: ${theme.lightDanger};
-    `}
-`;
-
-export const StateTitle = styled.div`
+export const StatusBadge = styled.div<{ status: string }>`
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
   font-weight: 700;
-  color: ${({ theme }) => theme.text};
-`;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 
-export const StateText = styled.p`
-  margin: 6px 0 0 0;
-  color: ${({ theme }) => theme.description};
-  font-size: 13px;
-`;
-
-export const StateActions = styled.div`
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-  }
-`;
-
-export const ActionButton = styled.button`
-  border: 0;
-  background: ${({ theme }) => theme.primary};
-  color: ${({ theme }) => theme["text-white"]};
-  border-radius: 12px;
-  padding: 10px 12px;
-  cursor: pointer;
-  transition: 0.15s ease;
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-
-  &:hover {
-    background: ${({ theme }) => theme.primaryHover};
-  }
+  ${({ status, theme }) => {
+    if (status === "ENVIADA") return css`background: ${theme.lightSuccess}; color: ${theme.statusDoneText};`;
+    if (status === "CANCELADA") return css`background: ${theme.lightDanger}; color: ${theme.statusCancelText};`;
+    return css`background: ${theme.active}; color: ${theme.primary};`;
+  }}
 `;
 
 /* ===== Meta ===== */
 export const MetaGrid = styled.div`
-  margin-top: 12px;
+  margin-top: 14px;
   display: grid;
+  gap: 10px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  min-width: 0;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+  @media (max-width: 1024px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) { grid-template-columns: 1fr; }
 `;
 
 export const MetaCard = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.bodyBg};
-  border-radius: 16px;
-  padding: 12px;
-
-  display: flex;
-  align-items: center;
-  gap: 12px;
   min-width: 0;
-`;
 
-export const MetaIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: ${({ theme }) => theme.lightPrimary};
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-
-  svg {
-    color: ${({ theme }) => theme.primary};
-    font-size: 18px;
+  svg { flex: 0 0 auto; color: ${({ theme }) => theme.primary}; }
+  div { min-width: 0; }
+  span { display: block; font-size: 11px; color: ${({ theme }) => theme.description}; margin-bottom: 2px; }
+  strong {
+    display: block; font-size: 13px; color: ${({ theme }) => theme.text};
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 `;
 
-export const MetaBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+export const MetaWide = styled.div`
+  grid-column: 1 / -1;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.bodyBg};
   min-width: 0;
 `;
 
-export const MetaLabel = styled.span`
+export const ScoreRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+export const CandidatoNome = styled.h2`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const CandidatoCPF = styled.p`
+  margin: 3px 0 0;
   font-size: 12px;
   color: ${({ theme }) => theme.description};
 `;
 
-export const MetaValue = styled.span`
-  font-size: 14px;
-  font-weight: 700;
-  color: ${({ theme }) => theme.text};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-export const MetaWideCard = styled.div`
-  grid-column: 1 / -1;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.bodyBg};
-  border-radius: 16px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-`;
-
-export const MetaWideTop = styled.div`
-  display: flex;
+export const ScoreBadge = styled.div`
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-`;
-
-export const MetaWideTitle = styled.h2`
-  margin: 0;
-  font-size: 16px;
-  color: ${({ theme }) => theme.text};
-  min-width: 0;
-
-  /* nome muito grande não estoura */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  @media (max-width: 640px) {
-    white-space: normal;
-    word-break: break-word;
-    font-size: 15px;
-  }
-`;
-
-export const ScorePill = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.active};
-  color: ${({ theme }) => theme.primary};
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
-  flex: 0 0 auto;
-
-  b {
-    color: ${({ theme }) => theme.primary};
-  }
-`;
-
-export const MetaWideBottom = styled.div`
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-`;
-
-export const MetaLine = styled.div`
-  display: flex;
   gap: 6px;
-  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.active};
+  border: 1px solid ${({ theme }) => theme.border};
+  color: ${({ theme }) => theme.primary};
   font-size: 13px;
-
-  span {
-    color: ${({ theme }) => theme.description};
-  }
-
-  strong {
-    color: ${({ theme }) => theme.text};
-  }
-`;
-
-export const ObsBox = styled.div`
-  border: 1px dashed ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  border-radius: 14px;
-  padding: 12px;
-  min-width: 0;
-`;
-
-export const ObsTitle = styled.div`
   font-weight: 800;
-  color: ${({ theme }) => theme.text};
-  font-size: 13px;
+  white-space: nowrap;
 `;
 
-export const ObsText = styled.p`
-  margin: 6px 0 0 0;
+export const Obs = styled.p`
+  margin: 10px 0 0;
+  font-size: 13px;
   color: ${({ theme }) => theme.description};
-  font-size: 13px;
   line-height: 1.5;
-  word-break: break-word;
 `;
 
-/* ===== Card base ===== */
+/* ===== Card ===== */
 export const Card = styled.section`
+  border-radius: 18px;
+  padding: 16px;
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
-  border-radius: 18px;
-  padding: 14px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
   min-width: 0;
-
-  @media (max-width: 640px) {
-    padding: 12px;
-  }
 `;
 
 export const CardHeader = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-`;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 
-export const CardTitle = styled.h3`
-  margin: 0;
-  font-size: 15px;
-  color: ${({ theme }) => theme.text};
-`;
-
-export const CardDesc = styled.p`
-  margin: 0;
-  font-size: 13px;
-  color: ${({ theme }) => theme.description};
-`;
-
-/* ===== Scroll containers (muitos docs / muitas perguntas) ===== */
-export const ScrollArea = styled.div`
-  /* altura máxima e scroll interno */
-  max-height: min(62vh, 620px);
-  overflow: auto;
-  padding-right: 6px; /* espaço pro scroll não “comer” conteúdo */
-
-  /* iOS / mac */
-  -webkit-overflow-scrolling: touch;
-
-  /* deixa rolagem mais “leve” no layout */
-  overscroll-behavior: contain;
-
-  @media (max-width: 640px) {
-    max-height: min(70vh, 560px);
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.text};
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 `;
 
-/* ===== Perguntas ===== */
-export const List = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
+export const QCount = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
 `;
 
-export const Item = styled.div`
+/* ===== Candidato Grid ===== */
+export const CandidatoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+
+  @media (max-width: 1024px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 640px) { grid-template-columns: 1fr; }
+`;
+
+export const InfoItem = styled.div`
+  padding: 10px 12px;
+  border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.bodyBg};
-  border-radius: 16px;
-  padding: 12px;
   min-width: 0;
 `;
 
-export const ItemTop = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 0;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+export const InfoItemWide = styled(InfoItem)`
+  grid-column: 1 / -1;
 `;
 
-export const QuestionTitle = styled.div`
-  font-weight: 800;
-  color: ${({ theme }) => theme.text};
-  font-size: 14px;
-  line-height: 1.4;
-  min-width: 0;
-
-  @media (max-width: 640px) {
-    font-size: 13.5px;
-  }
-`;
-
-export const Required = styled.span`
-  color: ${({ theme }) => theme.danger};
-  margin-left: 6px;
-`;
-
-export const TypePill = styled.span`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
+export const InfoLabel = styled.div`
+  font-size: 11px;
   color: ${({ theme }) => theme.description};
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  white-space: nowrap;
-  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
 `;
 
-export const QuestionDesc = styled.p`
-  margin: 6px 0 0 0;
-  color: ${({ theme }) => theme.description};
+export const InfoValue = styled.div`
   font-size: 13px;
-  line-height: 1.5;
-  word-break: break-word;
-`;
-
-export const AnswerBox = styled.div`
-  margin-top: 10px;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  border-radius: 14px;
-  padding: 10px 12px;
-  min-width: 0;
-`;
-
-export const AnswerLabel = styled.div`
-  font-size: 12px;
-  color: ${({ theme }) => theme.description};
-`;
-
-export const AnswerValue = styled.div`
-  margin-top: 6px;
+  font-weight: 600;
   color: ${({ theme }) => theme.text};
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.45;
-  word-break: break-word;
-
-  /* se vier texto gigante sem espaço */
   overflow-wrap: anywhere;
 `;
 
-export const AnswerMeta = styled.div`
-  margin-top: 10px;
+/* ===== Scroll ===== */
+export const ScrollArea = styled.div`
+  max-height: 65vh;
+  overflow: auto;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 `;
 
-export const MetaChip = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.bodyBg};
-  color: ${({ theme }) => theme.description};
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-
-  b {
-    color: ${({ theme }) => theme.text};
-  }
-`;
-
-/* ===== Empty states ===== */
+/* ===== Empty ===== */
 export const Empty = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  border-radius: 18px;
-  padding: 16px;
+  border: 1px dashed ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.bodyBg};
+  border-radius: 14px;
+  padding: 20px;
   text-align: center;
-`;
-
-export const EmptyTitle = styled.div`
-  font-weight: 800;
-  color: ${({ theme }) => theme.text};
-`;
-
-export const EmptyText = styled.p`
-  margin: 6px 0 0 0;
   color: ${({ theme }) => theme.description};
   font-size: 13px;
 `;
 
-export const EmptyCompact = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  border-radius: 16px;
-  padding: 14px;
-  text-align: center;
-`;
-
-/* ===== Documentos ===== */
-export const DocList = styled.div`
+/* ===================== DOCUMENTOS ===================== */
+export const DocGrid = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-width: 0;
 `;
 
 export const DocItem = styled.div`
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.bodyBg};
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 12px;
-
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -524,83 +321,36 @@ export const DocItem = styled.div`
   }
 `;
 
-export const DocLeft = styled.div`
+export const DocInfo = styled.div`
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
 
-export const DocRight = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex: 0 0 auto;
+  strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.text};
+    margin-bottom: 2px;
+  }
 
-  @media (max-width: 640px) {
-    justify-content: flex-start;
+  div {
+    font-size: 13px;
+    color: ${({ theme }) => theme.text};
+    overflow-wrap: anywhere;
+  }
+
+  small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: ${({ theme }) => theme.description};
   }
 `;
 
-export const DocType = styled.div`
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.active};
-  color: ${({ theme }) => theme.primary};
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 800;
-`;
-
-export const DocName = styled.div`
-  font-size: 14px;
-  font-weight: 800;
-  color: ${({ theme }) => theme.text};
-  min-width: 0;
-
-  /* desktop: uma linha, com ellipsis */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 760px;
-
-  /* se tiver MUITO longo e você quiser permitir quebra: */
-  overflow-wrap: anywhere;
-
-  @media (max-width: 640px) {
-    max-width: 100%;
-    white-space: normal;
-  }
-`;
-
-export const DocMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+export const DocPerguntaRef = styled.div`
+  margin-top: 6px;
+  font-size: 11px;
   color: ${({ theme }) => theme.description};
-  font-size: 12px;
-
-  /* se tiver meta demais, evita “quebrar feio” */
-  overflow-wrap: anywhere;
-`;
-
-export const Dot = styled.span`
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.border};
-  display: inline-block;
-`;
-
-export const DocDesc = styled.div`
-  color: ${({ theme }) => theme.description};
-  font-size: 13px;
-  line-height: 1.45;
-  word-break: break-word;
+  font-style: italic;
   overflow-wrap: anywhere;
 `;
 
@@ -609,24 +359,20 @@ export const DocLink = styled.a`
   background: ${({ theme }) => theme.primary};
   color: ${({ theme }) => theme["text-white"]};
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   text-decoration: none;
-  cursor: pointer;
-
+  font-size: 13px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-
+  gap: 6px;
+  cursor: pointer;
   transition: 0.15s ease;
+  flex: 0 0 auto;
+  white-space: nowrap;
 
-  @media (max-width: 640px) {
-    width: 100%;
-    justify-content: center;
-  }
+  @media (max-width: 640px) { width: 100%; justify-content: center; }
 
-  &:hover {
-    background: ${({ theme }) => theme.primaryHover};
-  }
+  &:hover { background: ${({ theme }) => theme.primaryHover}; }
 `;
 
 export const DocDisabled = styled.div`
@@ -634,12 +380,182 @@ export const DocDisabled = styled.div`
   background: ${({ theme }) => theme.background};
   color: ${({ theme }) => theme.description};
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
+  font-size: 13px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+
+  @media (max-width: 640px) { width: 100%; }
+`;
+
+/* ===================== FICHA (PERGUNTAS) ===================== */
+export const Ficha = styled.div<{ respondida?: boolean }>`
+  border-radius: 16px;
+  border: 1px solid ${({ theme, respondida }) => respondida ? theme.border : theme.border};
+  padding: 14px 14px 14px 18px;
+  background: ${({ theme }) => theme.bodyBg};
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    border-radius: 999px;
+    background: ${({ theme, respondida }) => respondida ? theme.primary : theme.border};
+    opacity: ${({ respondida }) => respondida ? 0.7 : 0.4};
+  }
+`;
+
+export const FichaHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
 
   @media (max-width: 640px) {
-    width: 100%;
-    justify-content: center;
+    flex-direction: column;
   }
+`;
+
+export const FichaLeft = styled.div`
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+`;
+
+export const FichaRight = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+`;
+
+export const QIndex = styled.div`
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.lightPrimary};
+  color: ${({ theme }) => theme.primary};
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  height: fit-content;
+`;
+
+export const QuestionTitle = styled.div`
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+`;
+
+export const QuestionDesc = styled.p`
+  margin: 5px 0 0;
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+`;
+
+export const Required = styled.span`
+  color: ${({ theme }) => theme.danger};
+  margin-left: 4px;
+`;
+
+export const TypePill = styled.div`
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+  color: ${({ theme }) => theme.description};
+  white-space: nowrap;
+`;
+
+export const Points = styled.div<{ positive?: boolean }>`
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  border: 1px solid ${({ theme, positive }) => positive ? theme.border : theme.border};
+  background: ${({ theme, positive }) => positive ? theme.active : theme.background};
+  color: ${({ theme, positive }) => positive ? theme.primary : theme.description};
+`;
+
+export const FichaBody = styled.div`
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 10px;
+  min-width: 0;
+
+  @media (max-width: 860px) { grid-template-columns: 1fr; }
+`;
+
+export const AnswerBlock = styled.div<{ respondida?: boolean }>`
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.background};
+  padding: 10px 12px;
+  min-width: 0;
+
+  span { font-size: 11px; color: ${({ theme }) => theme.description}; }
+
+  strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    color: ${({ theme, respondida }) => respondida ? theme.text : theme.description};
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+    font-style: ${({ respondida }) => respondida ? "normal" : "italic"};
+  }
+`;
+
+export const DocBlock = styled(AnswerBlock)``;
+
+export const DocStatus = styled.div<{ type: "ok" | "missing" | "none" }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+
+  ${({ type, theme }) => {
+    if (type === "ok") return css`color: ${theme.statusDoneText};`;
+    if (type === "missing") return css`color: ${theme.danger};`;
+    return css`color: ${theme.description};`;
+  }}
+`;
+
+/* ===== Opções SELECT ===== */
+export const OpcoesList = styled.div`
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+
+export const OpcaoItem = styled.div<{ selected?: boolean }>`
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid ${({ theme, selected }) => selected ? theme.primary : theme.border};
+  background: ${({ theme, selected }) => selected ? theme.active : theme.background};
+  color: ${({ theme, selected }) => selected ? theme.primary : theme.description};
+  font-weight: ${({ selected }) => selected ? "700" : "400"};
+  transition: 0.1s ease;
 `;

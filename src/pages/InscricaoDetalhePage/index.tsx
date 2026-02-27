@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -9,101 +8,18 @@ import {
   FiFileText,
   FiPaperclip,
   FiExternalLink,
+  FiUser,
+  FiMapPin,
+  FiPhone,
+  FiMail,
+  FiAward,
+  FiHelpCircle,
 } from "react-icons/fi";
 import * as S from "./styles";
-import { api } from "../../lib/axios";
+import { getInscricaoFull, type InscricaoFull } from "../../api/get-inscricao-full";
 import { env } from "../../env";
 
-type StorageProvider = "LOCAL" | "S3" | "AZURE" | "GCS";
-
-type FullInscricaoResponse = {
-  inscricao: {
-    id_inscricao: string;
-    id_processo_seletivo: string;
-    id_vaga: string;
-    status: string;
-    protocolo: string;
-    data_criacao?: string | null;
-    data_envio?: string | null;
-    observacao?: string | null;
-    pontuacao_total?: number | null;
-    pontuacao_detalhe?: any;
-    vaga?: any;
-    usuario?: {
-      id_usuario: string;
-      tipo: string;
-      candidato?: any;
-    } | null;
-  };
-
-  itens: Array<{
-    id_pergunta: string;
-    pergunta: {
-      id_pergunta: string;
-      titulo: string;
-      descricao?: string | null;
-      tipo: string;
-      obrigatoria: boolean;
-      ordem?: number | null;
-      exige_comprovante?: boolean;
-      label_comprovante?: string | null;
-      regra_json?: any;
-      opcoes?: Array<{
-        id_opcao: string;
-        label: string;
-        pontos?: number;
-        ordem?: number | null;
-      }>;
-    };
-    resposta: {
-      existe: boolean;
-      id_resposta?: string | null;
-      id_inscricao: string;
-      id_pergunta: string;
-      opcao_id?: string | null;
-      opcao?: {
-        id_opcao: string;
-        label: string;
-        pontos?: number;
-      } | null;
-      value?: any;
-      raw?: {
-        valor_texto?: string | null;
-        valor_numero?: number | null;
-        valor_boolean?: boolean | null;
-        valor_data?: string | null;
-      };
-      pontos_calculados?: number | null;
-      pontos_detalhe?: any;
-    };
-  }>;
-
-  // ✅ documentos anexados (ajustado para os campos do backend novo)
-  documentos: Array<{
-    id_candidato_documento: string;
-    tipo: string;
-    status: string;
-    descricao?: string | null;
-    data_criacao: string;
-    data_atualizacao: string;
-    arquivo: null | {
-      id_arquivo: string;
-
-      nome_original: string;
-      nome_armazenado: string;
-
-      mime_type: string | null;
-      tamanho_bytes: number;
-
-      provider: StorageProvider;
-      storage_key: string;
-      url_publica: string | null;
-
-      sha256?: string | null;
-    };
-  }>;
-};
-
+/* ===================== Utils ===================== */
 function formatDateBR(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -111,393 +27,307 @@ function formatDateBR(iso?: string | null) {
   return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 }
 
-function formatBool(v: any) {
-  if (v === true) return "Sim";
-  if (v === false) return "Não";
-  return "—";
-}
-
-function formatNumber(v: any) {
-  if (v === null || v === undefined || v === "") return "—";
-  const n = Number(v);
-  if (Number.isNaN(n)) return String(v);
-  return n.toLocaleString("pt-BR");
-}
-
-function formatBytes(bytes?: number | null) {
-  if (!bytes || bytes <= 0) return "—";
+function formatBytes(bytes?: string | number | null) {
+  const n = Number(bytes);
+  if (!n || n <= 0) return "—";
   const units = ["B", "KB", "MB", "GB"];
-  let size = bytes;
-  let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
+  let size = n;
+  let i = 0;
+  while (size >= 1024 && i < units.length - 1) {
     size /= 1024;
-    unitIndex++;
+    i++;
   }
-  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
-}
-function guessFileName(doc: FullInscricaoResponse["documentos"][number]) {
-  const a = doc.arquivo;
-  if (!a) return doc.tipo;
-  const nome = (a.nome_original ?? "").trim();
-  if (nome) return nome;
-  const stored = (a.nome_armazenado ?? "").trim();
-  if (stored) return stored;
-  return doc.tipo;
+  return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-function buildFileUrl(
-  arquivo: NonNullable<FullInscricaoResponse["documentos"][number]["arquivo"]>,
-) {
-  if (arquivo.url_publica) return arquivo.url_publica;
-
-  if (arquivo.provider === "LOCAL") {
-    const base = env.VITE_API_URL.replace(/\/api\/?$/, "");
-    const key = String(arquivo.storage_key || "")
-      .replace(/^\/+/, "")
-      .replace(/^uploads\/+/, "");
-
-    return `${base}/uploads/${key}`;
-  }
-
-  return null;
+function formatCPF(cpf: string) {
+  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 }
 
-function renderResposta(item: FullInscricaoResponse["itens"][number]) {
-  const tipo = String(item.pergunta.tipo ?? "").toUpperCase();
-  const r = item.resposta;
-
-  if (!r?.existe) return "—";
-
-  if (tipo === "SELECT") return r.opcao?.label ?? "—";
-
-  if (tipo === "BOOLEAN" || tipo === "BOOLEANO" || tipo === "BOOL") {
-    return formatBool(r.value);
-  }
-
-  if (tipo === "DATA") return formatDateBR(r.value);
-
-  if (tipo === "NUMERO" || tipo === "EXPERIENCIA_DIAS") {
-    return formatNumber(r.value);
-  }
-
-  if (typeof r.value === "string") {
-    const txt = r.value.trim();
-    return txt ? txt : "—";
-  }
-
-  return r.value ?? "—";
+function formatTelefone(tel: string) {
+  const d = tel.replace(/\D/g, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return tel;
 }
 
-async function fetchInscricaoFull(idInscricao: string) {
-  const { data } = await api.get<FullInscricaoResponse>(
-    `/processos-seletivos-inscricoes/${idInscricao}/full`,
+function buildFileUrl(storageKey: string): string {
+  const base = env.VITE_API_URL.replace(/\/api\/?$/, "");
+  const key = String(storageKey).replace(/^\/+/, "").replace(/^uploads\/+/, "");
+  return `${base}/uploads/${key}`;
+}
+
+function renderResposta(pergunta: InscricaoFull["processo"]["perguntas"][number]) {
+  const r = pergunta.resposta_candidato;
+  if (!r) return "—";
+  const tipo = pergunta.tipo.toUpperCase();
+  if (tipo === "SELECT") return r.opcao_selecionada?.label ?? r.opcao_id ?? "—";
+  if (tipo === "BOOLEAN") {
+    if (r.valor_boolean === true) return "Sim";
+    if (r.valor_boolean === false) return "Não";
+    return "—";
+  }
+  if (tipo === "NUMBER") return r.valor_numero != null ? String(r.valor_numero) : "—";
+  if (tipo === "DATE") return formatDateBR(r.valor_data as unknown as string);
+  return r.valor_texto ?? "—";
+}
+
+/* ===================== Skeleton ===================== */
+function Skeleton() {
+  return (
+    <S.Page>
+      <S.SkeletonHeader />
+      <S.SkeletonCard />
+      <S.SkeletonCard />
+    </S.Page>
   );
-  return data;
 }
 
+/* ===================== Page ===================== */
 export default function InscricaoDetalhePage() {
-  // ⚠️ sua rota usa :id_inscricao, não :idInscricao
   const { id_inscricao } = useParams();
   const navigate = useNavigate();
 
-  const enabled = !!id_inscricao;
-
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["inscricao-full", id_inscricao],
-    queryFn: () => fetchInscricaoFull(String(id_inscricao)),
-    enabled,
-    staleTime: 60_000,
+    queryFn: () => getInscricaoFull(String(id_inscricao)),
+    enabled: !!id_inscricao,
   });
 
-  const header = useMemo(() => {
-    const i = data?.inscricao;
-    if (!i) return null;
+  if (isLoading) return <Skeleton />;
+  if (isError || !data) return (
+    <S.Page>
+      <S.ErrorBox>Não foi possível carregar a inscrição.</S.ErrorBox>
+    </S.Page>
+  );
 
-    const candidatoNome =
-      i.usuario?.candidato?.nome ||
-      i.usuario?.candidato?.nome_completo ||
-      i.usuario?.candidato?.nm_candidato ||
-      "Candidato";
+  const { candidato, inscricao, processo } = data;
 
-    const vagaNome =
-      i.vaga?.titulo ||
-      i.vaga?.nome ||
-      i.vaga?.descricao ||
-      i.vaga?.nome_vaga ||
-      "Vaga";
+  const enderecoCompleto = [
+    candidato.logradouro,
+    candidato.numero,
+    candidato.complemento,
+    candidato.bairro,
+    candidato.cidade,
+    candidato.uf,
+  ].filter(Boolean).join(", ");
 
-    const pontuacao = Number(i.pontuacao_total ?? 0);
-
-    return {
-      protocolo: i.protocolo ?? "—",
-      status: i.status ?? "—",
-      candidatoNome,
-      vagaNome,
-      pontuacao,
-      criadoEm: formatDateBR(i.data_criacao ?? null),
-      enviadoEm: formatDateBR(i.data_envio ?? null),
-      observacao: (i.observacao ?? "").trim() || null,
-    };
-  }, [data]);
-
-  const documentos = data?.documentos ?? [];
-  const temDocumentos = documentos.length > 0;
+  // Todos os documentos da inscrição (da lista de perguntas que exigem comprovante)
+  const documentosAnexados = processo.perguntas
+    .filter((p) => p.comprovante_anexado)
+    .map((p) => ({ pergunta: p, doc: p.comprovante_anexado! }));
 
   return (
     <S.Page>
+      {/* ================= HEADER ================= */}
       <S.Header>
         <S.HeaderTop>
-          <S.BackButton type="button" onClick={() => navigate(-1)}>
-            <FiArrowLeft />
+          <S.BackButton onClick={() => navigate(-1)}>
+            <FiArrowLeft size={15} />
             Voltar
           </S.BackButton>
-
-          <S.HeaderTitleArea>
-            <S.Title>Detalhe da Inscrição</S.Title>
-            <S.Subtitle>
-              Visualize perguntas, respostas e documentos anexados.
-            </S.Subtitle>
-          </S.HeaderTitleArea>
+          <S.TitleArea>
+            <S.Title>Ficha de Inscrição</S.Title>
+            <S.Subtitle>{processo.titulo} — {processo.secretaria}</S.Subtitle>
+          </S.TitleArea>
+          <S.StatusBadge status={inscricao.status}>{inscricao.status}</S.StatusBadge>
         </S.HeaderTop>
 
-        {isLoading && (
-          <S.StateBox>
-            <S.StateTitle>Carregando…</S.StateTitle>
-            <S.StateText>Buscando dados da inscrição.</S.StateText>
-          </S.StateBox>
-        )}
+        <S.MetaGrid>
+          <S.MetaCard>
+            <FiClipboard size={16} />
+            <div>
+              <span>Protocolo</span>
+              <strong>{inscricao.protocolo ?? "—"}</strong>
+            </div>
+          </S.MetaCard>
+          <S.MetaCard>
+            <FiFileText size={16} />
+            <div>
+              <span>Vaga</span>
+              <strong>{inscricao.vaga.nome}</strong>
+            </div>
+          </S.MetaCard>
+          <S.MetaCard>
+            <FiAward size={16} />
+            <div>
+              <span>Nível</span>
+              <strong>{inscricao.vaga.nivel}</strong>
+            </div>
+          </S.MetaCard>
+          <S.MetaCard>
+            <FiClock size={16} />
+            <div>
+              <span>Enviada em</span>
+              <strong>{formatDateBR(inscricao.data_envio)}</strong>
+            </div>
+          </S.MetaCard>
 
-        {isError && (
-          <S.StateBox $variant="danger">
-            <S.StateTitle>Erro ao carregar</S.StateTitle>
-            <S.StateText>
-              {(error as any)?.response?.data?.message ??
-                (error as any)?.message ??
-                "Não foi possível carregar."}
-            </S.StateText>
-            <S.StateActions>
-              <S.ActionButton type="button" onClick={() => refetch()}>
-                Tentar novamente
-              </S.ActionButton>
-            </S.StateActions>
-          </S.StateBox>
-        )}
-
-        {!isLoading && !isError && header && (
-          <S.MetaGrid>
-            <S.MetaCard>
-              <S.MetaIcon>
-                <FiClipboard />
-              </S.MetaIcon>
-              <S.MetaBody>
-                <S.MetaLabel>Protocolo</S.MetaLabel>
-                <S.MetaValue>{header.protocolo}</S.MetaValue>
-              </S.MetaBody>
-            </S.MetaCard>
-
-            <S.MetaCard>
-              <S.MetaIcon>
-                <FiCheckCircle />
-              </S.MetaIcon>
-              <S.MetaBody>
-                <S.MetaLabel>Status</S.MetaLabel>
-                <S.MetaValue>{header.status}</S.MetaValue>
-              </S.MetaBody>
-            </S.MetaCard>
-
-            <S.MetaCard>
-              <S.MetaIcon>
-                <FiFileText />
-              </S.MetaIcon>
-              <S.MetaBody>
-                <S.MetaLabel>Vaga</S.MetaLabel>
-                <S.MetaValue title={header.vagaNome}>
-                  {header.vagaNome}
-                </S.MetaValue>
-              </S.MetaBody>
-            </S.MetaCard>
-
-            <S.MetaCard>
-              <S.MetaIcon>
-                <FiClock />
-              </S.MetaIcon>
-              <S.MetaBody>
-                <S.MetaLabel>Enviada em</S.MetaLabel>
-                <S.MetaValue>{header.enviadoEm}</S.MetaValue>
-              </S.MetaBody>
-            </S.MetaCard>
-
-            <S.MetaWideCard>
-              <S.MetaWideTop>
-                <S.MetaWideTitle>{header.candidatoNome}</S.MetaWideTitle>
-                <S.ScorePill>
-                  Pontuação: <b>{header.pontuacao}</b>
-                </S.ScorePill>
-              </S.MetaWideTop>
-
-              <S.MetaWideBottom>
-                <S.MetaLine>
-                  <span>Criada em:</span>
-                  <strong>{header.criadoEm}</strong>
-                </S.MetaLine>
-                <S.MetaLine>
-                  <span>Enviada em:</span>
-                  <strong>{header.enviadoEm}</strong>
-                </S.MetaLine>
-              </S.MetaWideBottom>
-
-              {header.observacao && (
-                <S.ObsBox>
-                  <S.ObsTitle>Observação do candidato</S.ObsTitle>
-                  <S.ObsText>{header.observacao}</S.ObsText>
-                </S.ObsBox>
-              )}
-            </S.MetaWideCard>
-          </S.MetaGrid>
-        )}
+          <S.MetaWide>
+            <S.ScoreRow>
+              <div>
+                <S.CandidatoNome>{candidato.nome_completo}</S.CandidatoNome>
+                <S.CandidatoCPF>CPF: {formatCPF(candidato.cpf)}</S.CandidatoCPF>
+              </div>
+              <S.ScoreBadge>
+                <FiAward size={14} />
+                {inscricao.pontuacao_total} pts
+              </S.ScoreBadge>
+            </S.ScoreRow>
+            {inscricao.observacao && <S.Obs>{inscricao.observacao}</S.Obs>}
+          </S.MetaWide>
+        </S.MetaGrid>
       </S.Header>
 
-      {/* ✅ CARD: DOCUMENTOS */}
-      {!isLoading && !isError ? (
-        <S.Card>
-          <S.CardHeader>
-            <S.CardTitle>
-              <span
-                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
-              >
-                <FiPaperclip /> Documentos anexados
-              </span>
-            </S.CardTitle>
-            <S.CardDesc>
-              Lista dos documentos ativos anexados pelo candidato nesta
-              inscrição.
-            </S.CardDesc>
-          </S.CardHeader>
-
-          {!temDocumentos ? (
-            <S.EmptyCompact>
-              <S.EmptyTitle>Nenhum documento anexado</S.EmptyTitle>
-              <S.EmptyText>
-                O candidato ainda não enviou documentos.
-              </S.EmptyText>
-            </S.EmptyCompact>
-          ) : (
-            <S.DocList>
-              {documentos.map((doc) => {
-                const a = doc.arquivo;
-                const nomeArquivo = guessFileName(doc);
-                const tamanho = formatBytes(a?.tamanho_bytes ?? null);
-                const mime = a?.mime_type ?? "—";
-                const url = a ? buildFileUrl(a) : null;
-
-                return (
-                  <S.DocItem key={doc.id_candidato_documento}>
-                    <S.DocLeft>
-                      <S.DocType>{doc.tipo}</S.DocType>
-                      <S.DocName title={nomeArquivo}>{nomeArquivo}</S.DocName>
-
-                      <S.DocMeta>
-                        <span>{mime}</span>
-                        <S.Dot />
-                        <span>{tamanho}</span>
-                        <S.Dot />
-                        <span>Enviado: {formatDateBR(doc.data_criacao)}</span>
-                      </S.DocMeta>
-
-                      {doc.descricao ? (
-                        <S.DocDesc title={doc.descricao}>
-                          {doc.descricao}
-                        </S.DocDesc>
-                      ) : null}
-                    </S.DocLeft>
-
-                    <S.DocRight>
-                      {url ? (
-                        <S.DocLink href={url} target="_blank" rel="noreferrer">
-                          <FiExternalLink />
-                          Abrir
-                        </S.DocLink>
-                      ) : (
-                        <S.DocDisabled title="Sem URL disponível no arquivo">
-                          Sem link
-                        </S.DocDisabled>
-                      )}
-                    </S.DocRight>
-                  </S.DocItem>
-                );
-              })}
-            </S.DocList>
+      {/* ================= DADOS DO CANDIDATO ================= */}
+      <S.Card>
+        <S.CardHeader>
+          <h3><FiUser size={15} /> Dados Pessoais</h3>
+        </S.CardHeader>
+        <S.CandidatoGrid>
+          <S.InfoItem>
+            <S.InfoLabel><FiMail size={12} /> E-mail</S.InfoLabel>
+            <S.InfoValue>{candidato.email}</S.InfoValue>
+          </S.InfoItem>
+          <S.InfoItem>
+            <S.InfoLabel><FiPhone size={12} /> Telefone</S.InfoLabel>
+            <S.InfoValue>{formatTelefone(candidato.telefone)}</S.InfoValue>
+          </S.InfoItem>
+          <S.InfoItem>
+            <S.InfoLabel>RG</S.InfoLabel>
+            <S.InfoValue>{candidato.rg ?? "—"}</S.InfoValue>
+          </S.InfoItem>
+          <S.InfoItem>
+            <S.InfoLabel>Data de Nascimento</S.InfoLabel>
+            <S.InfoValue>
+              {candidato.data_nascimento
+                ? new Date(candidato.data_nascimento + "T00:00:00").toLocaleDateString("pt-BR")
+                : "—"}
+            </S.InfoValue>
+          </S.InfoItem>
+          {enderecoCompleto && (
+            <S.InfoItemWide>
+              <S.InfoLabel><FiMapPin size={12} /> Endereço</S.InfoLabel>
+              <S.InfoValue>{enderecoCompleto}</S.InfoValue>
+            </S.InfoItemWide>
           )}
-        </S.Card>
-      ) : null}
+        </S.CandidatoGrid>
+      </S.Card>
 
-      {/* ✅ CARD: PERGUNTAS */}
-      {!isLoading && !isError && data?.itens?.length ? (
-        <S.Card>
-          <S.CardHeader>
-            <S.CardTitle>Perguntas e Respostas</S.CardTitle>
-            <S.CardDesc>
-              Abaixo estão as perguntas do processo e as respostas registradas
-              nesta inscrição.
-            </S.CardDesc>
-          </S.CardHeader>
-
-          <S.List>
-            {data.itens.map((item) => {
-              const respostaTxt = renderResposta(item);
-              const tipo = String(item.pergunta.tipo ?? "").toUpperCase();
-
+      {/* ================= DOCUMENTOS ================= */}
+      <S.Card>
+        <S.CardHeader>
+          <h3><FiPaperclip size={15} /> Documentos Anexados</h3>
+        </S.CardHeader>
+        {!documentosAnexados.length ? (
+          <S.Empty>Nenhum documento anexado.</S.Empty>
+        ) : (
+          <S.DocGrid>
+            {documentosAnexados.map(({ pergunta, doc }) => {
+              const url = doc.arquivo ? buildFileUrl(doc.arquivo.storage_key) : null;
               return (
-                <S.Item key={item.id_pergunta}>
-                  <S.ItemTop>
-                    <S.QuestionTitle>
-                      {item.pergunta.titulo}
-                      {item.pergunta.obrigatoria && <S.Required>*</S.Required>}
-                    </S.QuestionTitle>
-
-                    <S.TypePill title="Tipo da pergunta">
-                      {tipo || "—"}
-                    </S.TypePill>
-                  </S.ItemTop>
-
-                  {item.pergunta.descricao ? (
-                    <S.QuestionDesc>{item.pergunta.descricao}</S.QuestionDesc>
-                  ) : null}
-
-                  <S.AnswerBox>
-                    <S.AnswerLabel>Resposta</S.AnswerLabel>
-                    <S.AnswerValue title={String(respostaTxt)}>
-                      {String(respostaTxt)}
-                    </S.AnswerValue>
-
-                    <S.AnswerMeta>
-                      <S.MetaChip>
-                        Pontos:{" "}
-                        <b>{Number(item.resposta.pontos_calculados ?? 0)}</b>
-                      </S.MetaChip>
-
-                      {item.pergunta.exige_comprovante &&
-                      item.pergunta.label_comprovante ? (
-                        <S.MetaChip title="Documento exigido">
-                          Doc: <b>{item.pergunta.label_comprovante}</b>
-                        </S.MetaChip>
-                      ) : null}
-                    </S.AnswerMeta>
-                  </S.AnswerBox>
-                </S.Item>
+                <S.DocItem key={doc.id_candidato_documento}>
+                  <S.DocInfo>
+                    <strong>{doc.tipo}</strong>
+                    <div>{doc.arquivo?.nome_original ?? "—"}</div>
+                    <small>
+                      {doc.arquivo?.mime_type ?? "—"} • {formatBytes(doc.arquivo?.tamanho_bytes)}
+                    </small>
+                    <S.DocPerguntaRef>{pergunta.titulo}</S.DocPerguntaRef>
+                  </S.DocInfo>
+                  {url ? (
+                    <S.DocLink href={url} target="_blank" rel="noopener noreferrer">
+                      <FiExternalLink size={14} /> Abrir
+                    </S.DocLink>
+                  ) : (
+                    <S.DocDisabled>Sem link</S.DocDisabled>
+                  )}
+                </S.DocItem>
               );
             })}
-          </S.List>
-        </S.Card>
-      ) : !isLoading && !isError ? (
-        <S.Empty>
-          <S.EmptyTitle>Nenhuma pergunta encontrada</S.EmptyTitle>
-          <S.EmptyText>
-            Não há perguntas ativas ou não foi possível montar o formulário
-            dessa inscrição.
-          </S.EmptyText>
-        </S.Empty>
-      ) : null}
+          </S.DocGrid>
+        )}
+      </S.Card>
+
+      {/* ================= PERGUNTAS ================= */}
+      <S.Card>
+        <S.CardHeader>
+          <h3><FiHelpCircle size={15} /> Perguntas e Respostas</h3>
+          <S.QCount>{processo.perguntas.length} pergunta{processo.perguntas.length !== 1 ? "s" : ""}</S.QCount>
+        </S.CardHeader>
+        {!processo.perguntas.length ? (
+          <S.Empty>Nenhuma pergunta neste processo.</S.Empty>
+        ) : (
+          <S.ScrollArea>
+            {processo.perguntas.map((pergunta, idx) => {
+              const respostaTxt = renderResposta(pergunta);
+              const temResposta = !!pergunta.resposta_candidato;
+              const pontos = pergunta.resposta_candidato?.pontos_calculados ?? 0;
+
+              return (
+                <S.Ficha key={pergunta.id_pergunta} respondida={temResposta}>
+                  <S.FichaHeader>
+                    <S.FichaLeft>
+                      <S.QIndex>Q{String(idx + 1).padStart(2, "0")}</S.QIndex>
+                      <div>
+                        <S.QuestionTitle>
+                          {pergunta.titulo}
+                          {pergunta.obrigatoria && <S.Required title="Obrigatória">*</S.Required>}
+                        </S.QuestionTitle>
+                        {pergunta.descricao && (
+                          <S.QuestionDesc>{pergunta.descricao}</S.QuestionDesc>
+                        )}
+                      </div>
+                    </S.FichaLeft>
+                    <S.FichaRight>
+                      <S.TypePill>{pergunta.tipo}</S.TypePill>
+                      {temResposta && (
+                        <S.Points positive={pontos > 0}>{pontos} pts</S.Points>
+                      )}
+                    </S.FichaRight>
+                  </S.FichaHeader>
+
+                  <S.FichaBody>
+                    <S.AnswerBlock respondida={temResposta}>
+                      <span>Resposta</span>
+                      <strong>{String(respostaTxt)}</strong>
+                    </S.AnswerBlock>
+
+                    <S.DocBlock>
+                      <span>Comprovante</span>
+                      {!pergunta.exige_comprovante ? (
+                        <S.DocStatus type="none">Não exigido</S.DocStatus>
+                      ) : pergunta.comprovante_anexado ? (
+                        <S.DocStatus type="ok">
+                          <br></br>
+                          <FiCheckCircle size={12} />
+                          {pergunta.comprovante_anexado.arquivo?.nome_original ?? pergunta.label_comprovante}
+                        </S.DocStatus>
+                      ) : (
+                        <S.DocStatus type="missing">Não anexado</S.DocStatus>
+                      )}
+                    </S.DocBlock>
+                  </S.FichaBody>
+
+                  {/* Opções SELECT */}
+                  {pergunta.tipo === "SELECT" && pergunta.opcoes.length > 0 && (
+                    <S.OpcoesList>
+                      {pergunta.opcoes.map((op) => (
+                        <S.OpcaoItem
+                          key={op.id_opcao}
+                          selected={pergunta.resposta_candidato?.opcao_id === op.id_opcao}
+                        >
+                          {op.label}
+                        </S.OpcaoItem>
+                      ))}
+                    </S.OpcoesList>
+                  )}
+                </S.Ficha>
+              );
+            })}
+          </S.ScrollArea>
+        )}
+      </S.Card>
     </S.Page>
   );
 }
