@@ -455,3 +455,31 @@ export const PageInfo = styled.div`
     color: ${({ theme }) => theme.text};
   }
 `;
+
+export const DraftNotice = styled.div`
+  padding: ${ui.space.md} ${ui.space.lg};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.BGlink};
+
+  display: grid;
+  gap: 6px;
+`;
+
+export const DraftTitle = styled.div`
+  font-weight: 900;
+  color: ${({ theme }) => theme.primary};
+  font-size: 13px;
+  letter-spacing: -0.01em;
+`;
+
+export const DraftText = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.description};
+  font-size: 13px;
+  line-height: 1.45;
+
+  b {
+    color: ${({ theme }) => theme.text};
+    font-weight: 900;
+  }
+`;

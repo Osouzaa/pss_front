@@ -211,6 +211,16 @@ export function MinhasInscricoes() {
                     {normalizeStatusLabel(i.status)}
                   </S.StatusPill>
                 </S.CardTop>
+                {String(i.status).toUpperCase() === "RASCUNHO" && (
+                  <S.DraftNotice role="note" aria-label="Lembrete de rascunho">
+                    <S.DraftTitle>⚠️ Candidatura em rascunho</S.DraftTitle>
+                    <S.DraftText>
+                      Preencha todos os campos e anexe os documentos para
+                      enviar. Só serão contabilizadas candidaturas{" "}
+                      <b>enviadas</b>.
+                    </S.DraftText>
+                  </S.DraftNotice>
+                )}
 
                 <S.MetaRow>
                   <S.MetaItem>
