@@ -22,6 +22,7 @@ import { getAllVagasProcessoId } from "../../api/get-all-vagas-processoId";
 import { Pagination } from "../../components/Pagination";
 import { TokenSistems } from "../../constants/env.constantes";
 import { excluirVaga } from "../../api/deleta-vaga";
+import { api } from "../../lib/axios";
 
 function normalizeText(s: string) {
   return (s ?? "")
@@ -52,7 +53,7 @@ function getInitialTab(isAdmin: boolean): TabKey {
 
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<string>(() => getInitialTab(isAdmin));
@@ -175,6 +176,13 @@ export function ProcessoSeletivosDetalhes() {
     setOpenModalEditProceso(true);
   }
 
+  async function sendEmail() {
+    await api.post(
+      `/processos-seletivos-inscricoes/all/${id}/notificar-rascunhos`,
+    );
+    toast.success("ENVIADO");
+  }
+
   function onCadastrarPergunta() {
     if (!isAdmin) {
       toast.error("Apenas administradores podem cadastrar perguntas.");
@@ -258,6 +266,12 @@ export function ProcessoSeletivosDetalhes() {
               <S.PrimaryButton type="button" onClick={onCadastrarPergunta}>
                 Cadastrar perguntas
               </S.PrimaryButton>
+
+              {user?.email === "gabriel.alves@ibirite.mg.gov.br" && (
+                <S.PrimaryButton type="button" onClick={sendEmail}>
+                  Enviar e-mail
+                </S.PrimaryButton>
+              )}
             </>
           )}
         </S.HeaderRight>
