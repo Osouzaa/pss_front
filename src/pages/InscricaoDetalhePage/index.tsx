@@ -61,17 +61,27 @@ function renderResposta(pergunta: InscricaoFull["processo"]["perguntas"][number]
   const r = pergunta.resposta_candidato;
   if (!r) return "—";
   const tipo = pergunta.tipo.toUpperCase();
+
   if (tipo === "SELECT") return r.opcao_selecionada?.label ?? r.opcao_id ?? "—";
+  
   if (tipo === "BOOLEAN") {
     if (r.valor_boolean === true) return "Sim";
     if (r.valor_boolean === false) return "Não";
     return "—";
   }
-  if (tipo === "NUMBER") return r.valor_numero != null ? String(r.valor_numero) : "—";
-  if (tipo === "DATE") return formatDateBR(r.valor_data as unknown as string);
+
+  if (tipo === "NUMBER" || tipo === "NUMERO") 
+    return r.valor_numero != null ? String(r.valor_numero) : "—";
+
+  // ✅ EXPERIENCIA_DIAS — valor fica em valor_numero (dias)
+  if (tipo === "EXPERIENCIA_DIAS")
+    return r.valor_numero != null ? `${r.valor_numero} dias` : "—";
+
+  if (tipo === "DATE" || tipo === "DATA") 
+    return formatDateBR(r.valor_data as unknown as string);
+
   return r.valor_texto ?? "—";
 }
-
 /* ===================== Skeleton ===================== */
 function Skeleton() {
   return (

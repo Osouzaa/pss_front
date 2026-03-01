@@ -10,9 +10,11 @@ export function formatDate(
   let parsed: Date;
 
   if (typeof date === "string") {
-    // 🔥 evita conversão UTC
-    const [year, month, day] = date.split("T")[0].split("-").map(Number);
-    parsed = new Date(year, month - 1, day);
+    const onlyDate = date.split("T")[0]; // remove horário se existir
+    const [year, month, day] = onlyDate.split("-").map(Number);
+
+    // 🔥 cria no meio-dia para evitar D-1 por timezone
+    parsed = new Date(year, month - 1, day, 12);
   } else {
     parsed = date;
   }
