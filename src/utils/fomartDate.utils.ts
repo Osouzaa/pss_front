@@ -1,4 +1,4 @@
-import { format, isValid } from "date-fns";
+import { format, isValid, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export function formatDate(
@@ -10,11 +10,17 @@ export function formatDate(
   let parsed: Date;
 
   if (typeof date === "string") {
-    const onlyDate = date.split("T")[0]; // remove horário se existir
-    const [year, month, day] = onlyDate.split("-").map(Number);
+    const s = date.trim();
 
-    // 🔥 cria no meio-dia para evitar D-1 por timezone
-    parsed = new Date(year, month - 1, day, 12);
+    // ✅ Se tem "T", é datetime (provavelmente ISO). Parseia de verdade.
+    if (s.includes("T")) {
+      parsed = new Date(s);
+    } else {
+      // ✅ Se é só data "YYYY-MM-DD", parseia como data local sem timezone
+      // e joga no meio-dia pra evitar D-1
+      const d = parse(s, "yyyy-MM-dd", new Date());
+      parsed = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12);
+    }
   } else {
     parsed = date;
   }
