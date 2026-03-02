@@ -21,6 +21,7 @@ import { ForgotPassword } from "../pages/ForgotPassword";
 import { ResetPassword } from "../pages/ResetPassword";
 import InscricaoDetalhePage from "../pages/InscricaoDetalhePage";
 import { RequireRole } from "./RequireRole";
+import { InscricoesAdmin } from "../pages/InscricoesAdmin";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -59,6 +60,10 @@ function AnimatedRoutes() {
               <Route
                 path="/processos/:id/inscricoes/:id_inscricao/detalhe"
                 element={<InscricaoDetalhePage />}
+              />
+              <Route
+                path="/all-inscricoes/:id_processo_seletivo"
+                element={<InscricoesAdmin />}
               />
             </Route>
           </Route>

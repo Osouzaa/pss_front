@@ -242,6 +242,16 @@ export function Processo() {
                     >
                       Inscrever
                     </S.PrimaryButton>
+                    <S.PrimaryButton
+                      type="button"
+                      disabled={disabled}
+                      title={title}
+                      onClick={() =>
+                        navigate(`/all-inscricoes/${p.id_processo_seletivo}`)
+                      }
+                    >
+                      Ver inscrições
+                    </S.PrimaryButton>
                   </S.CardFooter>
                 </S.Card>
               );

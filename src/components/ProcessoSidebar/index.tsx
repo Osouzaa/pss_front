@@ -37,6 +37,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         label: "Inscrições",
         icon: <FiUsers size={18} />,
       },
+     
       { to: "/perfil", label: "Perfil", icon: <FiUser size={18} /> },
     ],
     [],
