@@ -35,46 +35,9 @@ import {
 } from "../../../../components/InputSelectFilter";
 
 const DocumentoTipoEnum = z.enum(
-  [
-    // Identificação
-    "CPF",
-    "RG",
-    "CNH",
-    "CERTIDAO_NASCIMENTO",
-    "CERTIDAO_CASAMENTO",
-
-    "DECLARACAO_MATRICULA",
-    // Endereço
-    "COMPROVANTE_ENDERECO",
-
-    // Obrigações civis
-    "CERTIFICADO_RESERVISTA",
-    "TITULO_ELEITOR",
-
-    // Formação
-    "DIPLOMA",
-    "HISTORICO_ESCOLAR",
-    "ENSINO_SUPERIOR",
-    "MESTRADO",
-    "DOUTORADO",
-    "CURSO",
-
-    // Experiência profissional
-    "EXPERIENCIA_PROFISSIONAL",
-    "CTPS",
-    "CONTRATO_TRABALHO",
-    "DECLARACAO_EXPERIENCIA",
-
-    // Ações afirmativas / cotas
-    "DECLARACAO_RACA_COR",
-
-    // PCD
-    "PCD_LAUDO_MEDICO",
-    "PCD_RELATORIO",
-
-    // Outros
-    "COMPROVANTE_RESERVA_VAGA",
-    "OUTROS",
+  DOCUMENTO_TIPO_OPTIONS.map((o) => o.value) as [
+    (typeof DOCUMENTO_TIPO_OPTIONS)[number]["value"],
+    ...(typeof DOCUMENTO_TIPO_OPTIONS)[number]["value"][],
   ],
   { message: "Selecione uma opção válida!" },
 );
@@ -113,28 +76,9 @@ function formatBytes(bytes: number) {
 }
 
 function labelTipo(tipo: DocumentoTipo) {
-  switch (tipo) {
-    case "CPF":
-      return "CPF";
-    case "COMPROVANTE_ENDERECO":
-      return "Comprovante de endereço";
-    case "DIPLOMA":
-      return "Diploma";
-    case "ENSINO_SUPERIOR":
-      return "Ensino Superior";
-    case "MESTRADO":
-      return "Mestrado (até 2)";
-    case "DOUTORADO":
-      return "Doutorado";
-    case "CURSO":
-      return "Cursos";
-    case "EXPERIENCIA_PROFISSIONAL":
-      return "Experiencia Profissional";
-    case "OUTROS":
-      return "Outros";
-    default:
-      return tipo;
-  }
+  return (
+    DOCUMENTO_TIPO_OPTIONS.find((o) => o.value === tipo)?.label ?? String(tipo)
+  );
 }
 
 export function ModalAddAnexo({

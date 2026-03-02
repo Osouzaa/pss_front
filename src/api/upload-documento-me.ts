@@ -1,38 +1,5 @@
 import { api } from "../lib/axios";
-
-export type DocumentoTipo =
-  // Identificação
-  | "CPF"
-  | "RG"
-  | "CNH"
-  | "CERTIDAO_NASCIMENTO"
-  | "CERTIDAO_CASAMENTO"
-  | "DECLARACAO_MATRICULA"
-  // Endereço
-  | "COMPROVANTE_ENDERECO"
-  // Obrigações civis
-  | "CERTIFICADO_RESERVISTA"
-  | "TITULO_ELEITOR"
-  // Formação
-  | "DIPLOMA"
-  | "HISTORICO_ESCOLAR"
-  | "ENSINO_SUPERIOR"
-  | "MESTRADO"
-  | "DOUTORADO"
-  | "CURSO"
-  // Experiência
-  | "EXPERIENCIA_PROFISSIONAL"
-  | "CTPS"
-  | "CONTRATO_TRABALHO"
-  | "DECLARACAO_EXPERIENCIA"
-  // Cotas / ações afirmativas
-  | "DECLARACAO_RACA_COR"
-  // PCD
-  | "PCD_LAUDO_MEDICO"
-  | "PCD_RELATORIO"
-  // Outros
-  | "COMPROVANTE_RESERVA_VAGA"
-  | "OUTROS";
+import type { DocumentoTipo } from "../utils/documentoTipos";
 
 type UploadDocumentoMeInput = {
   file: File;
@@ -46,6 +13,7 @@ export async function uploadDocumentoMe(input: UploadDocumentoMeInput) {
   form.append("tipo", input.tipo);
   if (input.descricao) form.append("descricao", input.descricao);
 
+  // axios já detecta multipart/form-data com FormData, sem precisar setar boundary manualmente.
   const res = await api.post(
     "/processo-seletivo-candidatos/me/documentos",
     form,

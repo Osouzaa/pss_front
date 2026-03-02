@@ -5,7 +5,6 @@ export const DOCUMENTO_TIPO_OPTIONS = [
   { value: "CNH", label: "CNH" },
   { value: "CERTIDAO_NASCIMENTO", label: "CERTIDÃO DE NASCIMENTO" },
   { value: "CERTIDAO_CASAMENTO", label: "CERTIDÃO DE CASAMENTO" },
-
   { value: "DECLARACAO_MATRICULA", label: "DECLARAÇÃO DE MATRÍCULA" },
 
   // Endereço
@@ -23,7 +22,7 @@ export const DOCUMENTO_TIPO_OPTIONS = [
   { value: "DOUTORADO", label: "DOUTORADO" },
   { value: "CURSO", label: "CURSOS / CERTIFICADOS" },
 
-  // ✅ Especialização (máx. 2)
+  // Especialização (máx. 2)
   {
     value: "COMPROVANTE_ESPECIALIZACAO_1",
     label: "COMPROVANTE DE ESPECIALIZAÇÃO (1)",
@@ -53,3 +52,9 @@ export const DOCUMENTO_TIPO_OPTIONS = [
   },
   { value: "OUTROS", label: "OUTROS" },
 ] as const;
+
+/**
+ * Tipo derivado diretamente das opções acima — garante que enum/union
+ * esteja sempre sincronizado com a lista.
+ */
+export type DocumentoTipo = (typeof DOCUMENTO_TIPO_OPTIONS)[number]["value"];
