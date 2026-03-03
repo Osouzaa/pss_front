@@ -333,3 +333,4 @@ export const BottomLabel = styled.span`
 
 /* Exporta a altura do BottomBar pra você usar no layout */
 export const MOBILE_BOTTOM_BAR_HEIGHT = bottomBarH;
+

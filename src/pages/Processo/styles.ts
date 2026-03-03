@@ -673,3 +673,9 @@ export const ProfileWarnButton = styled.button`
     filter: brightness(1.02);
   }
 `;
+
+export const ContainerButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;

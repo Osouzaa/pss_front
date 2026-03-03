@@ -234,24 +234,28 @@ export function Processo() {
                       Ver detalhes
                     </S.SecondaryButton>
 
-                    <S.PrimaryButton
-                      type="button"
-                      disabled={disabled}
-                      title={title}
-                      onClick={() => handleSubscribe(p.id_processo_seletivo)}
-                    >
-                      Inscrever
-                    </S.PrimaryButton>
-                    <S.PrimaryButton
-                      type="button"
-                      disabled={disabled}
-                      title={title}
-                      onClick={() =>
-                        navigate(`/all-inscricoes/${p.id_processo_seletivo}`)
-                      }
-                    >
-                      Ver inscrições
-                    </S.PrimaryButton>
+                    <S.ContainerButtons>
+                      <S.PrimaryButton
+                        type="button"
+                        disabled={disabled}
+                        title={title}
+                        onClick={() => handleSubscribe(p.id_processo_seletivo)}
+                      >
+                        Inscrever
+                      </S.PrimaryButton>
+                      {isAdmin && (
+                        <S.PrimaryButton
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              `/all-inscricoes/${p.id_processo_seletivo}`,
+                            )
+                          }
+                        >
+                          Ver inscrições
+                        </S.PrimaryButton>
+                      )}
+                    </S.ContainerButtons>
                   </S.CardFooter>
                 </S.Card>
               );
