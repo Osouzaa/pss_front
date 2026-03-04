@@ -659,7 +659,6 @@ export function InscricoesAdmin() {
         </S.Footer>
       </S.Card>
 
-      {/* ── MODAL DE DETALHES ── */}
       {modalDetalhe && (
         <S.Overlay onClick={fecharModal}>
           <S.Modal onClick={(e) => e.stopPropagation()}>

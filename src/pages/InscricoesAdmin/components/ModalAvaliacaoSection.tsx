@@ -9,6 +9,7 @@ interface ModalAvaliacaoSectionProps {
   dataAvaliacao?: string | null;
   classificacaoAntesReprovacao?: number | null;
   decisaoPendente: AvaliacaoResultado | null;
+  statusProcesso?: string | null;
   isPending: boolean;
   isError: boolean;
   onAprovar: () => void;
@@ -39,6 +40,7 @@ export function ModalAvaliacaoSection({
   dataAvaliacao,
   classificacaoAntesReprovacao,
   decisaoPendente,
+  statusProcesso,
   isPending,
   isError,
   onAprovar,
@@ -52,6 +54,9 @@ export function ModalAvaliacaoSection({
 
   const jaAvaliado =
     avaliacaoResultado === "APROVADO" || avaliacaoResultado === "REPROVADO";
+
+  const processoEncerrado =
+    (statusProcesso ?? "").toUpperCase() === "ENCERRADO";
 
   // ── já avaliado e não está editando ──
   if (jaAvaliado && !editando && !decisaoPendente) {
@@ -80,18 +85,20 @@ export function ModalAvaliacaoSection({
           </S.MotivoReprovacao>
         )}
 
-        <S.AvaliacaoBtns style={{ marginTop: "0.75rem" }}>
-          <S.Button
-            type="button"
-            $variant="ghost"
-            onClick={() => {
-              setEditando(true);
-              onEditar();
-            }}
-          >
-            ✎ Alterar avaliação
-          </S.Button>
-        </S.AvaliacaoBtns>
+        {processoEncerrado && (
+          <S.AvaliacaoBtns style={{ marginTop: "0.75rem" }}>
+            <S.Button
+              type="button"
+              $variant="ghost"
+              onClick={() => {
+                setEditando(true);
+                onEditar();
+              }}
+            >
+              ✎ Alterar avaliação
+            </S.Button>
+          </S.AvaliacaoBtns>
+        )}
       </S.AvaliacaoBox>
     );
   }
@@ -150,6 +157,14 @@ export function ModalAvaliacaoSection({
   }
 
   // ── botões de ação (primeira avaliação ou após clicar em "Alterar") ──
+  if (!processoEncerrado) {
+    return (
+      <S.Muted style={{ fontSize: "0.8125rem" }}>
+        A avaliação estará disponível após o encerramento do processo seletivo.
+      </S.Muted>
+    );
+  }
+
   return (
     <S.AvaliacaoBtns>
       <S.Button type="button" $variant="danger" onClick={onReprovar}>
