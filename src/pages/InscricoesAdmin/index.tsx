@@ -11,6 +11,10 @@ import {
   type ProcessoSeletivoResponse,
 } from "../../api/get-processo-id";
 import { api } from "../../lib/axios";
+import { ModalScoreSection } from "./components/ModalScoreSection";
+import { ModalDesempateSection } from "./components/ModalDesempateSection";
+import { ModalDocumentosSection } from "./components/ModalDocumentosSection";
+import { ModalAvaliacaoSection } from "./components/ModalAvaliacaoSection";
 
 // ─── tipos ────────────────────────────────────────────────────
 type AvaliacaoResultado = "APROVADO" | "REPROVADO";
@@ -119,21 +123,6 @@ function formatDateTimeBR(v?: string | null) {
   });
 }
 
-function calcIdade(dataNascimento?: string | null): string {
-  if (!dataNascimento) return "—";
-  const anos = Math.floor(
-    (Date.now() - new Date(dataNascimento).getTime()) /
-      (1000 * 60 * 60 * 24 * 365.25),
-  );
-  return `${anos} anos`;
-}
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function statusTone(status: string) {
   const s = (status || "").toUpperCase();
   if (s === "ENVIADA" || s === "APROVADO") return "success" as const;
@@ -169,22 +158,30 @@ export function InscricoesAdmin() {
   const [debNome, setDebNome] = useState("");
   const [debCpf, setDebCpf] = useState("");
   const [modalDetalhe, setModalDetalhe] = useState<ModalDetalhe | null>(null);
-  const [decisaoPendente, setDecisaoPendente] = useState<AvaliacaoResultado | null>(null);
+  const [decisaoPendente, setDecisaoPendente] =
+    useState<AvaliacaoResultado | null>(null);
   const [motivoReprovacao, setMotivoReprovacao] = useState("");
 
   useEffect(() => {
-    const t = setTimeout(() => { setDebNome(nome.trim()); setPage(1); }, 400);
+    const t = setTimeout(() => {
+      setDebNome(nome.trim());
+      setPage(1);
+    }, 400);
     return () => clearTimeout(t);
   }, [nome]);
 
   useEffect(() => {
-    const t = setTimeout(() => { setDebCpf(onlyDigits(cpf)); setPage(1); }, 400);
+    const t = setTimeout(() => {
+      setDebCpf(onlyDigits(cpf));
+      setPage(1);
+    }, 400);
     return () => clearTimeout(t);
   }, [cpf]);
 
-  useEffect(() => { setPage(1); }, [idVaga, limit]);
+  useEffect(() => {
+    setPage(1);
+  }, [idVaga, limit]);
 
-  // fecha modal com ESC
   useEffect(() => {
     if (!modalDetalhe) return;
     const handler = (e: KeyboardEvent) => {
@@ -217,8 +214,7 @@ export function InscricoesAdmin() {
       const q: Record<string, any> = { page, limit };
       if (idVaga !== "ALL") q.id_vaga = idVaga;
       if (debNome) q.nome = debNome;
-      if (debCpf)  q.cpf  = debCpf;
-
+      if (debCpf) q.cpf = debCpf;
       const { data } = await api.get<PaginatedResponse<Inscricao>>(
         `processos-seletivos-inscricoes/all/${id_processo_seletivo}`,
         { params: q },
@@ -235,8 +231,8 @@ export function InscricoesAdmin() {
     staleTime: 60_000,
   });
 
-  // Documentos — lazy, só busca quando modal está aberto e candidato disponível
-  const idCandidatoModal = modalDetalhe?.inscricao.usuario?.candidato?.id_candidato;
+  const idCandidatoModal =
+    modalDetalhe?.inscricao.usuario?.candidato?.id_candidato;
 
   const documentosQuery = useQuery<Documento[]>({
     queryKey: ["documentos-candidato", idCandidatoModal],
@@ -252,7 +248,13 @@ export function InscricoesAdmin() {
 
   // ─── mutation ────────────────────────────────────────────────
   const avaliarMutation = useMutation({
-    mutationFn: ({ resultado, motivo }: { resultado: AvaliacaoResultado; motivo?: string }) =>
+    mutationFn: ({
+      resultado,
+      motivo,
+    }: {
+      resultado: AvaliacaoResultado;
+      motivo?: string;
+    }) =>
       api.patch(
         `processos-seletivos-inscricoes/${modalDetalhe!.inscricao.id_inscricao}/avaliar`,
         {
@@ -301,12 +303,11 @@ export function InscricoesAdmin() {
   const mostrarEspecializacao = nivelVagaSelecionada === "SUPERIOR";
 
   const serverData = inscricoesQuery.data?.data ?? [];
-  const total      = inscricoesQuery.data?.total      ?? 0;
+  const total = inscricoesQuery.data?.total ?? 0;
   const totalPages = inscricoesQuery.data?.totalPages ?? 1;
-  const processo   = processoQuery.data;
-
-  const isLoading      = inscricoesQuery.isLoading;
-  const isError        = inscricoesQuery.isError;
+  const processo = processoQuery.data;
+  const isLoading = inscricoesQuery.isLoading;
+  const isError = inscricoesQuery.isError;
   const isVagasLoading = vagasQuery.isLoading;
 
   // ─── ações ──────────────────────────────────────────────────
@@ -350,7 +351,6 @@ export function InscricoesAdmin() {
       <S.Header>
         <S.HeaderLeft>
           <S.Breadcrumb>Processos Seletivos / Inscrições</S.Breadcrumb>
-
           <S.TitleRow>
             <S.Title>
               {processoQuery.isLoading
@@ -363,7 +363,6 @@ export function InscricoesAdmin() {
               </S.StatusBadge>
             )}
           </S.TitleRow>
-
           <S.MetaRow>
             {processo?.secretaria && (
               <S.MetaItem>{processo.secretaria}</S.MetaItem>
@@ -399,7 +398,6 @@ export function InscricoesAdmin() {
 
       {/* ── CARD ── */}
       <S.Card>
-        {/* filtros */}
         <S.FiltersBar>
           <S.FiltersLeft>
             <S.Field>
@@ -477,12 +475,9 @@ export function InscricoesAdmin() {
         )}
 
         {!isLoading && !isError && serverData.length === 0 && (
-          <S.Empty>
-            Nenhuma inscrição encontrada com os filtros atuais.
-          </S.Empty>
+          <S.Empty>Nenhuma inscrição encontrada com os filtros atuais.</S.Empty>
         )}
 
-        {/* tabela */}
         <S.TableWrap>
           <S.Table>
             <thead>
@@ -501,7 +496,6 @@ export function InscricoesAdmin() {
                 <th>Enviado em</th>
               </tr>
             </thead>
-
             <tbody>
               {isLoading
                 ? Array.from({ length: 6 }).map((_, idx) => (
@@ -518,7 +512,6 @@ export function InscricoesAdmin() {
                 : serverData.map((i) => {
                     const cand = i.usuario?.candidato;
                     const temDetalhe = Boolean(i.classificacao);
-
                     return (
                       <tr key={i.id_inscricao}>
                         <td>
@@ -552,9 +545,7 @@ export function InscricoesAdmin() {
                         <td>{i.experiencia_dias ?? "—"}</td>
                         {mostrarEspecializacao && (
                           <td>
-                            <S.Score>
-                              {i.especializacao_pontos ?? "—"}
-                            </S.Score>
+                            <S.Score>{i.especializacao_pontos ?? "—"}</S.Score>
                           </td>
                         )}
                         <td>
@@ -579,14 +570,12 @@ export function InscricoesAdmin() {
           </S.Table>
         </S.TableWrap>
 
-        {/* footer paginação */}
         <S.Footer>
           <S.Muted>
             {total > 0
               ? `Exibindo ${serverData.length} de ${total} inscrições`
               : "Nenhum resultado"}
           </S.Muted>
-
           <S.Pagination>
             <S.Button
               type="button"
@@ -595,11 +584,9 @@ export function InscricoesAdmin() {
             >
               ← Anterior
             </S.Button>
-
             <S.PageInfo>
               {page} / {totalPages}
             </S.PageInfo>
-
             <S.Button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -616,8 +603,6 @@ export function InscricoesAdmin() {
       {modalDetalhe && (
         <S.Overlay onClick={fecharModal}>
           <S.Modal onClick={(e) => e.stopPropagation()}>
-
-            {/* cabeçalho */}
             <S.ModalHeader>
               <div>
                 <S.ModalTitle>Detalhes da Classificação</S.ModalTitle>
@@ -631,224 +616,54 @@ export function InscricoesAdmin() {
             </S.ModalHeader>
 
             <S.ModalBody>
-              {/* ── resumo pontuação ── */}
-              <S.ModalScoreRow>
-                <S.ModalScoreBox>
-                  <S.StatValue>
-                    {modalDetalhe.inscricao.pontuacao_total ?? 0}
-                  </S.StatValue>
-                  <S.StatLabel>Pontuação total</S.StatLabel>
-                </S.ModalScoreBox>
-
-                <S.ModalScoreBox>
-                  <S.StatValue>
-                    {modalDetalhe.inscricao.experiencia_dias ?? 0}
-                  </S.StatValue>
-                  <S.StatLabel>Dias de experiência</S.StatLabel>
-                </S.ModalScoreBox>
-
-                {mostrarEspecializacao && (
-                  <S.ModalScoreBox>
-                    <S.StatValue>
-                      {modalDetalhe.inscricao.especializacao_pontos ?? 0}
-                    </S.StatValue>
-                    <S.StatLabel>Pts titulação</S.StatLabel>
-                  </S.ModalScoreBox>
-                )}
-
-                <S.ModalScoreBox>
-                  <S.StatValue>
-                    {calcIdade(
-                      modalDetalhe.inscricao.usuario?.candidato?.data_nascimento,
-                    )}
-                  </S.StatValue>
-                  <S.StatLabel>Idade</S.StatLabel>
-                </S.ModalScoreBox>
-              </S.ModalScoreRow>
-
-              {/* ── critérios de desempate ── */}
-              <S.ModalSection>
-                <S.ModalSectionTitle>
-                  Critérios de desempate (ordem)
-                </S.ModalSectionTitle>
-                <S.TieList>
-                  <S.TieItem>
-                    <S.TieNum>1</S.TieNum> Maior pontuação total
-                  </S.TieItem>
-                  <S.TieItem>
-                    <S.TieNum>2</S.TieNum> Prioridade idade ≥ 60 anos
-                  </S.TieItem>
-                  {mostrarEspecializacao && (
-                    <S.TieItem>
-                      <S.TieNum>3</S.TieNum> Maior pontuação em titulação
-                      (especialização + mestrado + doutorado)
-                    </S.TieItem>
-                  )}
-                  <S.TieItem>
-                    <S.TieNum>{mostrarEspecializacao ? 4 : 3}</S.TieNum> Maior
-                    tempo de experiência
-                  </S.TieItem>
-                  <S.TieItem>
-                    <S.TieNum>{mostrarEspecializacao ? 5 : 4}</S.TieNum> Mais
-                    velho (data de nascimento)
-                  </S.TieItem>
-                </S.TieList>
-              </S.ModalSection>
-
-              {/* ── documentos ── */}
-              <S.ModalSection>
-                <S.ModalSectionTitle>Documentos anexados</S.ModalSectionTitle>
-
-                {documentosQuery.isLoading && (
-                  <S.Muted>Carregando documentos...</S.Muted>
-                )}
-
-                {documentosQuery.isError && (
-                  <S.ErrorBox>Erro ao carregar documentos.</S.ErrorBox>
-                )}
-
-                {!documentosQuery.isLoading && documentosQuery.data?.length === 0 && (
-                  <S.Empty>Nenhum documento anexado.</S.Empty>
-                )}
-
-                {documentosQuery.data && documentosQuery.data.length > 0 && (
-                  <S.DocList>
-                    {documentosQuery.data.map((doc) => (
-                      <S.DocItem key={doc.id_candidato_documento}>
-                        <S.DocInfo>
-                          <S.DocIcon>
-                            {doc.arquivo.mime_type === "application/pdf" ? "📄" : "🖼️"}
-                          </S.DocIcon>
-                          <div>
-                            <S.DocNome>{doc.arquivo.nome_original}</S.DocNome>
-                            <S.DocMeta>
-                              {doc.tipo} · {formatBytes(doc.arquivo.tamanho_bytes)}
-                              {doc.descricao ? ` · ${doc.descricao}` : ""}
-                            </S.DocMeta>
-                          </div>
-                        </S.DocInfo>
-
-                        <S.Button
-                          as="a"
-                          href={urlDocumentoView(doc.id_candidato_documento)}
-                          target="_blank"
-                          rel="noreferrer"
-                          $variant="ghost"
-                          type="button"
-                        >
-                          Abrir →
-                        </S.Button>
-                      </S.DocItem>
-                    ))}
-                  </S.DocList>
-                )}
-              </S.ModalSection>
-
-              {/* ── avaliação ── */}
-              {(() => {
-                const resultado = modalDetalhe.inscricao.avaliacao_resultado;
-                const jaAvaliado = resultado === "APROVADO" || resultado === "REPROVADO";
-
-                if (jaAvaliado) {
-                  return (
-                    <S.AvaliacaoBox $decisao={resultado}>
-                      <strong>
-                        {resultado === "APROVADO" ? "✓ Aprovado" : "✕ Reprovado"}
-                      </strong>{" "}
-                      — esta inscrição já foi avaliada.
-                      {modalDetalhe.inscricao.motivo_reprovacao && (
-                        <S.MotivoReprovacao>
-                          <strong>Motivo:</strong>{" "}
-                          {modalDetalhe.inscricao.motivo_reprovacao}
-                        </S.MotivoReprovacao>
-                      )}
-                      {modalDetalhe.inscricao.data_avaliacao && (
-                        <S.MotivoReprovacao>
-                          <strong>Avaliado em:</strong>{" "}
-                          {formatDateTimeBR(modalDetalhe.inscricao.data_avaliacao)}
-                        </S.MotivoReprovacao>
-                      )}
-                    </S.AvaliacaoBox>
-                  );
+              <ModalScoreSection
+                pontuacao_total={modalDetalhe.inscricao.pontuacao_total}
+                experiencia_dias={modalDetalhe.inscricao.experiencia_dias}
+                especializacao_pontos={
+                  modalDetalhe.inscricao.especializacao_pontos
                 }
-
-                if (decisaoPendente) {
-                  const isReprovando = decisaoPendente === "REPROVADO";
-                  const podeConfirmar = !isReprovando || motivoReprovacao.trim().length > 0;
-
-                  return (
-                    <S.AvaliacaoBox $decisao={decisaoPendente}>
-                      <S.AvaliacaoConfirmText>
-                        Confirmar{" "}
-                        <strong>
-                          {isReprovando ? "reprovação" : "aprovação"}
-                        </strong>{" "}
-                        desta inscrição?
-                      </S.AvaliacaoConfirmText>
-
-                      {isReprovando && (
-                        <S.MotivoTextarea
-                          placeholder="Informe o motivo da reprovação (obrigatório)..."
-                          value={motivoReprovacao}
-                          onChange={(e) => setMotivoReprovacao(e.target.value)}
-                          rows={3}
-                          disabled={avaliarMutation.isPending}
-                        />
-                      )}
-
-                      {avaliarMutation.isError && (
-                        <S.ErrorBox>Erro ao salvar. Tente novamente.</S.ErrorBox>
-                      )}
-
-                      <S.AvaliacaoBtns>
-                        <S.Button
-                          type="button"
-                          $variant="ghost"
-                          onClick={() => {
-                            setDecisaoPendente(null);
-                            setMotivoReprovacao("");
-                          }}
-                          disabled={avaliarMutation.isPending}
-                        >
-                          Cancelar
-                        </S.Button>
-                        <S.Button
-                          type="button"
-                          $variant={isReprovando ? "danger" : "primary"}
-                          disabled={avaliarMutation.isPending || !podeConfirmar}
-                          onClick={() =>
-                            avaliarMutation.mutate({
-                              resultado: decisaoPendente,
-                              motivo: motivoReprovacao.trim(),
-                            })
-                          }
-                        >
-                          {avaliarMutation.isPending ? "Salvando..." : "Confirmar"}
-                        </S.Button>
-                      </S.AvaliacaoBtns>
-                    </S.AvaliacaoBox>
-                  );
+                dataNascimento={
+                  modalDetalhe.inscricao.usuario?.candidato?.data_nascimento
                 }
+                mostrarEspecializacao={mostrarEspecializacao}
+              />
 
-                return (
-                  <S.AvaliacaoBtns>
-                    <S.Button
-                      type="button"
-                      $variant="danger"
-                      onClick={() => setDecisaoPendente("REPROVADO")}
-                    >
-                      ✕ Reprovar
-                    </S.Button>
-                    <S.Button
-                      type="button"
-                      $variant="primary"
-                      onClick={() => setDecisaoPendente("APROVADO")}
-                    >
-                      ✓ Aprovar
-                    </S.Button>
-                  </S.AvaliacaoBtns>
-                );
-              })()}
+              <ModalDesempateSection
+                mostrarEspecializacao={mostrarEspecializacao}
+              />
+
+              <ModalDocumentosSection
+                isLoading={documentosQuery.isLoading}
+                isError={documentosQuery.isError}
+                documentos={documentosQuery.data}
+                urlDocumentoView={urlDocumentoView}
+              />
+
+              <ModalAvaliacaoSection
+                avaliacaoResultado={modalDetalhe.inscricao.avaliacao_resultado}
+                motivoReprovacao={motivoReprovacao}
+                dataAvaliacao={modalDetalhe.inscricao.data_avaliacao}
+                decisaoPendente={decisaoPendente}
+                isPending={avaliarMutation.isPending}
+                isError={avaliarMutation.isError}
+                onAprovar={() => setDecisaoPendente("APROVADO")}
+                onReprovar={() => setDecisaoPendente("REPROVADO")}
+                onConfirmar={() =>
+                  avaliarMutation.mutate({
+                    resultado: decisaoPendente!,
+                    motivo: motivoReprovacao.trim(),
+                  })
+                }
+                onCancelar={() => {
+                  setDecisaoPendente(null);
+                  setMotivoReprovacao("");
+                }}
+                onChangeMotivoReprovacao={setMotivoReprovacao}
+                onEditar={() => {
+                  setDecisaoPendente(null);
+                  setMotivoReprovacao("");
+                }}
+              />
             </S.ModalBody>
           </S.Modal>
         </S.Overlay>
