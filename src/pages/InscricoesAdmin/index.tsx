@@ -13,6 +13,8 @@ import {
 import { api } from "../../lib/axios";
 
 // ─── tipos ────────────────────────────────────────────────────
+type AvaliacaoResultado = "APROVADO" | "REPROVADO";
+
 type Vaga = {
   id_vaga: string;
   nome: string;
@@ -47,6 +49,9 @@ type Inscricao = {
   data_criacao?: string | null;
   usuario?: Usuario | null;
   vaga?: Vaga | null;
+  avaliacao_resultado?: AvaliacaoResultado | null;
+  motivo_reprovacao?: string | null;
+  data_avaliacao?: string | null;
 };
 
 type DetalheItem = {
@@ -131,9 +136,9 @@ function formatBytes(bytes: number) {
 
 function statusTone(status: string) {
   const s = (status || "").toUpperCase();
-  if (s === "ENVIADA" || s === "DEFERIDA") return "success" as const;
+  if (s === "ENVIADA" || s === "APROVADO") return "success" as const;
   if (s === "RASCUNHO" || s === "ANALISE") return "warning" as const;
-  if (s === "CANCELADA" || s === "INDEFERIDA") return "danger" as const;
+  if (s === "CANCELADA" || s === "REPROVADO") return "danger" as const;
   return "default" as const;
 }
 
@@ -164,7 +169,8 @@ export function InscricoesAdmin() {
   const [debNome, setDebNome] = useState("");
   const [debCpf, setDebCpf] = useState("");
   const [modalDetalhe, setModalDetalhe] = useState<ModalDetalhe | null>(null);
-  const [decisaoPendente, setDecisaoPendente] = useState<"DEFERIDA" | "INDEFERIDA" | null>(null);
+  const [decisaoPendente, setDecisaoPendente] = useState<AvaliacaoResultado | null>(null);
+  const [motivoReprovacao, setMotivoReprovacao] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => { setDebNome(nome.trim()); setPage(1); }, 400);
@@ -246,10 +252,13 @@ export function InscricoesAdmin() {
 
   // ─── mutation ────────────────────────────────────────────────
   const avaliarMutation = useMutation({
-    mutationFn: (decisao: "DEFERIDA" | "INDEFERIDA") =>
+    mutationFn: ({ resultado, motivo }: { resultado: AvaliacaoResultado; motivo?: string }) =>
       api.patch(
         `processos-seletivos-inscricoes/${modalDetalhe!.inscricao.id_inscricao}/avaliar`,
-        { decisao },
+        {
+          avaliacao_resultado: resultado,
+          ...(resultado === "REPROVADO" && { motivo_reprovacao: motivo }),
+        },
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inscricoes-admin"] });
@@ -304,6 +313,7 @@ export function InscricoesAdmin() {
   function fecharModal() {
     setModalDetalhe(null);
     setDecisaoPendente(null);
+    setMotivoReprovacao("");
   }
 
   function abrirDetalhe(i: Inscricao) {
@@ -316,6 +326,7 @@ export function InscricoesAdmin() {
       detalhes = [];
     }
     setDecisaoPendente(null);
+    setMotivoReprovacao("");
     setModalDetalhe({ inscricao: i, detalhes });
   }
 
@@ -486,6 +497,7 @@ export function InscricoesAdmin() {
                 <th>Exp. (dias)</th>
                 {mostrarEspecializacao && <th>Especialização</th>}
                 <th>Status</th>
+                <th>Avaliação</th>
                 <th>Enviado em</th>
               </tr>
             </thead>
@@ -495,7 +507,7 @@ export function InscricoesAdmin() {
                 ? Array.from({ length: 6 }).map((_, idx) => (
                     <tr key={idx}>
                       {Array.from({
-                        length: mostrarEspecializacao ? 11 : 10,
+                        length: mostrarEspecializacao ? 12 : 11,
                       }).map((__, c) => (
                         <td key={c}>
                           <S.Skeleton />
@@ -549,6 +561,15 @@ export function InscricoesAdmin() {
                           <S.Badge $tone={statusTone(i.status)}>
                             {i.status}
                           </S.Badge>
+                        </td>
+                        <td>
+                          {i.avaliacao_resultado ? (
+                            <S.Badge $tone={statusTone(i.avaliacao_resultado)}>
+                              {i.avaliacao_resultado}
+                            </S.Badge>
+                          ) : (
+                            <S.Muted>—</S.Muted>
+                          )}
                         </td>
                         <td>{formatDateTimeBR(i.data_envio)}</td>
                       </tr>
@@ -709,9 +730,7 @@ export function InscricoesAdmin() {
 
                         <S.Button
                           as="a"
-                          href={urlDocumentoView(
-                            doc.id_candidato_documento,
-                          )}
+                          href={urlDocumentoView(doc.id_candidato_documento)}
                           target="_blank"
                           rel="noreferrer"
                           $variant="ghost"
@@ -727,30 +746,55 @@ export function InscricoesAdmin() {
 
               {/* ── avaliação ── */}
               {(() => {
-                const status = modalDetalhe.inscricao.status;
-                const jaAvaliado = status === "DEFERIDA" || status === "INDEFERIDA";
+                const resultado = modalDetalhe.inscricao.avaliacao_resultado;
+                const jaAvaliado = resultado === "APROVADO" || resultado === "REPROVADO";
 
                 if (jaAvaliado) {
                   return (
-                    <S.AvaliacaoBox $decisao={status as "DEFERIDA" | "INDEFERIDA"}>
+                    <S.AvaliacaoBox $decisao={resultado}>
                       <strong>
-                        {status === "DEFERIDA" ? "✓ Deferida" : "✕ Indeferida"}
+                        {resultado === "APROVADO" ? "✓ Aprovado" : "✕ Reprovado"}
                       </strong>{" "}
                       — esta inscrição já foi avaliada.
+                      {modalDetalhe.inscricao.motivo_reprovacao && (
+                        <S.MotivoReprovacao>
+                          <strong>Motivo:</strong>{" "}
+                          {modalDetalhe.inscricao.motivo_reprovacao}
+                        </S.MotivoReprovacao>
+                      )}
+                      {modalDetalhe.inscricao.data_avaliacao && (
+                        <S.MotivoReprovacao>
+                          <strong>Avaliado em:</strong>{" "}
+                          {formatDateTimeBR(modalDetalhe.inscricao.data_avaliacao)}
+                        </S.MotivoReprovacao>
+                      )}
                     </S.AvaliacaoBox>
                   );
                 }
 
                 if (decisaoPendente) {
+                  const isReprovando = decisaoPendente === "REPROVADO";
+                  const podeConfirmar = !isReprovando || motivoReprovacao.trim().length > 0;
+
                   return (
                     <S.AvaliacaoBox $decisao={decisaoPendente}>
                       <S.AvaliacaoConfirmText>
                         Confirmar{" "}
                         <strong>
-                          {decisaoPendente === "DEFERIDA" ? "deferimento" : "indeferimento"}
+                          {isReprovando ? "reprovação" : "aprovação"}
                         </strong>{" "}
                         desta inscrição?
                       </S.AvaliacaoConfirmText>
+
+                      {isReprovando && (
+                        <S.MotivoTextarea
+                          placeholder="Informe o motivo da reprovação (obrigatório)..."
+                          value={motivoReprovacao}
+                          onChange={(e) => setMotivoReprovacao(e.target.value)}
+                          rows={3}
+                          disabled={avaliarMutation.isPending}
+                        />
+                      )}
 
                       {avaliarMutation.isError && (
                         <S.ErrorBox>Erro ao salvar. Tente novamente.</S.ErrorBox>
@@ -760,16 +804,24 @@ export function InscricoesAdmin() {
                         <S.Button
                           type="button"
                           $variant="ghost"
-                          onClick={() => setDecisaoPendente(null)}
+                          onClick={() => {
+                            setDecisaoPendente(null);
+                            setMotivoReprovacao("");
+                          }}
                           disabled={avaliarMutation.isPending}
                         >
                           Cancelar
                         </S.Button>
                         <S.Button
                           type="button"
-                          $variant={decisaoPendente === "DEFERIDA" ? "primary" : "danger"}
-                          disabled={avaliarMutation.isPending}
-                          onClick={() => avaliarMutation.mutate(decisaoPendente)}
+                          $variant={isReprovando ? "danger" : "primary"}
+                          disabled={avaliarMutation.isPending || !podeConfirmar}
+                          onClick={() =>
+                            avaliarMutation.mutate({
+                              resultado: decisaoPendente,
+                              motivo: motivoReprovacao.trim(),
+                            })
+                          }
                         >
                           {avaliarMutation.isPending ? "Salvando..." : "Confirmar"}
                         </S.Button>
@@ -783,16 +835,16 @@ export function InscricoesAdmin() {
                     <S.Button
                       type="button"
                       $variant="danger"
-                      onClick={() => setDecisaoPendente("INDEFERIDA")}
+                      onClick={() => setDecisaoPendente("REPROVADO")}
                     >
-                      ✕ Indeferir
+                      ✕ Reprovar
                     </S.Button>
                     <S.Button
                       type="button"
                       $variant="primary"
-                      onClick={() => setDecisaoPendente("DEFERIDA")}
+                      onClick={() => setDecisaoPendente("APROVADO")}
                     >
-                      ✓ Deferir
+                      ✓ Aprovar
                     </S.Button>
                   </S.AvaliacaoBtns>
                 );

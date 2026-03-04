@@ -223,16 +223,23 @@ export const Input = styled.input`
   color: ${({ theme }) => theme.text};
   font-size: 13px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 
-  &::placeholder { color: ${({ theme }) => theme.placeholder}; }
+  &::placeholder {
+    color: ${({ theme }) => theme.placeholder};
+  }
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.lightPrimary};
   }
 
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 export const Select = styled.select`
@@ -245,14 +252,19 @@ export const Select = styled.select`
   font-size: 13px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.lightPrimary};
   }
 
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 export const Button = styled.button<{
@@ -269,11 +281,16 @@ export const Button = styled.button<{
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: background 0.15s, opacity 0.15s;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
   white-space: nowrap;
   text-decoration: none; /* para quando usado como <a> */
 
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   ${({ $variant, theme }) => {
     if ($variant === "primary")
@@ -350,12 +367,18 @@ export const TableWrap = styled.div`
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.surfaceBorder};
 
-  &::-webkit-scrollbar { height: 6px; }
-  &::-webkit-scrollbar-track { background: ${({ theme }) => theme.scrollbarTrack}; }
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: ${({ theme }) => theme.scrollbarTrack};
+  }
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.scrollbarThumb};
     border-radius: 999px;
-    &:hover { background: ${({ theme }) => theme.scrollbarThumbHover}; }
+    &:hover {
+      background: ${({ theme }) => theme.scrollbarThumbHover};
+    }
   }
 `;
 
@@ -388,8 +411,12 @@ export const Table = styled.table`
     white-space: nowrap;
   }
 
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover td { background: ${({ theme }) => theme.lightPrimary}44; }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  tbody tr:hover td {
+    background: ${({ theme }) => theme.lightPrimary}44;
+  }
 `;
 
 export const Rank = styled.span`
@@ -530,7 +557,9 @@ export const ModalClose = styled.button`
   border-radius: 6px;
   line-height: 1;
   flex-shrink: 0;
-  &:hover { background: ${({ theme }) => theme.backgroundInput}; }
+  &:hover {
+    background: ${({ theme }) => theme.backgroundInput};
+  }
 `;
 
 export const ModalBody = styled.div`
@@ -540,8 +569,12 @@ export const ModalBody = styled.div`
   flex-direction: column;
   gap: 20px;
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.scrollbarThumb};
     border-radius: 999px;
@@ -634,8 +667,12 @@ export const DetalheTable = styled.table`
     border-bottom: 1px solid ${({ theme }) => theme.surfaceBorder};
   }
 
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover td { background: ${({ theme }) => theme.lightPrimary}44; }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+  tbody tr:hover td {
+    background: ${({ theme }) => theme.lightPrimary}44;
+  }
 `;
 
 // ─── documentos ───────────────────────────────────────────────
@@ -699,26 +736,33 @@ export const DocMeta = styled.p`
 `;
 
 // ─── avaliação ────────────────────────────────────────────────
-export const AvaliacaoBox = styled.div<{ $decisao: "DEFERIDA" | "INDEFERIDA" }>`
-  padding: 14px 16px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  font-size: 13px;
+export const AvaliacaoBox = styled.div<{ $decisao: string }>`
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  border: 1px solid;
 
-  ${({ $decisao, theme }) =>
-    $decisao === "DEFERIDA"
-      ? `
-        background: ${theme.statusDoneBg};
-        color: ${theme.statusDoneText};
-        border: 1px solid ${theme.statusDoneText}22;
-      `
-      : `
-        background: ${theme.statusCancelBg};
-        color: ${theme.statusCancelText};
-        border: 1px solid ${theme.statusCancelText}22;
-      `}
+  ${({ $decisao, theme }) => {
+    const d = $decisao?.toUpperCase();
+    if (d === "APROVADO" || d === "APROVADA")
+      return `
+      background: ${theme.lightSuccess};
+      border-color: ${theme.statusDoneText};
+      color: ${theme.statusDoneText};
+    `;
+    if (d === "REPROVADO" || d === "REPROVADA")
+      return `
+      background: ${theme.lightDanger};
+      border-color: ${theme.danger};
+      color: ${theme.danger};
+    `;
+    return `
+      background: ${theme.warningBg};
+      border-color: ${theme.warning};
+      color: ${theme.warningText};
+    `;
+  }}
 `;
 
 export const AvaliacaoConfirmText = styled.p`
@@ -734,4 +778,40 @@ export const AvaliacaoBtns = styled.div`
   padding-top: 12px;
   border-top: 1px solid ${({ theme }) => theme.surfaceBorder};
   margin-top: 4px;
+`;
+
+export const MotivoTextarea = styled.textarea`
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 6px;
+  font-size: 0.875rem;
+  resize: vertical;
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.text};
+  font-family: inherit;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.placeholder};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.primary};
+    background: ${({ theme }) => theme.surface};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const MotivoReprovacao = styled.p`
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.textMuted};
+  line-height: 1.5;
 `;
