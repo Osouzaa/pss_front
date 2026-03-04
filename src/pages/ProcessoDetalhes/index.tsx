@@ -1,5 +1,5 @@
 // ProcessoSeletivosDetalhes.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as S from "./styles";
@@ -24,6 +24,8 @@ import { TokenSistems } from "../../constants/env.constantes";
 import { excluirVaga } from "../../api/deleta-vaga";
 import { api } from "../../lib/axios";
 
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
 function normalizeText(s: string) {
   return (s ?? "")
     .normalize("NFD")
@@ -32,71 +34,90 @@ function normalizeText(s: string) {
     .trim();
 }
 
+/**
+ * Debounce simples sem dependência externa.
+ * Retorna o valor estabilizado após `delay` ms sem mudança.
+ */
+function useDebouncedValue<T>(value: T, delay = 400): T {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debounced;
+}
+
+// ─── tabs ─────────────────────────────────────────────────────────────────────
+
 const VALID_TABS = ["vagas", "perguntas", "inscricoes"] as const;
 type TabKey = (typeof VALID_TABS)[number];
 
 function getInitialTab(isAdmin: boolean): TabKey {
   const raw = localStorage.getItem(TokenSistems.TAB_STORAGE_KEY);
 
-  if (!raw) return "vagas";
-
-  if (!VALID_TABS.includes(raw as TabKey)) {
-    return "vagas";
-  }
-
-  if (!isAdmin && raw === "inscricoes") {
-    return "vagas";
-  }
+  if (!raw || !VALID_TABS.includes(raw as TabKey)) return "vagas";
+  if (!isAdmin && raw === "inscricoes") return "vagas";
 
   return raw as TabKey;
 }
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [tab, setTab] = useState<string>(() => getInitialTab(isAdmin));
+  const [tab, setTab] = useState<TabKey>(() => getInitialTab(isAdmin));
   const [qVaga, setQVaga] = useState("");
 
-  const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openModal, setOpenModal] = useState(false);
   const [vagaToEdit, setVagaToEdit] = useState<any>(null);
-  const [openModalEditProcesso, setOpenModalEditProceso] =
-    useState<boolean>(false);
+  const [openModalEditProcesso, setOpenModalEditProceso] = useState(false);
 
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
 
-  // ===== PAGINAÇÃO VAGAS =====
+  // ── paginação ──────────────────────────────────────────────────────────────
   const [pageVagas, setPageVagas] = useState(1);
   const [pageSizeVagas, setPageSizeVagas] = useState(10);
 
-  // ===== PAGINAÇÃO INSCRIÇÕES =====
   const [pageInscricoes, setPageInscricoes] = useState(1);
   const [pageSizeInscricoes, setPageSizeInscricoes] = useState(20);
 
-  // ===== PAGINAÇÃO PERGUNTAS =====
   const [pagePerguntas, setPagePerguntas] = useState(1);
   const [pageSizePerguntas, setPageSizePerguntas] = useState(20);
 
-  const qVagaNormalized = useMemo(() => normalizeText(qVaga), [qVaga]);
+  // ── search com debounce (evita 1 req por tecla) ────────────────────────────
+  const qVagaDebounced = useDebouncedValue(qVaga, 400);
+  const qVagaNormalized = useMemo(
+    () => normalizeText(qVagaDebounced),
+    [qVagaDebounced],
+  );
 
+  // ── persiste aba no localStorage ──────────────────────────────────────────
   useEffect(() => {
     if (!isAdmin && tab === "inscricoes") {
       setTab("vagas");
       localStorage.setItem(TokenSistems.TAB_STORAGE_KEY, "vagas");
       return;
     }
-
     localStorage.setItem(TokenSistems.TAB_STORAGE_KEY, tab);
   }, [tab, isAdmin]);
 
+  // ── queries ───────────────────────────────────────────────────────────────
+
+  // Processo — sempre necessário para renderizar o header
   const { data: processo, isLoading } = useQuery({
     queryKey: ["processo", id],
     queryFn: () => getProcessoId(id!),
     enabled: !!id,
+    staleTime: 60_000,
   });
 
+  // Vagas — só a aba ativa, com staleTime para evitar refetch desnecessário
   const {
     data: resultAllVagas,
     isLoading: isLoadingVagas,
@@ -109,10 +130,11 @@ export function ProcessoSeletivosDetalhes() {
         limit: pageSizeVagas,
         q: qVagaNormalized || undefined,
       }),
-    enabled: !!id,
+    enabled: !!id && tab === "vagas", // ✅ lazy: só busca quando a aba está ativa
     staleTime: 30_000,
   });
 
+  // Perguntas — só quando aba "perguntas" está ativa
   const { data: perguntas, isLoading: isLoadingPerguntas } = useQuery({
     queryKey: ["perguntas-processos", id, pagePerguntas, pageSizePerguntas],
     queryFn: () =>
@@ -120,9 +142,11 @@ export function ProcessoSeletivosDetalhes() {
         page: pagePerguntas,
         limit: pageSizePerguntas,
       }),
-    enabled: !!id,
+    enabled: !!id && tab === "perguntas", // ✅ lazy
+    staleTime: 30_000,
   });
 
+  // Inscrições — só quando aba "inscricoes" está ativa E usuário é admin
   const { data: resultAllInscricoes, isLoading: isLoadingInscricoes } =
     useQuery({
       queryKey: ["all-inscricoes", id, pageInscricoes, pageSizeInscricoes],
@@ -131,19 +155,25 @@ export function ProcessoSeletivosDetalhes() {
           page: pageInscricoes,
           limit: pageSizeInscricoes,
         }),
-      enabled: !!id,
+      enabled: !!id && tab === "inscricoes" && isAdmin, // ✅ lazy + guard de permissão
       staleTime: 30_000,
     });
 
-  // ✅ MUTATION EXCLUIR VAGA
+  // ── mutation excluir vaga ─────────────────────────────────────────────────
   const { mutateAsync: excluirVagaAsync, isPending: isDeletingVaga } =
     useMutation({
       mutationFn: (id_vaga: string) => excluirVaga({ id_vaga }),
       onSuccess: async () => {
         toast.success("Vaga apagada com sucesso.");
-        // invalida tudo que começa com "vagas-processo" para recarregar página/busca
+        // ✅ invalida apenas a chave exata da página/busca atual
         await queryClient.invalidateQueries({
-          queryKey: ["vagas-processo", id],
+          queryKey: [
+            "vagas-processo",
+            id,
+            pageVagas,
+            pageSizeVagas,
+            qVagaNormalized,
+          ],
         });
       },
       onError: () => {
@@ -151,61 +181,76 @@ export function ProcessoSeletivosDetalhes() {
       },
     });
 
-  function onEditarVaga(v: any) {
-    if (!isAdmin) {
-      toast.error("Apenas administradores podem editar vaga.");
-      return;
-    }
-    setVagaToEdit(v);
-    setOpenModal(true);
-  }
+  // ── handlers ──────────────────────────────────────────────────────────────
 
-  function onCadastrarVaga() {
+  const onEditarVaga = useCallback(
+    (v: any) => {
+      if (!isAdmin) {
+        toast.error("Apenas administradores podem editar vaga.");
+        return;
+      }
+      setVagaToEdit(v);
+      setOpenModal(true);
+    },
+    [isAdmin],
+  );
+
+  const onCadastrarVaga = useCallback(() => {
     if (!isAdmin) {
       toast.error("Apenas administradores podem cadastrar vaga.");
       return;
     }
     setOpenModal(true);
-  }
+  }, [isAdmin]);
 
-  function onEditarProcesso() {
+  const onEditarProcesso = useCallback(() => {
     if (!isAdmin) {
       toast.error("Apenas administradores podem editar o processo.");
       return;
     }
     setOpenModalEditProceso(true);
-  }
+  }, [isAdmin]);
 
-  async function sendEmail() {
-    await api.post(
-      `/processos-seletivos-inscricoes/all/${id}/notificar-rascunhos`,
-    );
-    toast.success("ENVIADO");
-  }
-
-  function onCadastrarPergunta() {
+  const onCadastrarPergunta = useCallback(() => {
     if (!isAdmin) {
       toast.error("Apenas administradores podem cadastrar perguntas.");
       return;
     }
     setPerguntaToEdit(null);
     setOpenModalNovaPergunta(true);
-  }
+  }, [isAdmin]);
 
-  async function onApagarVaga(v: any) {
-    if (!isAdmin) {
-      toast.error("Apenas administradores podem apagar vaga.");
-      return;
-    }
+  const onApagarVaga = useCallback(
+    async (v: any) => {
+      if (!isAdmin) {
+        toast.error("Apenas administradores podem apagar vaga.");
+        return;
+      }
 
-    const ok = window.confirm(
-      `Tem certeza que deseja apagar a vaga "${v?.nome}"?\n\nEssa ação não pode ser desfeita.`,
+      const ok = window.confirm(
+        `Tem certeza que deseja apagar a vaga "${v?.nome}"?\n\nEssa ação não pode ser desfeita.`,
+      );
+      if (!ok) return;
+
+      await excluirVagaAsync(v.id_vaga);
+    },
+    [isAdmin, excluirVagaAsync],
+  );
+
+  const sendEmail = useCallback(async () => {
+    await api.post(
+      `/processos-seletivos-inscricoes/all/${id}/notificar-rascunhos`,
     );
-    if (!ok) return;
+    toast.success("ENVIADO");
+  }, [id]);
 
-    await excluirVagaAsync(v.id_vaga);
-  }
+  // ── totais (fallback seguro enquanto a query ainda não rodou) ─────────────
+  const totalInscricoes = resultAllInscricoes?.total ?? 0;
+  const totalPerguntas = perguntas?.total ?? 0;
+  const vagasItems = resultAllVagas?.items ?? [];
+  const vagasTotal = resultAllVagas?.meta?.total ?? 0;
 
+  // ── loading inicial do processo ───────────────────────────────────────────
   if (isLoading) {
     return (
       <S.Container>
@@ -219,12 +264,7 @@ export function ProcessoSeletivosDetalhes() {
     );
   }
 
-  const totalInscricoes = resultAllInscricoes?.total ?? 0;
-  const totalPerguntas = perguntas?.total ?? 0;
-
-  const vagasItems = resultAllVagas?.items ?? [];
-  const vagasTotal = resultAllVagas?.meta?.total ?? 0;
-
+  // ── render ────────────────────────────────────────────────────────────────
   return (
     <S.Container>
       <S.Breadcrumbs>
@@ -277,6 +317,7 @@ export function ProcessoSeletivosDetalhes() {
         </S.HeaderRight>
       </S.Header>
 
+      {/* ── tabs ── */}
       <S.Tabs>
         <S.TabButton
           type="button"
@@ -308,6 +349,7 @@ export function ProcessoSeletivosDetalhes() {
         )}
       </S.Tabs>
 
+      {/* ── aba vagas ── */}
       {tab === "vagas" && (
         <S.Section>
           <S.SectionHeader>
@@ -323,7 +365,7 @@ export function ProcessoSeletivosDetalhes() {
                 value={qVaga}
                 onChange={(e) => {
                   setQVaga(e.target.value);
-                  setPageVagas(1);
+                  setPageVagas(1); // reset para página 1 ao buscar
                 }}
                 placeholder="Buscar por nome, nível..."
               />
@@ -392,7 +434,6 @@ export function ProcessoSeletivosDetalhes() {
                                   Editar
                                 </S.SecondaryButton>
 
-                                {/* ✅ NOVO BOTÃO */}
                                 <S.DangerButton
                                   type="button"
                                   onClick={() => onApagarVaga(v)}
@@ -429,6 +470,7 @@ export function ProcessoSeletivosDetalhes() {
         </S.Section>
       )}
 
+      {/* ── aba perguntas ── */}
       {tab === "perguntas" && (
         <TablePerguntas
           processo_seletivo_id={id!}
@@ -447,6 +489,7 @@ export function ProcessoSeletivosDetalhes() {
         />
       )}
 
+      {/* ── aba inscrições ── */}
       {tab === "inscricoes" && isAdmin && (
         <TableInscricoes
           isLoadingInscricoes={isLoadingInscricoes}
@@ -461,6 +504,7 @@ export function ProcessoSeletivosDetalhes() {
         />
       )}
 
+      {/* ── modais (admin) ── */}
       {isAdmin && (
         <>
           <ModalNovaVaga
