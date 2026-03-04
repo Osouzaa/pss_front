@@ -169,7 +169,6 @@ export const Card = styled.div`
   position: relative;
 `;
 
-// barra fina de "refetching"
 export const FetchingBar = styled.div`
   position: absolute;
   top: 0;
@@ -224,23 +223,16 @@ export const Input = styled.input`
   color: ${({ theme }) => theme.text};
   font-size: 13px;
   outline: none;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
-  &::placeholder {
-    color: ${({ theme }) => theme.placeholder};
-  }
+  &::placeholder { color: ${({ theme }) => theme.placeholder}; }
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.lightPrimary};
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
 export const Select = styled.select`
@@ -253,19 +245,14 @@ export const Select = styled.select`
   font-size: 13px;
   outline: none;
   cursor: pointer;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.lightPrimary};
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
 export const Button = styled.button<{
@@ -282,15 +269,11 @@ export const Button = styled.button<{
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition:
-    background 0.15s,
-    opacity 0.15s;
+  transition: background 0.15s, opacity 0.15s;
   white-space: nowrap;
+  text-decoration: none; /* para quando usado como <a> */
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 
   ${({ $variant, theme }) => {
     if ($variant === "primary")
@@ -334,9 +317,9 @@ export const ErrorBox = styled.div`
 `;
 
 export const Empty = styled.div`
-  margin: 16px 0;
-  padding: 24px;
-  border-radius: 12px;
+  margin: 4px 0;
+  padding: 16px;
+  border-radius: 10px;
   border: 1px dashed ${({ theme }) => theme.surfaceBorder};
   color: ${({ theme }) => theme.textMuted};
   background: ${({ theme }) => theme.backgroundInput};
@@ -367,18 +350,12 @@ export const TableWrap = styled.div`
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.surfaceBorder};
 
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.scrollbarTrack};
-  }
+  &::-webkit-scrollbar { height: 6px; }
+  &::-webkit-scrollbar-track { background: ${({ theme }) => theme.scrollbarTrack}; }
   &::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.scrollbarThumb};
     border-radius: 999px;
-    &:hover {
-      background: ${({ theme }) => theme.scrollbarThumbHover};
-    }
+    &:hover { background: ${({ theme }) => theme.scrollbarThumbHover}; }
   }
 `;
 
@@ -411,13 +388,8 @@ export const Table = styled.table`
     white-space: nowrap;
   }
 
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  tbody tr:hover td {
-    background: ${({ theme }) => theme.lightPrimary}44;
-  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: ${({ theme }) => theme.lightPrimary}44; }
 `;
 
 export const Rank = styled.span`
@@ -431,6 +403,7 @@ export const Rank = styled.span`
   color: ${({ theme }) => theme.primary};
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
 `;
 
 export const Mono = styled.span`
@@ -469,7 +442,7 @@ export const Badge = styled.span<{
   }}
 `;
 
-// ─── footer ───────────────────────────────────────────────────
+// ─── footer / paginação ───────────────────────────────────────
 export const Footer = styled.div`
   margin-top: 14px;
   display: flex;
@@ -498,6 +471,7 @@ export const Muted = styled.span`
   color: ${({ theme }) => theme.textMuted};
 `;
 
+// ─── modal ────────────────────────────────────────────────────
 export const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -517,7 +491,7 @@ export const Modal = styled.div`
   box-shadow: ${({ theme }) => theme.shadowSoft};
   width: 100%;
   max-width: 560px;
-  max-height: 80vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -530,6 +504,7 @@ export const ModalHeader = styled.div`
   gap: 12px;
   padding: 18px 20px 14px;
   border-bottom: 1px solid ${({ theme }) => theme.surfaceBorder};
+  flex-shrink: 0;
 `;
 
 export const ModalTitle = styled.h2`
@@ -554,6 +529,7 @@ export const ModalClose = styled.button`
   padding: 2px 6px;
   border-radius: 6px;
   line-height: 1;
+  flex-shrink: 0;
   &:hover { background: ${({ theme }) => theme.backgroundInput}; }
 `;
 
@@ -563,6 +539,13 @@ export const ModalBody = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.scrollbarThumb};
+    border-radius: 999px;
+  }
 `;
 
 export const ModalScoreRow = styled.div`
@@ -651,11 +634,104 @@ export const DetalheTable = styled.table`
     border-bottom: 1px solid ${({ theme }) => theme.surfaceBorder};
   }
 
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: ${({ theme }) => theme.lightPrimary}44; }
+`;
 
-  tbody tr:hover td {
-    background: ${({ theme }) => theme.lightPrimary}44;
+// ─── documentos ───────────────────────────────────────────────
+export const DocList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const DocItem = styled.li`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.backgroundInput};
+  border: 1px solid ${({ theme }) => theme.surfaceBorder};
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.primary}66;
   }
+`;
+
+export const DocInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+`;
+
+export const DocIcon = styled.span`
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+`;
+
+export const DocNome = styled.p`
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+`;
+
+export const DocMeta = styled.p`
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: ${({ theme }) => theme.textMuted};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+`;
+
+// ─── avaliação ────────────────────────────────────────────────
+export const AvaliacaoBox = styled.div<{ $decisao: "DEFERIDA" | "INDEFERIDA" }>`
+  padding: 14px 16px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+
+  ${({ $decisao, theme }) =>
+    $decisao === "DEFERIDA"
+      ? `
+        background: ${theme.statusDoneBg};
+        color: ${theme.statusDoneText};
+        border: 1px solid ${theme.statusDoneText}22;
+      `
+      : `
+        background: ${theme.statusCancelBg};
+        color: ${theme.statusCancelText};
+        border: 1px solid ${theme.statusCancelText}22;
+      `}
+`;
+
+export const AvaliacaoConfirmText = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+`;
+
+export const AvaliacaoBtns = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid ${({ theme }) => theme.surfaceBorder};
+  margin-top: 4px;
 `;

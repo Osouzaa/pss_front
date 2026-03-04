@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as S from "./styles";
 import {
   getAllVagasProcessoId,
@@ -61,6 +61,19 @@ type ModalDetalhe = {
   detalhes: DetalheItem[];
 };
 
+type Documento = {
+  id_candidato_documento: string;
+  tipo: string;
+  descricao?: string | null;
+  data_criacao?: string | null;
+  arquivo: {
+    id_arquivo: string;
+    nome_original: string;
+    mime_type: string;
+    tamanho_bytes: number;
+  };
+};
+
 type PaginatedResponse<T> = {
   data: T[];
   page: number;
@@ -110,6 +123,12 @@ function calcIdade(dataNascimento?: string | null): string {
   return `${anos} anos`;
 }
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function statusTone(status: string) {
   const s = (status || "").toUpperCase();
   if (s === "ENVIADA" || s === "DEFERIDA") return "success" as const;
@@ -135,6 +154,8 @@ export function InscricoesAdmin() {
   const id_processo_seletivo =
     (params as any)?.id_processo_seletivo || (params as any)?.idProcesso;
 
+  const queryClient = useQueryClient();
+
   const [idVaga, setIdVaga] = useState<string>("ALL");
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
@@ -143,6 +164,7 @@ export function InscricoesAdmin() {
   const [debNome, setDebNome] = useState("");
   const [debCpf, setDebCpf] = useState("");
   const [modalDetalhe, setModalDetalhe] = useState<ModalDetalhe | null>(null);
+  const [decisaoPendente, setDecisaoPendente] = useState<"DEFERIDA" | "INDEFERIDA" | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => { setDebNome(nome.trim()); setPage(1); }, 400);
@@ -160,7 +182,7 @@ export function InscricoesAdmin() {
   useEffect(() => {
     if (!modalDetalhe) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setModalDetalhe(null);
+      if (e.key === "Escape") fecharModal();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -207,6 +229,34 @@ export function InscricoesAdmin() {
     staleTime: 60_000,
   });
 
+  // Documentos — lazy, só busca quando modal está aberto e candidato disponível
+  const idCandidatoModal = modalDetalhe?.inscricao.usuario?.candidato?.id_candidato;
+
+  const documentosQuery = useQuery<Documento[]>({
+    queryKey: ["documentos-candidato", idCandidatoModal],
+    enabled: Boolean(idCandidatoModal),
+    queryFn: async () => {
+      const { data } = await api.get(
+        `processo-seletivo-candidatos/me/documentos/candidato/${idCandidatoModal}`,
+      );
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  // ─── mutation ────────────────────────────────────────────────
+  const avaliarMutation = useMutation({
+    mutationFn: (decisao: "DEFERIDA" | "INDEFERIDA") =>
+      api.patch(
+        `processos-seletivos-inscricoes/${modalDetalhe!.inscricao.id_inscricao}/avaliar`,
+        { decisao },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inscricoes-admin"] });
+      fecharModal();
+    },
+  });
+
   // ─── derivados ──────────────────────────────────────────────
   const vagas = useMemo<Vaga[]>(() => {
     if (vagasQuery.data?.items?.length) {
@@ -251,6 +301,11 @@ export function InscricoesAdmin() {
   const isVagasLoading = vagasQuery.isLoading;
 
   // ─── ações ──────────────────────────────────────────────────
+  function fecharModal() {
+    setModalDetalhe(null);
+    setDecisaoPendente(null);
+  }
+
   function abrirDetalhe(i: Inscricao) {
     let detalhes: DetalheItem[] = [];
     try {
@@ -260,6 +315,7 @@ export function InscricoesAdmin() {
     } catch {
       detalhes = [];
     }
+    setDecisaoPendente(null);
     setModalDetalhe({ inscricao: i, detalhes });
   }
 
@@ -269,6 +325,11 @@ export function InscricoesAdmin() {
     setCpf("");
     setPage(1);
     setLimit(20);
+  }
+
+  function urlDocumentoView(idDoc: string) {
+    const base = (api.defaults.baseURL ?? "").replace(/\/$/, "");
+    return `${base}/processo-seletivo-candidatos/me/documentos/documento/${idDoc}/view`;
   }
 
   // ─── render ─────────────────────────────────────────────────
@@ -532,8 +593,10 @@ export function InscricoesAdmin() {
 
       {/* ── MODAL DE DETALHES ── */}
       {modalDetalhe && (
-        <S.Overlay onClick={() => setModalDetalhe(null)}>
+        <S.Overlay onClick={fecharModal}>
           <S.Modal onClick={(e) => e.stopPropagation()}>
+
+            {/* cabeçalho */}
             <S.ModalHeader>
               <div>
                 <S.ModalTitle>Detalhes da Classificação</S.ModalTitle>
@@ -543,13 +606,11 @@ export function InscricoesAdmin() {
                   <strong>#{modalDetalhe.inscricao.classificacao}</strong>
                 </S.ModalSub>
               </div>
-              <S.ModalClose onClick={() => setModalDetalhe(null)}>
-                ✕
-              </S.ModalClose>
+              <S.ModalClose onClick={fecharModal}>✕</S.ModalClose>
             </S.ModalHeader>
 
             <S.ModalBody>
-              {/* resumo */}
+              {/* ── resumo pontuação ── */}
               <S.ModalScoreRow>
                 <S.ModalScoreBox>
                   <S.StatValue>
@@ -577,15 +638,14 @@ export function InscricoesAdmin() {
                 <S.ModalScoreBox>
                   <S.StatValue>
                     {calcIdade(
-                      modalDetalhe.inscricao.usuario?.candidato
-                        ?.data_nascimento,
+                      modalDetalhe.inscricao.usuario?.candidato?.data_nascimento,
                     )}
                   </S.StatValue>
                   <S.StatLabel>Idade</S.StatLabel>
                 </S.ModalScoreBox>
               </S.ModalScoreRow>
 
-              {/* critérios de desempate */}
+              {/* ── critérios de desempate ── */}
               <S.ModalSection>
                 <S.ModalSectionTitle>
                   Critérios de desempate (ordem)
@@ -614,36 +674,129 @@ export function InscricoesAdmin() {
                 </S.TieList>
               </S.ModalSection>
 
-              {/* detalhes por pergunta */}
-              {modalDetalhe.detalhes.length > 0 && (
-                <S.ModalSection>
-                  <S.ModalSectionTitle>
-                    Pontuação por critério
-                  </S.ModalSectionTitle>
-                  <S.DetalheTable>
-                    <thead>
-                      <tr>
-                        <th>Critério</th>
-                        <th>Tipo</th>
-                        <th style={{ textAlign: "right" }}>Pontos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {modalDetalhe.detalhes.map((d) => (
-                        <tr key={d.id_pergunta}>
-                          <td>{d.titulo}</td>
-                          <td>
-                            <S.Mono>{d.tipo}</S.Mono>
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <S.Score>{d.pontos}</S.Score>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </S.DetalheTable>
-                </S.ModalSection>
-              )}
+              {/* ── documentos ── */}
+              <S.ModalSection>
+                <S.ModalSectionTitle>Documentos anexados</S.ModalSectionTitle>
+
+                {documentosQuery.isLoading && (
+                  <S.Muted>Carregando documentos...</S.Muted>
+                )}
+
+                {documentosQuery.isError && (
+                  <S.ErrorBox>Erro ao carregar documentos.</S.ErrorBox>
+                )}
+
+                {!documentosQuery.isLoading && documentosQuery.data?.length === 0 && (
+                  <S.Empty>Nenhum documento anexado.</S.Empty>
+                )}
+
+                {documentosQuery.data && documentosQuery.data.length > 0 && (
+                  <S.DocList>
+                    {documentosQuery.data.map((doc) => (
+                      <S.DocItem key={doc.id_candidato_documento}>
+                        <S.DocInfo>
+                          <S.DocIcon>
+                            {doc.arquivo.mime_type === "application/pdf" ? "📄" : "🖼️"}
+                          </S.DocIcon>
+                          <div>
+                            <S.DocNome>{doc.arquivo.nome_original}</S.DocNome>
+                            <S.DocMeta>
+                              {doc.tipo} · {formatBytes(doc.arquivo.tamanho_bytes)}
+                              {doc.descricao ? ` · ${doc.descricao}` : ""}
+                            </S.DocMeta>
+                          </div>
+                        </S.DocInfo>
+
+                        <S.Button
+                          as="a"
+                          href={urlDocumentoView(
+                            doc.id_candidato_documento,
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          $variant="ghost"
+                          type="button"
+                        >
+                          Abrir →
+                        </S.Button>
+                      </S.DocItem>
+                    ))}
+                  </S.DocList>
+                )}
+              </S.ModalSection>
+
+              {/* ── avaliação ── */}
+              {(() => {
+                const status = modalDetalhe.inscricao.status;
+                const jaAvaliado = status === "DEFERIDA" || status === "INDEFERIDA";
+
+                if (jaAvaliado) {
+                  return (
+                    <S.AvaliacaoBox $decisao={status as "DEFERIDA" | "INDEFERIDA"}>
+                      <strong>
+                        {status === "DEFERIDA" ? "✓ Deferida" : "✕ Indeferida"}
+                      </strong>{" "}
+                      — esta inscrição já foi avaliada.
+                    </S.AvaliacaoBox>
+                  );
+                }
+
+                if (decisaoPendente) {
+                  return (
+                    <S.AvaliacaoBox $decisao={decisaoPendente}>
+                      <S.AvaliacaoConfirmText>
+                        Confirmar{" "}
+                        <strong>
+                          {decisaoPendente === "DEFERIDA" ? "deferimento" : "indeferimento"}
+                        </strong>{" "}
+                        desta inscrição?
+                      </S.AvaliacaoConfirmText>
+
+                      {avaliarMutation.isError && (
+                        <S.ErrorBox>Erro ao salvar. Tente novamente.</S.ErrorBox>
+                      )}
+
+                      <S.AvaliacaoBtns>
+                        <S.Button
+                          type="button"
+                          $variant="ghost"
+                          onClick={() => setDecisaoPendente(null)}
+                          disabled={avaliarMutation.isPending}
+                        >
+                          Cancelar
+                        </S.Button>
+                        <S.Button
+                          type="button"
+                          $variant={decisaoPendente === "DEFERIDA" ? "primary" : "danger"}
+                          disabled={avaliarMutation.isPending}
+                          onClick={() => avaliarMutation.mutate(decisaoPendente)}
+                        >
+                          {avaliarMutation.isPending ? "Salvando..." : "Confirmar"}
+                        </S.Button>
+                      </S.AvaliacaoBtns>
+                    </S.AvaliacaoBox>
+                  );
+                }
+
+                return (
+                  <S.AvaliacaoBtns>
+                    <S.Button
+                      type="button"
+                      $variant="danger"
+                      onClick={() => setDecisaoPendente("INDEFERIDA")}
+                    >
+                      ✕ Indeferir
+                    </S.Button>
+                    <S.Button
+                      type="button"
+                      $variant="primary"
+                      onClick={() => setDecisaoPendente("DEFERIDA")}
+                    >
+                      ✓ Deferir
+                    </S.Button>
+                  </S.AvaliacaoBtns>
+                );
+              })()}
             </S.ModalBody>
           </S.Modal>
         </S.Overlay>
