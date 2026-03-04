@@ -7,6 +7,7 @@ interface ModalAvaliacaoSectionProps {
   avaliacaoResultado?: AvaliacaoResultado | null;
   motivoReprovacao: string;
   dataAvaliacao?: string | null;
+  classificacaoAntesReprovacao?: number | null;
   decisaoPendente: AvaliacaoResultado | null;
   isPending: boolean;
   isError: boolean;
@@ -36,6 +37,7 @@ export function ModalAvaliacaoSection({
   avaliacaoResultado,
   motivoReprovacao,
   dataAvaliacao,
+  classificacaoAntesReprovacao,
   decisaoPendente,
   isPending,
   isError,
@@ -59,16 +61,25 @@ export function ModalAvaliacaoSection({
           {avaliacaoResultado === "APROVADO" ? "✓ Aprovado" : "✕ Reprovado"}
         </strong>{" "}
         — esta inscrição já foi avaliada.
+
         {motivoReprovacao && (
           <S.MotivoReprovacao>
             <strong>Motivo:</strong> {motivoReprovacao}
           </S.MotivoReprovacao>
         )}
+
+        {avaliacaoResultado === "REPROVADO" && classificacaoAntesReprovacao && (
+          <S.MotivoReprovacao>
+            <strong>Posição antes da reprovação:</strong> #{classificacaoAntesReprovacao}
+          </S.MotivoReprovacao>
+        )}
+
         {dataAvaliacao && (
           <S.MotivoReprovacao>
             <strong>Avaliado em:</strong> {formatDateTimeBR(dataAvaliacao)}
           </S.MotivoReprovacao>
         )}
+
         <S.AvaliacaoBtns style={{ marginTop: "0.75rem" }}>
           <S.Button
             type="button"
@@ -138,6 +149,7 @@ export function ModalAvaliacaoSection({
     );
   }
 
+  // ── botões de ação (primeira avaliação ou após clicar em "Alterar") ──
   return (
     <S.AvaliacaoBtns>
       <S.Button type="button" $variant="danger" onClick={onReprovar}>

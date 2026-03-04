@@ -56,6 +56,7 @@ type Inscricao = {
   avaliacao_resultado?: AvaliacaoResultado | null;
   motivo_reprovacao?: string | null;
   data_avaliacao?: string | null;
+  classificacao_antes_reprovacao?: number | null;
 };
 
 type DetalheItem = {
@@ -259,12 +260,37 @@ export function InscricoesAdmin() {
         `processos-seletivos-inscricoes/${modalDetalhe!.inscricao.id_inscricao}/avaliar`,
         {
           avaliacao_resultado: resultado,
+          classificacao_atual: modalDetalhe!.inscricao.classificacao ?? null,
           ...(resultado === "REPROVADO" && { motivo_reprovacao: motivo }),
         },
       ),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // atualiza o modal localmente sem fechar
+      setModalDetalhe((prev) =>
+        prev
+          ? {
+              ...prev,
+              inscricao: {
+                ...prev.inscricao,
+                avaliacao_resultado: variables.resultado,
+                motivo_reprovacao:
+                  variables.resultado === "REPROVADO"
+                    ? (variables.motivo ?? null)
+                    : null,
+                data_avaliacao: new Date().toISOString(),
+                classificacao_antes_reprovacao:
+                  variables.resultado === "REPROVADO"
+                    ? (prev.inscricao.classificacao ?? null)
+                    : null,
+              },
+            }
+          : null,
+      );
+      setDecisaoPendente(null);
+      setMotivoReprovacao(
+        variables.resultado === "REPROVADO" ? (variables.motivo ?? "") : "",
+      );
       queryClient.invalidateQueries({ queryKey: ["inscricoes-admin"] });
-      fecharModal();
     },
   });
 
@@ -327,7 +353,7 @@ export function InscricoesAdmin() {
       detalhes = [];
     }
     setDecisaoPendente(null);
-    setMotivoReprovacao("");
+    setMotivoReprovacao(i.motivo_reprovacao ?? "");
     setModalDetalhe({ inscricao: i, detalhes });
   }
 
@@ -483,17 +509,19 @@ export function InscricoesAdmin() {
             <thead>
               <tr>
                 <th style={{ width: 48 }}>#</th>
-                <th>Protocolo</th>
-                <th>Candidato</th>
-                <th>CPF</th>
-                <th>Nascimento</th>
-                <th>Vaga</th>
-                <th>Pontuação</th>
-                <th>Exp. (dias)</th>
-                {mostrarEspecializacao && <th>Especialização</th>}
-                <th>Status</th>
-                <th>Avaliação</th>
-                <th>Enviado em</th>
+                <th style={{ width: 120 }}>Protocolo</th>
+                <th style={{ width: 200 }}>Candidato</th>
+                <th style={{ width: 130 }}>CPF</th>
+                <th style={{ width: 100 }}>Nascimento</th>
+                <th style={{ width: 180 }}>Vaga</th>
+                <th style={{ width: 90 }}>Pontuação</th>
+                <th style={{ width: 90 }}>Exp. (dias)</th>
+                {mostrarEspecializacao && (
+                  <th style={{ width: 110 }}>Especialização</th>
+                )}
+                <th style={{ width: 100 }}>Status</th>
+                {idVaga !== "ALL" && <th style={{ width: 110 }}>Avaliação</th>}
+                <th style={{ width: 130 }}>Enviado em</th>
               </tr>
             </thead>
             <tbody>
@@ -511,26 +539,39 @@ export function InscricoesAdmin() {
                   ))
                 : serverData.map((i) => {
                     const cand = i.usuario?.candidato;
-                    const temDetalhe = Boolean(i.classificacao);
+                    const temDetalhe = i.status === "ENVIADA";
                     return (
                       <tr key={i.id_inscricao}>
                         <td>
                           <S.Rank
                             onClick={() => temDetalhe && abrirDetalhe(i)}
                             title={
-                              temDetalhe
-                                ? "Ver detalhes da classificação"
-                                : undefined
+                              temDetalhe ? "Ver detalhes / avaliar" : undefined
                             }
+                            style={{
+                              cursor: temDetalhe ? "pointer" : "default",
+                            }}
                           >
                             {i.classificacao ?? "—"}
                           </S.Rank>
                         </td>
                         <td>
-                          <S.Mono>{i.protocolo || "—"}</S.Mono>
+                          <S.Mono>
+                            <S.TruncatedCell
+                              $maxWidth="120px"
+                              title={i.protocolo}
+                            >
+                              {i.protocolo || "—"}
+                            </S.TruncatedCell>
+                          </S.Mono>
                         </td>
-                        <td title={cand?.nome_completo}>
-                          {cand?.nome_completo || "—"}
+                        <td>
+                          <S.TruncatedCell
+                            $maxWidth="200px"
+                            title={cand?.nome_completo}
+                          >
+                            {cand?.nome_completo || "—"}
+                          </S.TruncatedCell>
                         </td>
                         <td>
                           <S.Mono>{formatCPF(cand?.cpf)}</S.Mono>
@@ -538,7 +579,14 @@ export function InscricoesAdmin() {
                         <td>
                           <S.Mono>{formatDateBR(cand?.data_nascimento)}</S.Mono>
                         </td>
-                        <td>{i.vaga?.nome || i.id_vaga || "—"}</td>
+                        <td>
+                          <S.TruncatedCell
+                            $maxWidth="180px"
+                            title={i.vaga?.nome || i.id_vaga}
+                          >
+                            {i.vaga?.nome || i.id_vaga || "—"}
+                          </S.TruncatedCell>
+                        </td>
                         <td>
                           <S.Score>{i.pontuacao_total ?? "—"}</S.Score>
                         </td>
@@ -553,15 +601,27 @@ export function InscricoesAdmin() {
                             {i.status}
                           </S.Badge>
                         </td>
-                        <td>
-                          {i.avaliacao_resultado ? (
-                            <S.Badge $tone={statusTone(i.avaliacao_resultado)}>
-                              {i.avaliacao_resultado}
-                            </S.Badge>
-                          ) : (
-                            <S.Muted>—</S.Muted>
-                          )}
-                        </td>
+                        {idVaga !== "ALL" && (
+                          <td>
+                            {i.avaliacao_resultado ? (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.25rem",
+                                }}
+                              >
+                                <S.Badge
+                                  $tone={statusTone(i.avaliacao_resultado)}
+                                >
+                                  {i.avaliacao_resultado}
+                                </S.Badge>
+                              </div>
+                            ) : (
+                              <S.Muted>—</S.Muted>
+                            )}
+                          </td>
+                        )}
                         <td>{formatDateTimeBR(i.data_envio)}</td>
                       </tr>
                     );
@@ -608,8 +668,9 @@ export function InscricoesAdmin() {
                 <S.ModalTitle>Detalhes da Classificação</S.ModalTitle>
                 <S.ModalSub>
                   {modalDetalhe.inscricao.usuario?.candidato?.nome_completo} —
-                  Posição{" "}
-                  <strong>#{modalDetalhe.inscricao.classificacao}</strong>
+                  {modalDetalhe.inscricao.classificacao
+                    ? ` Posição #${modalDetalhe.inscricao.classificacao}`
+                    : " Sem classificação"}
                 </S.ModalSub>
               </div>
               <S.ModalClose onClick={fecharModal}>✕</S.ModalClose>
@@ -643,6 +704,9 @@ export function InscricoesAdmin() {
                 avaliacaoResultado={modalDetalhe.inscricao.avaliacao_resultado}
                 motivoReprovacao={motivoReprovacao}
                 dataAvaliacao={modalDetalhe.inscricao.data_avaliacao}
+                classificacaoAntesReprovacao={
+                  modalDetalhe.inscricao.classificacao_antes_reprovacao
+                }
                 decisaoPendente={decisaoPendente}
                 isPending={avaliarMutation.isPending}
                 isError={avaliarMutation.isError}

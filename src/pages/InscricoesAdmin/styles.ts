@@ -815,3 +815,12 @@ export const MotivoReprovacao = styled.p`
   color: ${({ theme }) => theme.textMuted};
   line-height: 1.5;
 `;
+
+
+export const TruncatedCell = styled.span<{ $maxWidth?: string }>`
+  display: block;
+  max-width: ${({ $maxWidth }) => $maxWidth ?? "160px"};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
