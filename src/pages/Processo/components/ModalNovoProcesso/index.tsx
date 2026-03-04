@@ -274,14 +274,14 @@ export function ModalNovoProcesso({
             <Row>
               <InputBase
                 label="Início das inscrições"
-                type="date"
+                type="datetime-local"
                 {...register("data_inicio_inscricoes")}
                 error={errors.data_inicio_inscricoes?.message}
               />
 
               <InputBase
                 label="Fim das inscrições"
-                type="date"
+                type="datetime-local"
                 {...register("data_fim_inscricoes")}
                 error={errors.data_fim_inscricoes?.message}
               />
