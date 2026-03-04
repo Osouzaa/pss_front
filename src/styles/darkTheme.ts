@@ -78,4 +78,7 @@ export const darkTheme = {
   warning: "#FFC300",
   warningBg: "rgba(255, 195, 0, 0.16)",
   warningText: "#FFE8A3",
+
+  statusProrrogadoBg: "#5B21B6", // roxo mais escuro/apagado
+  statusProrrogadoText: "#EDE9FE", // texto lilás claro
 };

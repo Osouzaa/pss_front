@@ -5,6 +5,7 @@ export type ProcessoSeletivoStatus =
   | "ABERTO"
   | "EM_ANDAMENTO"
   | "ENCERRADO"
+  | "PRORROGADO"
   | "CANCELADO";
 
 export interface ProcessoSeletivo {

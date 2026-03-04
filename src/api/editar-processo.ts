@@ -4,7 +4,7 @@ type EditarProcessoPayload = {
   titulo?: string;
   secretaria?: string;
   ano?: number;
-  status?: "RASCUNHO" | "ABERTO" | "ENCERRADO" | "EM_ANALISE";
+  status?: "RASCUNHO" | "ABERTO" | "ENCERRADO" | "EM_ANALISE" | "PRORROGADO"; 
   data_inicio_inscricoes?: string; // YYYY-MM-DD
   data_fim_inscricoes?: string; // YYYY-MM-DD
 };

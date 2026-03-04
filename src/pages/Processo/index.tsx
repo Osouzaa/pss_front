@@ -189,7 +189,7 @@ export function Processo() {
           <S.Grid>
             {items.map((p) => {
               const bloqueadoPorPerfil = isPerfilIncompleto;
-              const bloqueadoPorStatus = p.status !== "ABERTO";
+              const bloqueadoPorStatus = p.status !== "ABERTO" && p.status !== "PRORROGADO"; // bloqueia se não estiver ABERTO ou PRORROGADO
 
               const disabled = bloqueadoPorStatus || bloqueadoPorPerfil;
 

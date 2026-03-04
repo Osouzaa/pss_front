@@ -68,4 +68,7 @@ export const theme = {
   warning: "#FFC300",
   warningBg: "rgba(255, 195, 0, 0.16)",
   warningText: "#7A5C00",
+
+  statusProrrogadoBg: "#7C3AED", // roxo
+  statusProrrogadoText: "#FFFFFF",
 };

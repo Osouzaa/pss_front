@@ -43,7 +43,10 @@ function isoToInputDate(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().slice(0, 10);
+
+  // ✅ usa horário LOCAL, não UTC
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function ModalNovoProcesso({
@@ -267,6 +270,7 @@ export function ModalNovoProcesso({
                 <option value="">Selecione</option>
                 <option value="RASCUNHO">Rascunho</option>
                 <option value="ABERTO">Aberto</option>
+                <option value="PRORROGADO">Prorrogado</option> {/* 👈 novo */}
                 <option value="ENCERRADO">Encerrado</option>
               </SelectBase>
             </Row>

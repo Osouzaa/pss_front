@@ -422,7 +422,8 @@ const statusTokens = (status: string, theme: any) => {
       return { bg: theme.statusDoneBg, fg: theme.statusDoneText };
     case "CANCELADO":
       return { bg: theme.statusCancelBg, fg: theme.statusCancelText };
-    case "RASCUNHO":
+    case "PRORROGADO":
+      return { bg: theme.statusProrrogadoBg, fg: theme.statusProrrogadoText };
     default:
       return { bg: theme.lightDefault, fg: theme.text };
   }

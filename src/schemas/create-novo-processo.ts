@@ -4,6 +4,7 @@ export const ProcessoStatusEnum = z.enum([
   "RASCUNHO",
   "ABERTO",
   "EM_ANALISE",
+  "PRORROGADO",  // 👈 novo
   "ENCERRADO",
 ]);
 
