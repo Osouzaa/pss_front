@@ -726,6 +726,7 @@ export function InscricoesAdmin() {
                   setDecisaoPendente(null);
                   setMotivoReprovacao("");
                 }}
+                statusProcesso={processo?.status}
               />
             </S.ModalBody>
           </S.Modal>

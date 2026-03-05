@@ -12,9 +12,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "../../contexts/auth-context";
 import { formatDate } from "../../utils/fomartDate.utils";
-import { getAllInscricoesByProcessoId } from "../../api/get-all-inscricoes-by-processoId";
 import { TablePerguntas } from "./components/TablePerguntas";
-import { TableInscricoes } from "./components/TableInscricoes";
 import { ModalNovaPergunta } from "./components/ModalNovaPerguntas";
 import { buscarPerguntasProcessos } from "../../api/buscar-perguntas-processos";
 import { getAllVagasProcessoId } from "../../api/get-all-vagas-processoId";
@@ -51,14 +49,13 @@ function useDebouncedValue<T>(value: T, delay = 400): T {
 
 // ─── tabs ─────────────────────────────────────────────────────────────────────
 
-const VALID_TABS = ["vagas", "perguntas", "inscricoes"] as const;
+const VALID_TABS = ["vagas", "perguntas"] as const;
 type TabKey = (typeof VALID_TABS)[number];
 
-function getInitialTab(isAdmin: boolean): TabKey {
+function getInitialTab(): TabKey {
   const raw = localStorage.getItem(TokenSistems.TAB_STORAGE_KEY);
 
   if (!raw || !VALID_TABS.includes(raw as TabKey)) return "vagas";
-  if (!isAdmin && raw === "inscricoes") return "vagas";
 
   return raw as TabKey;
 }
@@ -70,7 +67,7 @@ export function ProcessoSeletivosDetalhes() {
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
-  const [tab, setTab] = useState<TabKey>(() => getInitialTab(isAdmin));
+  const [tab, setTab] = useState<TabKey>(() => getInitialTab());
   const [qVaga, setQVaga] = useState("");
 
   const [openModal, setOpenModal] = useState(false);
@@ -84,9 +81,6 @@ export function ProcessoSeletivosDetalhes() {
   const [pageVagas, setPageVagas] = useState(1);
   const [pageSizeVagas, setPageSizeVagas] = useState(10);
 
-  const [pageInscricoes, setPageInscricoes] = useState(1);
-  const [pageSizeInscricoes, setPageSizeInscricoes] = useState(20);
-
   const [pagePerguntas, setPagePerguntas] = useState(1);
   const [pageSizePerguntas, setPageSizePerguntas] = useState(20);
 
@@ -99,13 +93,8 @@ export function ProcessoSeletivosDetalhes() {
 
   // ── persiste aba no localStorage ──────────────────────────────────────────
   useEffect(() => {
-    if (!isAdmin && tab === "inscricoes") {
-      setTab("vagas");
-      localStorage.setItem(TokenSistems.TAB_STORAGE_KEY, "vagas");
-      return;
-    }
     localStorage.setItem(TokenSistems.TAB_STORAGE_KEY, tab);
-  }, [tab, isAdmin]);
+  }, [tab]);
 
   // ── queries ───────────────────────────────────────────────────────────────
 
@@ -130,7 +119,7 @@ export function ProcessoSeletivosDetalhes() {
         limit: pageSizeVagas,
         q: qVagaNormalized || undefined,
       }),
-    enabled: !!id && tab === "vagas", // ✅ lazy: só busca quando a aba está ativa
+    enabled: !!id && tab === "vagas",
     staleTime: 30_000,
   });
 
@@ -142,22 +131,9 @@ export function ProcessoSeletivosDetalhes() {
         page: pagePerguntas,
         limit: pageSizePerguntas,
       }),
-    enabled: !!id && tab === "perguntas", // ✅ lazy
+    enabled: !!id && tab === "perguntas",
     staleTime: 30_000,
   });
-
-  // Inscrições — só quando aba "inscricoes" está ativa E usuário é admin
-  const { data: resultAllInscricoes, isLoading: isLoadingInscricoes } =
-    useQuery({
-      queryKey: ["all-inscricoes", id, pageInscricoes, pageSizeInscricoes],
-      queryFn: () =>
-        getAllInscricoesByProcessoId(id!, {
-          page: pageInscricoes,
-          limit: pageSizeInscricoes,
-        }),
-      enabled: !!id && tab === "inscricoes" && isAdmin, // ✅ lazy + guard de permissão
-      staleTime: 30_000,
-    });
 
   // ── mutation excluir vaga ─────────────────────────────────────────────────
   const { mutateAsync: excluirVagaAsync, isPending: isDeletingVaga } =
@@ -165,7 +141,6 @@ export function ProcessoSeletivosDetalhes() {
       mutationFn: (id_vaga: string) => excluirVaga({ id_vaga }),
       onSuccess: async () => {
         toast.success("Vaga apagada com sucesso.");
-        // ✅ invalida apenas a chave exata da página/busca atual
         await queryClient.invalidateQueries({
           queryKey: [
             "vagas-processo",
@@ -245,7 +220,6 @@ export function ProcessoSeletivosDetalhes() {
   }, [id]);
 
   // ── totais (fallback seguro enquanto a query ainda não rodou) ─────────────
-  const totalInscricoes = resultAllInscricoes?.total ?? 0;
   const totalPerguntas = perguntas?.total ?? 0;
   const vagasItems = resultAllVagas?.items ?? [];
   const vagasTotal = resultAllVagas?.meta?.total ?? 0;
@@ -336,17 +310,6 @@ export function ProcessoSeletivosDetalhes() {
         >
           Perguntas ({totalPerguntas})
         </S.TabButton>
-
-        {isAdmin && (
-          <S.TabButton
-            type="button"
-            onClick={() => setTab("inscricoes")}
-            aria-current={tab === "inscricoes"}
-            $active={tab === "inscricoes"}
-          >
-            Inscrições ({totalInscricoes})
-          </S.TabButton>
-        )}
       </S.Tabs>
 
       {/* ── aba vagas ── */}
@@ -365,7 +328,7 @@ export function ProcessoSeletivosDetalhes() {
                 value={qVaga}
                 onChange={(e) => {
                   setQVaga(e.target.value);
-                  setPageVagas(1); // reset para página 1 ao buscar
+                  setPageVagas(1);
                 }}
                 placeholder="Buscar por nome, nível..."
               />
@@ -489,22 +452,6 @@ export function ProcessoSeletivosDetalhes() {
         />
       )}
 
-      {/* ── aba inscrições ── */}
-      {tab === "inscricoes" && isAdmin && (
-        <TableInscricoes
-          isLoadingInscricoes={isLoadingInscricoes}
-          resultAllInscricoes={resultAllInscricoes}
-          page={pageInscricoes}
-          pageSize={pageSizeInscricoes}
-          onPageChange={setPageInscricoes}
-          onPageSizeChange={(s) => {
-            setPageInscricoes(1);
-            setPageSizeInscricoes(s);
-          }}
-        />
-      )}
-
-      {/* ── modais (admin) ── */}
       {isAdmin && (
         <>
           <ModalNovaVaga
