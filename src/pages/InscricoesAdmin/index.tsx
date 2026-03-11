@@ -467,8 +467,8 @@ export function InscricoesAdmin() {
                 disabled={isLoading}
               />
             </S.Field>
-            {processoQuery.data?.titulo ===
-              "PSS 001/2026 CARGO- PNS: CIÊNCIAS" && (
+            {processoQuery.data?.titulo.includes(
+              "SECRETÁRIO ESCOLAR") && (
               <S.Field>
                 <S.Label>Cota</S.Label>
                 <S.Select
