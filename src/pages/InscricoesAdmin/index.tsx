@@ -162,6 +162,7 @@ export function InscricoesAdmin() {
   const [decisaoPendente, setDecisaoPendente] =
     useState<AvaliacaoResultado | null>(null);
   const [motivoReprovacao, setMotivoReprovacao] = useState("");
+  const [cota, setCota] = useState<string>("ALL");
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -209,6 +210,7 @@ export function InscricoesAdmin() {
       idVaga,
       debNome,
       debCpf,
+      cota,
     ],
     enabled: Boolean(id_processo_seletivo),
     queryFn: async () => {
@@ -216,6 +218,7 @@ export function InscricoesAdmin() {
       if (idVaga !== "ALL") q.id_vaga = idVaga;
       if (debNome) q.nome = debNome;
       if (debCpf) q.cpf = debCpf;
+      if (cota !== "ALL") q.cota = cota;
       const { data } = await api.get<PaginatedResponse<Inscricao>>(
         `processos-seletivos-inscricoes/all/${id_processo_seletivo}`,
         { params: q },
@@ -356,15 +359,14 @@ export function InscricoesAdmin() {
     setMotivoReprovacao(i.motivo_reprovacao ?? "");
     setModalDetalhe({ inscricao: i, detalhes });
   }
-
   function clearFilters() {
     setIdVaga("ALL");
     setNome("");
     setCpf("");
+    setCota("ALL"); // ← adicionar
     setPage(1);
     setLimit(20);
   }
-
   function urlDocumentoView(idDoc: string) {
     const base = (api.defaults.baseURL ?? "").replace(/\/$/, "");
     return `${base}/processo-seletivo-candidatos/me/documentos/documento/${idDoc}/view`;
@@ -465,6 +467,26 @@ export function InscricoesAdmin() {
                 disabled={isLoading}
               />
             </S.Field>
+            {processoQuery.data?.titulo ===
+              "PSS 001/2026 CARGO- PNS: CIÊNCIAS" && (
+              <S.Field>
+                <S.Label>Cota</S.Label>
+                <S.Select
+                  value={cota}
+                  onChange={(e) => {
+                    setCota(e.target.value);
+                    setPage(1);
+                  }}
+                  disabled={isLoading}
+                >
+                  <option value="ALL">Todas</option>
+                  <option value="pessoas_com_deficiencia_pcd">PCD</option>
+                  <option value="pessoas_pardas_ou_pretas_conforme_autodeclaracao_etnico_raci">
+                    Pretos e Pardos
+                  </option>
+                </S.Select>
+              </S.Field>
+            )}
 
             <S.Field>
               <S.Label>Por página</S.Label>
