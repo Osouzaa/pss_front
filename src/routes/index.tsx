@@ -57,7 +57,7 @@ function AnimatedRoutes() {
             />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
             <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
-              <Route
+              <Route 
                 path="/processos/:id/inscricoes/:id_inscricao/detalhe"
                 element={<InscricaoDetalhePage />}
               />

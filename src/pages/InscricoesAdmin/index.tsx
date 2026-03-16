@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as S from "./styles";
 import {
@@ -296,6 +296,15 @@ export function InscricoesAdmin() {
       queryClient.invalidateQueries({ queryKey: ["inscricoes-admin"] });
     },
   });
+  const navigate = useNavigate();
+
+  // 3. função de navegação
+  function irParaDetalhe() {
+    const idInscricao = modalDetalhe!.inscricao.id_inscricao;
+    navigate(
+      `/processos/${id_processo_seletivo}/inscricoes/${idInscricao}/detalhe`,
+    );
+  }
 
   // ─── derivados ──────────────────────────────────────────────
   const vagas = useMemo<Vaga[]>(() => {
@@ -467,8 +476,7 @@ export function InscricoesAdmin() {
                 disabled={isLoading}
               />
             </S.Field>
-            {processoQuery.data?.titulo.includes(
-              "SECRETÁRIO ESCOLAR") && (
+            {processoQuery.data?.titulo.includes("SECRETÁRIO ESCOLAR") && (
               <S.Field>
                 <S.Label>Cota</S.Label>
                 <S.Select
@@ -694,7 +702,19 @@ export function InscricoesAdmin() {
                     : " Sem classificação"}
                 </S.ModalSub>
               </div>
-              <S.ModalClose onClick={fecharModal}>✕</S.ModalClose>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                {/* ← botão novo */}
+                <S.Button
+                  type="button"
+                  $variant="primary"
+                  onClick={irParaDetalhe}
+                >
+                  Ver inscrição completa →
+                </S.Button>
+                <S.ModalClose onClick={fecharModal}>✕</S.ModalClose>
+              </div>
             </S.ModalHeader>
 
             <S.ModalBody>
