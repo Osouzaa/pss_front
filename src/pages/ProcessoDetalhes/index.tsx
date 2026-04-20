@@ -20,7 +20,6 @@ import { getAllVagasProcessoId } from "../../api/get-all-vagas-processoId";
 import { Pagination } from "../../components/Pagination";
 import { TokenSistems } from "../../constants/env.constantes";
 import { excluirVaga } from "../../api/deleta-vaga";
-import { api } from "../../lib/axios";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -65,7 +64,7 @@ function getInitialTab(): TabKey {
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<TabKey>(() => getInitialTab());
@@ -78,7 +77,6 @@ export function ProcessoSeletivosDetalhes() {
 
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
-  const [openInfoClassificacao, setOpenInfoClassificacao] = useState(false);
 
   // ── paginação ──────────────────────────────────────────────────────────────
   const [pageVagas, setPageVagas] = useState(1);
@@ -217,13 +215,6 @@ export function ProcessoSeletivosDetalhes() {
     [excluirVagaAsync],
   );
 
-  const sendEmail = useCallback(async () => {
-    await api.post(
-      `/processos-seletivos-inscricoes/all/${id}/notificar-rascunhos`,
-    );
-    toast.success("ENVIADO");
-  }, [id]);
-
   // ── totais (fallback seguro enquanto a query ainda não rodou) ─────────────
   const totalPerguntas = perguntas?.total ?? 0;
   const vagasItems = resultAllVagas?.items ?? [];
@@ -324,19 +315,6 @@ export function ProcessoSeletivosDetalhes() {
                 Cadastrar perguntas
               </S.PrimaryButton>
 
-              <S.SecondaryButton
-                type="button"
-                onClick={() => setOpenInfoClassificacao(true)}
-                title="Como funciona a classificação"
-              >
-                ? Classificação
-              </S.SecondaryButton>
-
-              {user?.email === "gabriel.alves@ibirite.mg.gov.br" && (
-                <S.PrimaryButton type="button" onClick={sendEmail}>
-                  Enviar e-mail
-                </S.PrimaryButton>
-              )}
             </>
           )}
         </S.HeaderRight>
@@ -552,42 +530,6 @@ export function ProcessoSeletivosDetalhes() {
         perguntaToEdit={perguntaToEdit}
       />
 
-      {openInfoClassificacao && (
-        <S.InfoModalOverlay onClick={() => setOpenInfoClassificacao(false)}>
-          <S.InfoModalBox onClick={(e) => e.stopPropagation()}>
-            <S.InfoModalHeader>
-              <S.InfoModalTitle>Como funciona a classificação</S.InfoModalTitle>
-              <S.InfoModalClose type="button" onClick={() => setOpenInfoClassificacao(false)}>
-                ✕
-              </S.InfoModalClose>
-            </S.InfoModalHeader>
-            <S.InfoModalBody>
-              <p>
-                O sistema de classificação ranqueia candidatos automaticamente com base nas
-                respostas dadas durante a inscrição.
-              </p>
-              <p>
-                <strong>Perguntas com pontuação</strong> — Cada pergunta pode ter um peso
-                (pontuação máxima). As opções selecionadas pelo candidato somam pontos.
-              </p>
-              <p>
-                <strong>Experiência profissional</strong> — Candidatos que declaram experiência
-                igual ou superior a 365 dias (1 ano) recebem pontos conforme as faixas
-                configuradas na pergunta.
-              </p>
-              <p>
-                <strong>Nível da vaga</strong> — A pontuação pode variar entre vagas de nível
-                médio e superior, permitindo critérios distintos para cada perfil.
-              </p>
-              <p>
-                Quando <em>Usar classificação</em> está desativado neste processo, o
-                ranqueamento não é exibido e candidatos são listados apenas por ordem de
-                inscrição.
-              </p>
-            </S.InfoModalBody>
-          </S.InfoModalBox>
-        </S.InfoModalOverlay>
-      )}
     </S.Container>
   );
 }
