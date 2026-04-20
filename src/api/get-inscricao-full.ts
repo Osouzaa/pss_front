@@ -101,10 +101,16 @@ export interface Processo {
   perguntas: Pergunta[];
 }
 
+export interface CandidatoDocumentoFull extends CandidatoDocumento {
+  descricao: string | null;
+  data_criacao: string | null;
+}
+
 export interface InscricaoFull {
   candidato: Candidato;
   inscricao: Inscricao;
   processo: Processo;
+  documentos_candidato: CandidatoDocumentoFull[];
 }
 
 export async function getInscricaoFull(id: string): Promise<InscricaoFull> {

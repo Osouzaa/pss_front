@@ -9,9 +9,11 @@ export function PerguntasSection(props: {
   perguntas: any[];
   respostas: RespostasState;
   nivel?: NivelVaga | null;
+  anexoFiles?: Record<string, File>;
   onChangeResposta: (idPergunta: string, next: AnswerValue) => void;
+  onFileSelect?: (idPergunta: string, file: File | null) => void;
 }) {
-  const { perguntas, respostas, nivel = null, onChangeResposta } = props;
+  const { perguntas, respostas, nivel = null, anexoFiles = {}, onChangeResposta, onFileSelect } = props;
 
   // Reutiliza o cache do AnexosUser — sem request extra se já carregado
   const { data: docs = [] } = useQuery({
@@ -23,6 +25,7 @@ export function PerguntasSection(props: {
   const docTipos = docs.map((d) => d.tipo as string);
 
   const answered = perguntas.filter((p) => {
+    if (p.tipo === "ANEXO") return !!anexoFiles[p.id_pergunta];
     const v = respostas[p.id_pergunta];
     if (v === null || v === undefined) return false;
     if (typeof v === "string") return v.trim() !== "";
@@ -58,7 +61,9 @@ export function PerguntasSection(props: {
             disabled={false}
             docTipos={docTipos}
             nivel={nivel}
+            selectedFile={anexoFiles[p.id_pergunta] ?? null}
             onChangeValue={(next) => onChangeResposta(p.id_pergunta, next)}
+            onFileSelect={onFileSelect ? (f) => onFileSelect(p.id_pergunta, f) : undefined}
           />
         ))}
       </S.QuestionsGrid>

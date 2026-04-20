@@ -139,6 +139,11 @@ export function useInscricaoActions(params: {
           };
         }
 
+        // ANEXO: o documento é o comprovante — sem campo de valor a enviar
+        if (p.tipo === "ANEXO") {
+          return { id_pergunta: p.id_pergunta };
+        }
+
         return { id_pergunta: p.id_pergunta };
       }),
     };

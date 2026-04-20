@@ -1,6 +1,7 @@
-import React from "react";
-import { FiCheck, FiAlertCircle } from "react-icons/fi";
+import React, { useRef } from "react";
+import { FiCheck, FiAlertCircle, FiPaperclip, FiX } from "react-icons/fi";
 import { Star } from "lucide-react";
+import { toast } from "sonner";
 import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
 import type {
@@ -115,7 +116,9 @@ type Props = {
   disabled?: boolean;
   docTipos?: string[];
   nivel?: NivelVaga | null;
+  selectedFile?: File | null;
   onChangeValue: (next: AnswerValue) => void;
+  onFileSelect?: (file: File | null) => void;
 };
 
 export function PerguntaField({
@@ -125,9 +128,12 @@ export function PerguntaField({
   disabled = false,
   docTipos = [],
   nivel = null,
+  selectedFile = null,
   onChangeValue,
+  onFileSelect,
 }: Props) {
   const idPergunta = p.id_pergunta;
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const opcoesAtivasOrdenadas = (p.opcoes ?? [])
     .filter((o: PerguntaOpcaoResponse) => o.ativa)
@@ -153,7 +159,8 @@ export function PerguntaField({
       ? p.descricao.trim()
       : null;
 
-  const answered = isAnswered(value);
+  const isAnexo = p.tipo === "ANEXO";
+  const answered = isAnexo ? selectedFile != null : isAnswered(value);
   const pontosInfo = calcPontos(p, nivel ?? null);
 
   return (
@@ -173,7 +180,8 @@ export function PerguntaField({
             )}
           </S.TitleRow>
 
-          {needsAttachment ? (
+          {/* Para ANEXO o picker no body já mostra o estado — não duplicar no header */}
+          {needsAttachment && !isAnexo ? (
             <S.AttachmentStatus $ok={docAnexado}>
               {docAnexado ? (
                 <>
@@ -295,6 +303,60 @@ export function PerguntaField({
               onChangeValue(safeString(e.target.value) || null)
             }
           />
+        )}
+
+        {p.tipo === "ANEXO" && (
+          <S.AnexoPicker>
+            <input
+              ref={fileRef}
+              type="file"
+              hidden
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              disabled={disabled}
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                e.target.value = "";
+                if (!f) return;
+                const allowed = ["application/pdf","image/jpeg","image/png","image/webp"];
+                if (!allowed.includes(f.type)) {
+                  toast.error("Formato inválido. Use PDF, JPG, PNG ou WEBP.");
+                  return;
+                }
+                if (f.size > 10 * 1024 * 1024) {
+                  toast.error("Arquivo muito grande. Máximo 10 MB.");
+                  return;
+                }
+                onFileSelect?.(f);
+              }}
+            />
+            {selectedFile ? (
+              <S.AnexoSelected>
+                <S.AnexoFileInfo>
+                  <FiPaperclip size={14} />
+                  <span title={selectedFile.name}>{selectedFile.name}</span>
+                  <small>({(selectedFile.size / 1024).toFixed(0)} KB)</small>
+                </S.AnexoFileInfo>
+                <S.AnexoClearBtn
+                  type="button"
+                  onClick={() => onFileSelect?.(null)}
+                  disabled={disabled}
+                  title="Remover arquivo"
+                >
+                  <FiX size={13} />
+                </S.AnexoClearBtn>
+              </S.AnexoSelected>
+            ) : (
+              <S.AnexoZone
+                type="button"
+                disabled={disabled}
+                onClick={() => fileRef.current?.click()}
+              >
+                <FiPaperclip size={15} />
+                Selecionar arquivo
+                <S.AnexoHint>PDF, JPG, PNG ou WEBP · máx. 10 MB</S.AnexoHint>
+              </S.AnexoZone>
+            )}
+          </S.AnexoPicker>
         )}
       </S.Body>
     </S.Card>

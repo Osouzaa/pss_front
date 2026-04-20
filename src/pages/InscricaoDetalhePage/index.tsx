@@ -111,7 +111,7 @@ export default function InscricaoDetalhePage() {
     </S.Page>
   );
 
-  const { candidato, inscricao, processo } = data;
+  const { candidato, inscricao, processo, documentos_candidato = [] } = data;
 
   const enderecoCompleto = [
     candidato.logradouro,
@@ -121,13 +121,6 @@ export default function InscricaoDetalhePage() {
     candidato.cidade,
     candidato.uf,
   ].filter(Boolean).join(", ");
-
-  // Todos os documentos da inscrição agrupados por pergunta (suporta múltiplos)
-  const documentosAnexados = processo.perguntas
-    .filter((p) => p.comprovantes_anexados?.length > 0)
-    .flatMap((p) =>
-      (p.comprovantes_anexados ?? []).map((doc) => ({ pergunta: p, doc })),
-    );
 
   return (
     <S.Page>
@@ -226,16 +219,19 @@ export default function InscricaoDetalhePage() {
         </S.CandidatoGrid>
       </S.Card>
 
-      {/* ================= DOCUMENTOS ================= */}
+      {/* ================= TODOS OS DOCUMENTOS DO CANDIDATO ================= */}
       <S.Card>
         <S.CardHeader>
-          <h3><FiPaperclip size={15} /> Documentos Anexados</h3>
+          <h3><FiPaperclip size={15} /> Documentos do Candidato</h3>
+          {documentos_candidato.length > 0 && (
+            <S.QCount>{documentos_candidato.length} arquivo{documentos_candidato.length !== 1 ? "s" : ""}</S.QCount>
+          )}
         </S.CardHeader>
-        {!documentosAnexados.length ? (
+        {!documentos_candidato.length ? (
           <S.Empty>Nenhum documento anexado.</S.Empty>
         ) : (
           <S.DocGrid>
-            {documentosAnexados.map(({ pergunta, doc }) => {
+            {documentos_candidato.map((doc) => {
               const url = doc.arquivo ? buildFileUrl(doc.arquivo.storage_key) : null;
               return (
                 <S.DocItem key={doc.id_candidato_documento}>
@@ -245,7 +241,7 @@ export default function InscricaoDetalhePage() {
                     <small>
                       {doc.arquivo?.mime_type ?? "—"} • {formatBytes(doc.arquivo?.tamanho_bytes)}
                     </small>
-                    <S.DocPerguntaRef>{pergunta.titulo}</S.DocPerguntaRef>
+                    {doc.descricao && <S.DocPerguntaRef>{doc.descricao}</S.DocPerguntaRef>}
                   </S.DocInfo>
                   {url ? (
                     <S.DocLink href={url} target="_blank" rel="noopener noreferrer">

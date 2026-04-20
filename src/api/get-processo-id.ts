@@ -13,7 +13,8 @@ export type PerguntaTipo =
   | "TEXTO"
   | "SELECT"
   | "EXPERIENCIA_DIAS"
-  | "DATA";
+  | "DATA"
+  | "ANEXO";
 
 export type NivelVaga = "MEDIO" | "SUPERIOR";
 

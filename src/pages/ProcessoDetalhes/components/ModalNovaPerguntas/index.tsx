@@ -57,7 +57,8 @@ type PerguntaTipo =
   | "SELECT"
   | "MULTISELECT"
   | "DATA"
-  | "EXPERIENCIA_DIAS";
+  | "EXPERIENCIA_DIAS"
+  | "ANEXO";
 
 type PerguntaToEdit = {
   id_pergunta: string;
@@ -111,6 +112,7 @@ const TIPOS_CONFIG = [
   { value: "MULTISELECT",     label: "Múltipla escolha",  desc: "Várias opções selecionáveis" },
   { value: "DATA",            label: "Data",              desc: "Campo de data (dd/mm/aaaa)" },
   { value: "EXPERIENCIA_DIAS",label: "Experiência",       desc: "Dias de experiência com pontuação por faixas" },
+  { value: "ANEXO",           label: "Anexo",             desc: "Candidato envia um documento como resposta" },
 ];
 
 function safeParseRegraJson(v?: string | null) {
@@ -235,6 +237,10 @@ export function ModalNovaPergunta({
       setValue("pontuacao_fundamental", null, { shouldValidate: true });
       setValue("pontuacao_medio", null, { shouldValidate: true });
       setValue("pontuacao_superior", null, { shouldValidate: true });
+    }
+    // ANEXO sempre exige comprovante — o documento É a resposta
+    if (tipo === "ANEXO") {
+      setValue("exige_comprovante", true, { shouldValidate: true });
     }
   }, [tipo, open, setValue]);
 
@@ -430,24 +436,18 @@ export function ModalNovaPergunta({
 
             {/* ── 4. Comprovante ── */}
             <Section>
-              <SectionTitle>Documento comprobatório</SectionTitle>
-              <Row>
-                <Controller
-                  control={control}
-                  name="exige_comprovante"
-                  render={({ field }) => (
-                    <SelectBase
-                      label="Exige comprovante?"
-                      value={field.value ? "true" : "false"}
-                      onChange={(e) => field.onChange(e.target.value === "true")}
-                    >
-                      <option value="false">Não</option>
-                      <option value="true">Sim</option>
-                    </SelectBase>
-                  )}
-                />
+              <SectionTitle>
+                {tipo === "ANEXO" ? "Documento a ser enviado" : "Documento comprobatório"}
+              </SectionTitle>
 
-                {exigeComprovante ? (
+              {tipo === "ANEXO" ? (
+                <>
+                  <InfoNote>
+                    <Info size={14} />
+                    <span>
+                      Para perguntas do tipo <strong>Anexo</strong>, o documento enviado pelo candidato <strong>é a resposta</strong>. Selecione o tipo de documento abaixo.
+                    </span>
+                  </InfoNote>
                   <Controller
                     control={control}
                     name="label_comprovante"
@@ -461,7 +461,7 @@ export function ModalNovaPergunta({
                       return (
                         <InputSelectFilter
                           id="label_comprovante"
-                          label="Qual documento?"
+                          label="Tipo de documento *"
                           placeholder="Digite para buscar..."
                           options={documentoOptions}
                           value={selected?.value ?? null}
@@ -475,18 +475,67 @@ export function ModalNovaPergunta({
                       );
                     }}
                   />
-                ) : (
-                  <div />
-                )}
-              </Row>
+                </>
+              ) : (
+                <>
+                  <Row>
+                    <Controller
+                      control={control}
+                      name="exige_comprovante"
+                      render={({ field }) => (
+                        <SelectBase
+                          label="Exige comprovante?"
+                          value={field.value ? "true" : "false"}
+                          onChange={(e) => field.onChange(e.target.value === "true")}
+                        >
+                          <option value="false">Não</option>
+                          <option value="true">Sim</option>
+                        </SelectBase>
+                      )}
+                    />
 
-              {exigeComprovante && (
-                <InfoNote>
-                  <Info size={14} />
-                  <span>
-                    O candidato só poderá finalizar a inscrição se enviar o documento selecionado.
-                  </span>
-                </InfoNote>
+                    {exigeComprovante ? (
+                      <Controller
+                        control={control}
+                        name="label_comprovante"
+                        render={({ field }) => {
+                          const documentoOptions = tiposDocumento.map((d) => ({
+                            value: d.nome,
+                            label: d.nome,
+                            description: d.descricao ?? undefined,
+                          }));
+                          const selected = documentoOptions.find((o) => o.value === (field.value ?? "")) ?? null;
+                          return (
+                            <InputSelectFilter
+                              id="label_comprovante"
+                              label="Qual documento?"
+                              placeholder="Digite para buscar..."
+                              options={documentoOptions}
+                              value={selected?.value ?? null}
+                              onChange={(val) => field.onChange(val ?? null)}
+                              clearable
+                              loading={isLoadingTipos}
+                              error={errors.label_comprovante?.message as any}
+                              helperText="Digite para filtrar e selecione um documento."
+                              showCount
+                            />
+                          );
+                        }}
+                      />
+                    ) : (
+                      <div />
+                    )}
+                  </Row>
+
+                  {exigeComprovante && (
+                    <InfoNote>
+                      <Info size={14} />
+                      <span>
+                        O candidato só poderá finalizar a inscrição se enviar o documento selecionado.
+                      </span>
+                    </InfoNote>
+                  )}
+                </>
               )}
             </Section>
 

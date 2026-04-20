@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ import { ActionsBar } from "./components/ActionsBar";
 import { toDateInputValue } from "./components/PerguntaField";
 import { AnexosUser } from "../../components/AnexosUser";
 import { InscricaoSkeleton } from "../../components/SkeletonInscricao";
+import { uploadDocumentoMe } from "../../api/upload-documento-me";
 
 export function InscricaoPage() {
   const navigate = useNavigate();
@@ -32,6 +34,8 @@ export function InscricaoPage() {
   const [respostas, setRespostas] = useState<RespostasState>({});
   const [docsFaltando, setDocsFaltando] = useState<DocFaltando[]>([]);
   const [modalDocsOpen, setModalDocsOpen] = useState(false);
+  const [anexoFiles, setAnexoFiles] = useState<Record<string, { file: File; tipo: string }>>({});
+  const [isUploadingAnexos, setIsUploadingAnexos] = useState(false);
 
   // ✅ em vez de boolean, guarda QUAL inscrição foi hidratada
   const hydratedIdRef = useRef<string | null>(null);
@@ -50,6 +54,7 @@ export function InscricaoPage() {
   useEffect(() => {
     hydratedIdRef.current = null;
     setRespostas({});
+    setAnexoFiles({});
   }, [idInscricao]);
 
   // hidratar respostas
@@ -85,6 +90,8 @@ export function InscricaoPage() {
     // ✅ marca que hidratou essa inscrição
     hydratedIdRef.current = idInscricao;
   }, [idInscricao, inscricaoQuery.data]);
+
+  const queryClient = useQueryClient();
 
   const { iniciarMut, salvarMut, enviarMut, buildPayload } =
     useInscricaoActions({
@@ -123,17 +130,36 @@ export function InscricaoPage() {
     if (!idVaga) return toast.error("Selecione uma vaga.");
     if (!idInscricao) return toast.error("Inicie a inscrição primeiro.");
 
+    const uploads = Object.values(anexoFiles);
+
     try {
+      // 1. Upload dos arquivos ANEXO (antes de salvar/enviar)
+      if (uploads.length > 0) {
+        setIsUploadingAnexos(true);
+        try {
+          await Promise.all(
+            uploads.map(({ file, tipo }) => uploadDocumentoMe({ file, tipo })),
+          );
+          queryClient.invalidateQueries({ queryKey: ["me-documentos"] });
+        } catch {
+          toast.error("Erro ao enviar os arquivos anexados. Verifique e tente novamente.");
+          return;
+        } finally {
+          setIsUploadingAnexos(false);
+        }
+      }
+
+      // 2. Salvar respostas + enviar inscrição
       await salvarMut.mutateAsync({
         body: buildPayload(),
-        silent: true, // ✅ não mostra "Alterações salvas!" no finalizar
+        silent: true,
       });
 
       await enviarMut.mutateAsync();
 
       navigate("/minhas-inscricoes");
     } catch {
-      // não navega
+      // salvarMut e enviarMut já exibem toast via onError
     }
   }
 
@@ -197,9 +223,24 @@ export function InscricaoPage() {
                     perguntas={perguntas}
                     respostas={respostas}
                     nivel={nivel}
+                    anexoFiles={Object.fromEntries(
+                      Object.entries(anexoFiles).map(([k, v]) => [k, v.file]),
+                    )}
                     onChangeResposta={(idPergunta, next) =>
                       setRespostas((prev) => ({ ...prev, [idPergunta]: next }))
                     }
+                    onFileSelect={(idPergunta, file) => {
+                      const pergunta = perguntas?.find((p: any) => p.id_pergunta === idPergunta) as any;
+                      const tipo = pergunta?.label_comprovante ?? "Documento";
+                      setAnexoFiles((prev) => {
+                        if (!file) {
+                          const next = { ...prev };
+                          delete next[idPergunta];
+                          return next;
+                        }
+                        return { ...prev, [idPergunta]: { file, tipo } };
+                      });
+                    }}
                   />
                 ) : null}
               </S.Grid>
@@ -207,10 +248,14 @@ export function InscricaoPage() {
               {iniciou ? (
                 <ActionsBar
                   primaryLabel={
-                    enviarMut.isPending ? "Finalizando..." : "Finalizar edição"
+                    isUploadingAnexos
+                      ? "Enviando anexos..."
+                      : enviarMut.isPending || salvarMut.isPending
+                        ? "Finalizando..."
+                        : "Finalizar edição"
                   }
                   onPrimary={handleFinalizar}
-                  primaryDisabled={salvarMut.isPending || enviarMut.isPending}
+                  primaryDisabled={isUploadingAnexos || salvarMut.isPending || enviarMut.isPending}
                 />
               ) : null}
             </S.Main>

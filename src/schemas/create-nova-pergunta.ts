@@ -11,6 +11,7 @@ export const PerguntaTipoEnum = z.enum([
   "MULTISELECT",
   "DATA",
   "EXPERIENCIA_DIAS",
+  "ANEXO",
 ]);
 
 /**

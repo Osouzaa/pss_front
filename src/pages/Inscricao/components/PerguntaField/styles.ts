@@ -200,3 +200,103 @@ export const PointsBadge = styled.div`
 
   svg { flex-shrink: 0; }
 `;
+
+/* ── ANEXO picker ── */
+export const AnexoPicker = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const AnexoZone = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px dashed ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.description};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+  width: 100%;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    border-color: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme.primary};
+    background: ${({ theme }) => theme.lightPrimary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const AnexoHint = styled.span`
+  font-size: 11px;
+  font-weight: 400;
+  color: ${({ theme }) => theme.description};
+  margin-left: auto;
+`;
+
+export const AnexoSelected = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid ${({ theme }) => `${theme.primary}40`};
+  background: ${({ theme }) => theme.lightPrimary};
+`;
+
+export const AnexoFileInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.primary};
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    font-size: 11px;
+    font-weight: 400;
+    color: ${({ theme }) => theme.description};
+    flex-shrink: 0;
+  }
+
+  svg { flex-shrink: 0; }
+`;
+
+export const AnexoClearBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.description};
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.hoverDanger}22;
+    color: ${({ theme }) => theme.hoverDanger};
+  }
+
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+`;
