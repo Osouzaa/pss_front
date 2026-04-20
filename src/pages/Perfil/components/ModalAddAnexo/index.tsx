@@ -153,7 +153,8 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
     resetForm();
   }
 
-  const canSend = !!tipo && !!selectedFile && isValid && phase === "form";
+  const isFormPhase = (phase as string) === "form";
+  const canSend = !!tipo && !!selectedFile && isValid && isFormPhase;
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>

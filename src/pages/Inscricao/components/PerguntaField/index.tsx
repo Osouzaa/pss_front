@@ -73,21 +73,20 @@ function isAnswered(value: AnswerValue): boolean {
 function calcPontos(p: PerguntaProcessoResponse, nivel: NivelVaga | null): { pts: number; variavel: boolean } | null {
   if (!nivel) return null;
 
-  const pick = (f: number | null | undefined, m: number | null | undefined, s: number | null | undefined) => {
-    if (nivel === "FUNDAMENTAL") return Number(f ?? 0);
+  const pick = (m: number | null | undefined, s: number | null | undefined) => {
     if (nivel === "MEDIO") return Number(m ?? 0);
     return Number(s ?? 0);
   };
 
   if (p.tipo === "BOOLEAN") {
-    const pts = pick(p.pontuacao_fundamental, p.pontuacao_medio, p.pontuacao_superior);
+    const pts = pick(p.pontuacao_medio, p.pontuacao_superior);
     return pts > 0 ? { pts, variavel: false } : null;
   }
 
-  if (p.tipo === "SELECT" || p.tipo === "MULTISELECT") {
+  if (p.tipo === "SELECT") {
     const ativas = (p.opcoes ?? []).filter((o) => o.ativa);
     const max = Math.max(0, ...ativas.map((o) =>
-      pick(o.valor_fundamental, o.valor_medio, o.valor_superior)
+      pick(o.valor_medio, o.valor_superior)
     ));
     return max > 0 ? { pts: max, variavel: true } : null;
   }

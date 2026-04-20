@@ -46,7 +46,7 @@ export const createNovoProcessoSchema = z
         "Data de fim inválida"
       ),
 
-    usa_classificacao: z.boolean().optional().default(true),
+    usa_classificacao: z.boolean(),
   })
   .refine(
     (data) => {

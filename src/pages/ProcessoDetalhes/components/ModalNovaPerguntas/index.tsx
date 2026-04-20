@@ -180,7 +180,7 @@ export function ModalNovaPergunta({
 
   const tipo = watch("tipo");
   const exigeComprovante = watch("exige_comprovante");
-  const faixasWatch = watch("faixas") ?? [];
+
 
   useEffect(() => {
     if (!open) return;
