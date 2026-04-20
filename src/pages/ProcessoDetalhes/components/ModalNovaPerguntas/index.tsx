@@ -3,12 +3,27 @@ import {
   Content,
   FormStyles,
   HeaderContent,
-  Overlay,
   Row,
   Footer,
   Title,
+  Subtitle,
+  Section,
+  SectionTitle,
+  TypeGrid,
+  TypeCard,
+  TypeCardName,
+  TypeCardDesc,
+  InfoNote,
+  FaixasTable,
+  FaixasHeader,
+  FaixaRow,
+  FaixaLabel,
+  FaixaLabelMain,
+  FaixaLabelSub,
+  FaixaInput,
+  Overlay,
 } from "./styles";
-import { X } from "lucide-react";
+import { X, Info } from "lucide-react";
 
 import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
@@ -22,7 +37,7 @@ import {
   type SubmitHandler,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -32,7 +47,7 @@ import {
 
 import { criarPergunta } from "../../../../api/criar-pergunta";
 import { editarPergunta } from "../../../../api/editar-pergunta";
-import { DOCUMENTO_TIPO_OPTIONS } from "../../../../utils/documentoTipos";
+import { getTiposDocumento } from "../../../../api/tipo-documento";
 import { InputSelectFilter } from "../../../../components/InputSelectFilter";
 
 type PerguntaTipo =
@@ -73,36 +88,44 @@ interface IModalNovaPergunta {
 type FaixaForm = { ate: number; medio: number | null; superior: number | null };
 
 const DEFAULT_FAIXAS: FaixaForm[] = [
-  { ate: 365, medio: null, superior: null },
-  { ate: 730, medio: null, superior: null },
-  { ate: 1095, medio: null, superior: null },
-  { ate: 1460, medio: null, superior: null },
+  { ate: 365,    medio: null, superior: null },
+  { ate: 730,    medio: null, superior: null },
+  { ate: 1095,   medio: null, superior: null },
+  { ate: 1460,   medio: null, superior: null },
   { ate: 999999, medio: null, superior: null },
+];
+
+const FAIXA_LABELS = [
+  { main: "1 ano completo",   sub: "365 dias" },
+  { main: "1 a 2 anos",       sub: "366 – 730 dias" },
+  { main: "2 a 3 anos",       sub: "731 – 1.095 dias" },
+  { main: "3 a 4 anos",       sub: "1.096 – 1.460 dias" },
+  { main: "Acima de 4 anos",  sub: "mais de 1.460 dias" },
+];
+
+const TIPOS_CONFIG = [
+  { value: "BOOLEAN",         label: "Sim / Não",        desc: "Resposta binária com pontuação por nível" },
+  { value: "NUMERO",          label: "Número",            desc: "Campo numérico livre" },
+  { value: "TEXTO",           label: "Texto livre",       desc: "Resposta dissertativa" },
+  { value: "SELECT",          label: "Seleção única",     desc: "Uma opção entre as cadastradas" },
+  { value: "MULTISELECT",     label: "Múltipla escolha",  desc: "Várias opções selecionáveis" },
+  { value: "DATA",            label: "Data",              desc: "Campo de data (dd/mm/aaaa)" },
+  { value: "EXPERIENCIA_DIAS",label: "Experiência",       desc: "Dias de experiência com pontuação por faixas" },
 ];
 
 function safeParseRegraJson(v?: string | null) {
   if (!v) return null;
-  try {
-    return JSON.parse(v);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(v); } catch { return null; }
 }
 
 function normalizeFaixasFromEdit(regra: any): FaixaForm[] | null {
-  if (!regra || regra.tipo !== "FAIXAS_DIAS" || !Array.isArray(regra.faixas)) {
-    return null;
-  }
+  if (!regra || regra.tipo !== "FAIXAS_DIAS" || !Array.isArray(regra.faixas)) return null;
 
   const incoming: FaixaForm[] = regra.faixas
     .map((f: any) => ({
       ate: Number(f?.ate ?? 0),
-      medio:
-        f?.medio === null || f?.medio === undefined ? null : Number(f.medio),
-      superior:
-        f?.superior === null || f?.superior === undefined
-          ? null
-          : Number(f.superior),
+      medio: f?.medio === null || f?.medio === undefined ? null : Number(f.medio),
+      superior: f?.superior === null || f?.superior === undefined ? null : Number(f.superior),
     }))
     .filter((f: FaixaForm) => Number.isFinite(f.ate) && f.ate > 0)
     .sort((a: { ate: number }, b: { ate: number }) => a.ate - b.ate);
@@ -122,6 +145,12 @@ export function ModalNovaPergunta({
   const queryClient = useQueryClient();
   const isEdit = !!perguntaToEdit?.id_pergunta;
 
+  const { data: tiposDocumento = [], isLoading: isLoadingTipos } = useQuery({
+    queryKey: ["tipos-documento"],
+    queryFn: () => getTiposDocumento(true),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const {
     register,
     handleSubmit,
@@ -131,9 +160,7 @@ export function ModalNovaPergunta({
     control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateNovaPerguntaFormData>({
-    resolver: zodResolver(
-      createNovaPerguntaSchema,
-    ) as unknown as Resolver<CreateNovaPerguntaFormData>,
+    resolver: zodResolver(createNovaPerguntaSchema) as unknown as Resolver<CreateNovaPerguntaFormData>,
     mode: "onChange",
     defaultValues: {
       titulo: "",
@@ -142,20 +169,17 @@ export function ModalNovaPergunta({
       obrigatoria: false,
       ordem: 0,
       ativa: true,
-
       pontuacao_fundamental: null,
       pontuacao_medio: null,
       pontuacao_superior: null,
-
       faixas: DEFAULT_FAIXAS,
-
       exige_comprovante: false,
       label_comprovante: null,
     },
   });
 
   const tipo = watch("tipo");
-  const exigeComprovante = watch("exige_comprovante"); // ✅ agora vai ser boolean estável
+  const exigeComprovante = watch("exige_comprovante");
   const faixasWatch = watch("faixas") ?? [];
 
   useEffect(() => {
@@ -164,7 +188,6 @@ export function ModalNovaPergunta({
     if (perguntaToEdit) {
       const regra = safeParseRegraJson(perguntaToEdit.regra_json);
       const faixasFromEdit = normalizeFaixasFromEdit(regra);
-
       const exige = !!perguntaToEdit.exige_comprovante;
       const doc = perguntaToEdit.label_comprovante ?? null;
 
@@ -175,25 +198,18 @@ export function ModalNovaPergunta({
         obrigatoria: !!perguntaToEdit.obrigatoria,
         ordem: Number(perguntaToEdit.ordem ?? 0),
         ativa: !!perguntaToEdit.ativa,
-
         pontuacao_fundamental: perguntaToEdit.pontuacao_fundamental ?? null,
         pontuacao_medio: perguntaToEdit.pontuacao_medio ?? null,
         pontuacao_superior: perguntaToEdit.pontuacao_superior ?? null,
-
         faixas: faixasFromEdit ?? DEFAULT_FAIXAS,
-
         exige_comprovante: exige,
         label_comprovante: exige ? doc : null,
       });
 
-      // ✅ reforço
       queueMicrotask(() => {
         setValue("exige_comprovante", exige, { shouldValidate: true });
-        setValue("label_comprovante", exige ? doc : null, {
-          shouldValidate: true,
-        });
+        setValue("label_comprovante", exige ? doc : null, { shouldValidate: true });
       });
-
       return;
     }
 
@@ -204,22 +220,17 @@ export function ModalNovaPergunta({
       obrigatoria: false,
       ordem: 0,
       ativa: true,
-
       pontuacao_fundamental: null,
       pontuacao_medio: null,
       pontuacao_superior: null,
-
       faixas: DEFAULT_FAIXAS,
-
       exige_comprovante: false,
       label_comprovante: null,
     });
   }, [open, perguntaToEdit, reset, setValue]);
 
-  // ✅ limpa pontuação se não for BOOLEAN
   useEffect(() => {
     if (!open) return;
-
     if (tipo !== "BOOLEAN") {
       setValue("pontuacao_fundamental", null, { shouldValidate: true });
       setValue("pontuacao_medio", null, { shouldValidate: true });
@@ -227,55 +238,38 @@ export function ModalNovaPergunta({
     }
   }, [tipo, open, setValue]);
 
-  // ✅ se não exige comprovante, limpa o documento
   useEffect(() => {
     if (!open) return;
-
     if (!exigeComprovante) {
       setValue("label_comprovante", null, { shouldValidate: true });
     }
   }, [exigeComprovante, open, setValue]);
 
-  function handleClose() {
-    onOpenChange(false);
-  }
+  function handleClose() { onOpenChange(false); }
 
   const { mutateAsync: criarPerguntaFn } = useMutation({
     mutationFn: criarPergunta,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["perguntas-processos", id_processo_seletivo],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["processo-id", id_processo_seletivo],
-      });
+      queryClient.invalidateQueries({ queryKey: ["perguntas-processos", id_processo_seletivo] });
+      queryClient.invalidateQueries({ queryKey: ["processo-id", id_processo_seletivo] });
     },
   });
 
   const { mutateAsync: editarPerguntaFn } = useMutation({
     mutationFn: editarPergunta,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["perguntas-processos", id_processo_seletivo],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["processo-id", id_processo_seletivo],
-      });
+      queryClient.invalidateQueries({ queryKey: ["perguntas-processos", id_processo_seletivo] });
+      queryClient.invalidateQueries({ queryKey: ["processo-id", id_processo_seletivo] });
     },
   });
 
-  const titleText = useMemo(
-    () => (isEdit ? "Editar pergunta" : "Cadastrar nova pergunta"),
-    [isEdit],
-  );
-
-  const submitText = useMemo(
-    () => (isEdit ? "Salvar alterações" : "Cadastrar pergunta"),
-    [isEdit],
-  );
+  const titleText = useMemo(() => (isEdit ? "Editar pergunta" : "Nova pergunta"), [isEdit]);
+  const submitText = useMemo(() => (isEdit ? "Salvar alterações" : "Cadastrar pergunta"), [isEdit]);
 
   const showPontuacaoPorNivel = tipo === "BOOLEAN";
   const showExperiencia = tipo === "EXPERIENCIA_DIAS";
+
+  const tipoAtual = TIPOS_CONFIG.find((t) => t.value === tipo);
 
   const onSubmit: SubmitHandler<CreateNovaPerguntaFormData> = async (data) => {
     try {
@@ -286,15 +280,11 @@ export function ModalNovaPergunta({
         obrigatoria: data.obrigatoria,
         ordem: data.ordem,
         ativa: data.ativa,
-
         pontuacao_fundamental: data.pontuacao_fundamental ?? null,
         pontuacao_medio: data.pontuacao_medio ?? null,
         pontuacao_superior: data.pontuacao_superior ?? null,
-
         exige_comprovante: data.exige_comprovante ?? false,
-        label_comprovante: data.exige_comprovante
-          ? (data.label_comprovante ?? null)
-          : null,
+        label_comprovante: data.exige_comprovante ? (data.label_comprovante ?? null) : null,
       };
 
       if (data.tipo === "EXPERIENCIA_DIAS") {
@@ -309,7 +299,6 @@ export function ModalNovaPergunta({
               superior: f.superior ?? 0,
             })),
         });
-
         payload.pontuacao_fundamental = null;
         payload.pontuacao_medio = null;
         payload.pontuacao_superior = null;
@@ -318,21 +307,13 @@ export function ModalNovaPergunta({
       }
 
       if (isEdit && perguntaToEdit?.id_pergunta) {
-        await editarPerguntaFn({
-          id_pergunta: perguntaToEdit.id_pergunta,
-          payload,
-        });
-
+        await editarPerguntaFn({ id_pergunta: perguntaToEdit.id_pergunta, payload });
         toast.success("Pergunta atualizada com sucesso!");
         handleClose();
         return;
       }
 
-      await criarPerguntaFn({
-        id_processo_seletivo,
-        payload,
-      });
-
+      await criarPerguntaFn({ id_processo_seletivo, payload });
       toast.success("Pergunta cadastrada com sucesso!");
       handleClose();
     } catch (e: any) {
@@ -350,262 +331,269 @@ export function ModalNovaPergunta({
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <HeaderContent>
-            <Title>{titleText}</Title>
+            <div>
+              <Title>{titleText}</Title>
+              {tipoAtual && (
+                <Subtitle>{tipoAtual.label} — {tipoAtual.desc}</Subtitle>
+              )}
+            </div>
             <button type="button" onClick={handleClose} aria-label="Fechar">
               <X size={16} />
             </button>
           </HeaderContent>
 
           <FormStyles onSubmit={handleSubmit(onSubmit)}>
-            <InputBase
-              label="Título da pergunta"
-              placeholder="Ex: Quantos dias de experiência você tem?"
-              {...register("titulo")}
-              error={errors.titulo?.message}
-            />
 
-            <TextAreaBase
-              label="Descrição (opcional)"
-              placeholder="Ex: Informe o total de dias de experiência comprovável."
-              {...register("descricao")}
-            />
-
-            <Row>
-              <SelectBase
-                label="Tipo"
-                {...register("tipo")}
-                error={errors.tipo?.message as any}
-              >
-                <option value="">Selecione</option>
-                <option value="BOOLEAN">Sim/Não (BOOLEAN)</option>
-                <option value="NUMERO">Número (NUMERO)</option>
-                <option value="TEXTO">Texto (TEXTO)</option>
-                <option value="SELECT">Seleção Única (SELECT)</option>
-                <option value="DATA">Data (DATA)</option>
-                <option value="EXPERIENCIA_DIAS">Experiência (em dias)</option>
-              </SelectBase>
-
+            {/* ── 1. Identificação ── */}
+            <Section>
+              <SectionTitle>Identificação</SectionTitle>
               <InputBase
-                label="Ordem"
-                type="number"
-                placeholder="0"
-                {...register("ordem", { valueAsNumber: true })}
-                error={errors.ordem?.message}
+                label="Título da pergunta"
+                placeholder="Ex: Qual é o seu tempo de experiência na área?"
+                {...register("titulo")}
+                error={errors.titulo?.message}
               />
-            </Row>
+              <TextAreaBase
+                label="Descrição (opcional)"
+                placeholder="Ex: Informe o total de dias de experiência comprovável."
+                {...register("descricao")}
+              />
+            </Section>
 
-            <Row>
-              <SelectBase
-                label="Obrigatória?"
-                {...register("obrigatoria", {
-                  setValueAs: (v) => v === true || v === "true",
-                })}
-              >
-                <option value="false">Não</option>
-                <option value="true">Sim</option>
-              </SelectBase>
-
-              <SelectBase
-                label="Ativa?"
-                {...register("ativa", {
-                  setValueAs: (v) => v === true || v === "true",
-                })}
-                error={errors.ativa?.message}
-              >
-                <option value="true">Sim</option>
-                <option value="false">Não</option>
-              </SelectBase>
-            </Row>
-
-            {/* ✅ anexo (Controller nos DOIS campos) */}
-            <Row>
+            {/* ── 2. Tipo de resposta ── */}
+            <Section>
+              <SectionTitle>Tipo de resposta</SectionTitle>
               <Controller
                 control={control}
-                name="exige_comprovante"
+                name="tipo"
                 render={({ field }) => (
-                  <SelectBase
-                    label="Precisa de anexo?"
-                    value={field.value ? "true" : "false"}
-                    onChange={(e) => field.onChange(e.target.value === "true")}
-                  >
-                    <option value="false">Não</option>
-                    <option value="true">Sim</option>
-                  </SelectBase>
+                  <TypeGrid>
+                    {TIPOS_CONFIG.map((t) => (
+                      <TypeCard
+                        key={t.value}
+                        type="button"
+                        $active={field.value === t.value}
+                        onClick={() => field.onChange(t.value)}
+                      >
+                        <TypeCardName $active={field.value === t.value}>
+                          {t.label}
+                        </TypeCardName>
+                        <TypeCardDesc>{t.desc}</TypeCardDesc>
+                      </TypeCard>
+                    ))}
+                  </TypeGrid>
                 )}
               />
+            </Section>
 
-              {exigeComprovante ? (
+            {/* ── 3. Configurações ── */}
+            <Section>
+              <SectionTitle>Configurações</SectionTitle>
+              <Row>
+                <InputBase
+                  label="Ordem de exibição"
+                  type="number"
+                  placeholder="0"
+                  {...register("ordem", { valueAsNumber: true })}
+                  error={errors.ordem?.message}
+                />
                 <Controller
                   control={control}
-                  name="label_comprovante"
-                  render={({ field }) => {
-                    // ✅ transforma suas options pra o formato do InputSelectFilter
-                    const documentoOptions = DOCUMENTO_TIPO_OPTIONS.map(
-                      (d) => ({
-                        value: d.value,
-                        label: d.label,
-                        // se quiser: description: d.description
-                      }),
-                    );
-
-                    // ✅ acha a option atual (pra controlar o value)
-                    const selected =
-                      documentoOptions.find(
-                        (o) => o.value === (field.value ?? ""),
-                      ) ?? null;
-
-                    return (
-                      <InputSelectFilter
-                        id="label_comprovante"
-                        label="Qual documento?"
-                        placeholder="Digite para buscar..."
-                        options={documentoOptions}
-                        value={selected?.value ?? null}
-                        onChange={(val) => field.onChange(val ?? null)}
-                        clearable
-                        loading={false}
-                        error={errors.label_comprovante?.message as any}
-                        helperText="Digite para filtrar e selecione um documento."
-                        showCount
-                        // ✅ opcional: se você quiser busca remota no backend
-                        // onSearch={(term) => setDocumentoTerm(term)}
-                      />
-                    );
-                  }}
+                  name="obrigatoria"
+                  render={({ field }) => (
+                    <SelectBase
+                      label="Obrigatória?"
+                      value={field.value ? "true" : "false"}
+                      onChange={(e) => field.onChange(e.target.value === "true")}
+                    >
+                      <option value="false">Não</option>
+                      <option value="true">Sim</option>
+                    </SelectBase>
+                  )}
                 />
-              ) : (
-                <div />
+                <Controller
+                  control={control}
+                  name="ativa"
+                  render={({ field }) => (
+                    <SelectBase
+                      label="Ativa?"
+                      value={field.value ? "true" : "false"}
+                      onChange={(e) => field.onChange(e.target.value === "true")}
+                    >
+                      <option value="true">Sim</option>
+                      <option value="false">Não</option>
+                    </SelectBase>
+                  )}
+                />
+              </Row>
+            </Section>
+
+            {/* ── 4. Comprovante ── */}
+            <Section>
+              <SectionTitle>Documento comprobatório</SectionTitle>
+              <Row>
+                <Controller
+                  control={control}
+                  name="exige_comprovante"
+                  render={({ field }) => (
+                    <SelectBase
+                      label="Exige comprovante?"
+                      value={field.value ? "true" : "false"}
+                      onChange={(e) => field.onChange(e.target.value === "true")}
+                    >
+                      <option value="false">Não</option>
+                      <option value="true">Sim</option>
+                    </SelectBase>
+                  )}
+                />
+
+                {exigeComprovante ? (
+                  <Controller
+                    control={control}
+                    name="label_comprovante"
+                    render={({ field }) => {
+                      const documentoOptions = tiposDocumento.map((d) => ({
+                        value: d.nome,
+                        label: d.nome,
+                        description: d.descricao ?? undefined,
+                      }));
+                      const selected = documentoOptions.find((o) => o.value === (field.value ?? "")) ?? null;
+                      return (
+                        <InputSelectFilter
+                          id="label_comprovante"
+                          label="Qual documento?"
+                          placeholder="Digite para buscar..."
+                          options={documentoOptions}
+                          value={selected?.value ?? null}
+                          onChange={(val) => field.onChange(val ?? null)}
+                          clearable
+                          loading={isLoadingTipos}
+                          error={errors.label_comprovante?.message as any}
+                          helperText="Digite para filtrar e selecione um documento."
+                          showCount
+                        />
+                      );
+                    }}
+                  />
+                ) : (
+                  <div />
+                )}
+              </Row>
+
+              {exigeComprovante && (
+                <InfoNote>
+                  <Info size={14} />
+                  <span>
+                    O candidato só poderá finalizar a inscrição se enviar o documento selecionado.
+                  </span>
+                </InfoNote>
               )}
-            </Row>
+            </Section>
 
-            {exigeComprovante ? (
-              <p style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
-                Se o candidato tentar finalizar sem esse documento, o backend
-                deve bloquear.
-              </p>
-            ) : null}
-
-            {showPontuacaoPorNivel ? (
-              <>
-                <Row className="row-grid">
+            {/* ── 5. Pontuação por nível (BOOLEAN) ── */}
+            {showPontuacaoPorNivel && (
+              <Section>
+                <SectionTitle>Pontuação por nível de escolaridade</SectionTitle>
+                <Row className="row-3">
                   <InputBase
-                    label="Pontuação (Fundamental)"
+                    label="Fundamental"
                     type="number"
                     placeholder="Ex: 0"
-                    {...register("pontuacao_fundamental", {
-                      valueAsNumber: true,
-                    })}
+                    {...register("pontuacao_fundamental", { valueAsNumber: true })}
                     error={errors.pontuacao_fundamental?.message}
                   />
-
                   <InputBase
-                    label="Pontuação (Médio)"
+                    label="Médio"
                     type="number"
-                    placeholder="Ex: 10"
+                    placeholder="Ex: 5"
                     {...register("pontuacao_medio", { valueAsNumber: true })}
                     error={errors.pontuacao_medio?.message}
                   />
-
                   <InputBase
-                    label="Pontuação (Superior)"
+                    label="Superior"
                     type="number"
-                    placeholder="Ex: 5"
+                    placeholder="Ex: 10"
                     {...register("pontuacao_superior", { valueAsNumber: true })}
                     error={errors.pontuacao_superior?.message}
                   />
                 </Row>
+                <InfoNote>
+                  <Info size={14} />
+                  <span>
+                    A pontuação é aplicada quando o candidato responde <strong>Sim</strong>. Para perguntas de seleção (SELECT/MULTISELECT), a pontuação deve ser configurada nas opções.
+                  </span>
+                </InfoNote>
+              </Section>
+            )}
 
-                <p style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>
-                  Para perguntas SELECT/MULTISELECT, a pontuação deve ficar nas
-                  opções.
-                </p>
-              </>
-            ) : null}
+            {/* ── 6. Faixas de experiência (EXPERIENCIA_DIAS) ── */}
+            {showExperiencia && (
+              <Section>
+                <SectionTitle>Faixas de pontuação por experiência</SectionTitle>
 
-            {showExperiencia ? (
-              <>
-                <div style={{ marginTop: 8, fontSize: 13, fontWeight: 600 }}>
-                  Faixas de experiência (dias)
-                </div>
+                <InfoNote>
+                  <Info size={14} />
+                  <span>
+                    Defina quantos pontos o candidato ganha por faixa de experiência.
+                    Candidatos com <strong>menos de 365 dias</strong> não pontuam nesta pergunta.
+                    Configure separadamente para nível <strong>Médio</strong> e <strong>Superior</strong>.
+                  </span>
+                </InfoNote>
 
-                <p style={{ marginTop: 6, fontSize: 12, opacity: 0.8 }}>
-                  A pontuação será calculada pelo nível da vaga (Médio/Superior)
-                  conforme a faixa:
-                  <br />
-                  0–365, 366–730, 731–1095, 1096–1460 e acima de 1460.
-                </p>
+                <FaixasTable>
+                  <FaixasHeader>
+                    <div>Faixa de experiência</div>
+                    <div>Médio</div>
+                    <div>Superior</div>
+                  </FaixasHeader>
 
-                {faixasWatch.slice(0, 5).map((_, idx) => (
-                  <Row key={idx} className="row-grid">
-                    <InputBase
-                      label={
-                        idx === 0
-                          ? "Até 365 dias"
-                          : idx === 1
-                            ? "Até 730 dias"
-                            : idx === 2
-                              ? "Até 1095 dias"
-                              : idx === 3
-                                ? "Até 1460 dias"
-                                : "Acima de 1460 dias"
-                      }
-                      type="number"
-                      placeholder={idx === 4 ? "999999" : "Ex: 365"}
-                      {...register(`faixas.${idx}.ate` as const, {
-                        valueAsNumber: true,
-                      })}
-                      error={(errors.faixas as any)?.[idx]?.ate?.message}
-                      disabled
-                    />
+                  {[0, 1, 2, 3, 4].map((idx) => (
+                    <FaixaRow key={idx}>
+                      <FaixaLabel>
+                        <FaixaLabelMain>{FAIXA_LABELS[idx].main}</FaixaLabelMain>
+                        <FaixaLabelSub>{FAIXA_LABELS[idx].sub}</FaixaLabelSub>
+                      </FaixaLabel>
 
-                    <InputBase
-                      label="Pontos (Médio)"
-                      type="number"
-                      placeholder="Ex: 10"
-                      {...register(`faixas.${idx}.medio` as const, {
-                        setValueAs: (v) =>
-                          v === "" || v === null || v === undefined
-                            ? null
-                            : Number(v),
-                      })}
-                      error={(errors.faixas as any)?.[idx]?.medio?.message}
-                    />
+                      <FaixaInput
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        {...register(`faixas.${idx}.medio` as const, {
+                          setValueAs: (v) =>
+                            v === "" || v === null || v === undefined ? null : Number(v),
+                        })}
+                      />
 
-                    <InputBase
-                      label="Pontos (Superior)"
-                      type="number"
-                      placeholder="Ex: 15"
-                      {...register(`faixas.${idx}.superior` as const, {
-                        setValueAs: (v) =>
-                          v === "" || v === null || v === undefined
-                            ? null
-                            : Number(v),
-                      })}
-                      error={(errors.faixas as any)?.[idx]?.superior?.message}
-                    />
-                  </Row>
-                ))}
+                      <FaixaInput
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        {...register(`faixas.${idx}.superior` as const, {
+                          setValueAs: (v) =>
+                            v === "" || v === null || v === undefined ? null : Number(v),
+                        })}
+                      />
+                    </FaixaRow>
+                  ))}
+                </FaixasTable>
 
-                {errors.faixas ? (
-                  <p style={{ marginTop: 8, fontSize: 12, color: "#DC2626" }}>
-                    {(errors.faixas as any)?.message}
+                {(errors.faixas as any)?.message && (
+                  <p style={{ fontSize: 12, color: "var(--danger, #DC2626)", marginTop: 4 }}>
+                    {(errors.faixas as any).message}
                   </p>
-                ) : null}
-              </>
-            ) : null}
+                )}
+              </Section>
+            )}
 
             <Footer>
               <button type="button" className="secondary" onClick={handleClose}>
                 Cancelar
               </button>
-
               <button
                 type="submit"
                 className="primary"
-                title={
-                  !isValid ? "Preencha os campos corretamente" : submitText
-                }
                 disabled={isSubmitting || !isValid}
+                title={!isValid ? "Preencha os campos corretamente" : undefined}
               >
                 {isSubmitting ? "Salvando..." : submitText}
               </button>

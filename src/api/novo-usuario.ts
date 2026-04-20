@@ -1,19 +1,18 @@
 import { api } from "../lib/axios";
 
-interface FormData {
+interface NovoUsuarioParams {
+  nome_completo: string;
   email: string;
   senha: string;
-  role: string;
 }
 
-export async function novoUsuario({
-  email,
-  senha,
-  role
-}: FormData) {
-  await api.post('/auth/register', {
-    email,
-    senha,
-    role
-  })
+interface NovoUsuarioResponse {
+  ok: boolean;
+  mail_sent: boolean;
+  message: string;
+}
+
+export async function novoUsuario(params: NovoUsuarioParams): Promise<NovoUsuarioResponse> {
+  const { data } = await api.post<NovoUsuarioResponse>("/auth/register", params);
+  return data;
 }

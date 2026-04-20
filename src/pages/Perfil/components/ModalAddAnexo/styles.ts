@@ -1,20 +1,14 @@
 import styled, { keyframes } from "styled-components";
 import * as Dialog from "@radix-ui/react-dialog";
 
-const overlayIn = keyframes`
-  from { opacity: 0; }
-  to   { opacity: 1; }
-`;
-
+const overlayIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const contentIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) translateY(10px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translate(-50%, -50%) translateY(10px) scale(0.985); }
+  to   { opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); }
+`;
+const popIn = keyframes`
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 `;
 
 export const Overlay = styled(Dialog.Overlay)`
@@ -31,10 +25,9 @@ export const Content = styled(Dialog.Content)`
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(760px, calc(100vw - 28px));
-  max-height: min(85vh, 860px);
+  width: min(520px, calc(100vw - 28px));
+  max-height: min(88vh, 720px);
   overflow: auto;
-
   background: ${({ theme }) => theme.background};
   border: 1px solid ${({ theme }) => theme.border};
   border-radius: 16px;
@@ -50,11 +43,15 @@ export const HeaderContent = styled.header`
   gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid ${({ theme }) => theme.border};
+  position: sticky;
+  top: 0;
+  background: ${({ theme }) => theme.background};
+  z-index: 1;
 
   .subtitle {
-    margin-top: 4px;
+    margin-top: 3px;
     font-size: 13px;
-    opacity: 0.8;
+    opacity: 0.65;
     color: ${({ theme }) => theme.text};
   }
 
@@ -66,11 +63,8 @@ export const HeaderContent = styled.header`
     cursor: pointer;
     border-radius: 12px;
     transition: 0.15s ease;
-
-    &:hover {
-      background-color: ${({ theme }) => theme.BGlink ?? theme.active};
-      color: ${({ theme }) => theme.text};
-    }
+    flex-shrink: 0;
+    &:hover { background-color: ${({ theme }) => theme.active}; }
   }
 `;
 
@@ -80,40 +74,29 @@ export const Title = styled(Dialog.Title)`
   color: ${({ theme }) => theme.text};
 `;
 
-export const UploadNote = styled.div`
-  font-size: 12px;
-  opacity: 0.85;
-  margin-bottom: 10px;
-  color: ${({ theme }) => theme.text};
-
-  strong {
-    font-weight: 900;
-  }
-`;
-
 export const Body = styled.div`
-  padding: 14px 16px 16px;
-`;
-
-export const FormStyles = styled.form`
-  display: grid;
-  gap: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
 export const Section = styled.section`
   border: 1px solid ${({ theme }) => theme.border};
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 14px;
   background: ${({ theme }) => theme.background};
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
 export const SectionTitle = styled.div`
-  font-size: 1rem;
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.2px;
-  margin-bottom: 10px;
-  color: ${({ theme }) => theme.text};
-  opacity: 0.9;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.description};
 `;
 
 export const FieldGrid = styled.div`
@@ -121,133 +104,180 @@ export const FieldGrid = styled.div`
   grid-template-columns: 1fr;
   gap: 12px;
 
-  @media (min-width: 680px) {
+  @media (min-width: 480px) {
     grid-template-columns: 1fr 1fr;
   }
 `;
 
-export const Row = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-
-  @media (min-width: 560px) {
-    grid-template-columns: 1fr 1fr;
-  }
+export const UploadNote = styled.div`
+  font-size: 12px;
+  opacity: 0.8;
+  color: ${({ theme }) => theme.text};
+  strong { font-weight: 900; }
 `;
 
-export const UploadZone = styled.button`
+export const UploadZone = styled.button<{ $hasFile?: boolean }>`
   width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
-
-  border: 1px dashed ${({ theme }) => theme.border};
-  border-radius: 16px;
+  border: 1.5px dashed ${({ theme, $hasFile }) => $hasFile ? theme.secondary : theme.border};
+  border-radius: 12px;
   padding: 14px;
-  background: ${({ theme }) => theme.bodyBg ?? "#f5f5f5"};
+  background: ${({ theme, $hasFile }) =>
+    $hasFile ? `${theme.secondary}0d` : theme.backgroundInput ?? theme.background};
   cursor: pointer;
   transition: 0.15s ease;
+  text-align: left;
 
   .icon {
     width: 40px;
     height: 40px;
-    border-radius: 14px;
+    border-radius: 10px;
     display: grid;
     place-items: center;
-    background: ${({ theme }) => theme.BGlink ?? theme.active};
-    border: 1px solid ${({ theme }) => theme.border};
+    flex-shrink: 0;
+    background: ${({ theme, $hasFile }) => $hasFile ? `${theme.secondary}22` : theme.active};
+    color: ${({ theme, $hasFile }) => $hasFile ? theme.secondary : theme.primary};
   }
 
-  .text {
-    text-align: left;
-    display: grid;
-    gap: 2px;
-    flex: 1;
-  }
+  .text { flex: 1; min-width: 0; }
 
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  &:hover:not(:disabled) { transform: translateY(-1px); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 `;
 
 export const UploadName = styled.div`
-  font-size: 14px;
-  font-weight: 900;
+  font-size: 13px;
+  font-weight: 800;
   color: ${({ theme }) => theme.text};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const UploadHint = styled.div`
-  font-size: 12px;
-  opacity: 0.8;
+  font-size: 11px;
+  opacity: 0.7;
   color: ${({ theme }) => theme.text};
+  margin-top: 2px;
 `;
 
-export const UploadMeta = styled.div`
-  margin-top: 10px;
-  font-size: 13px;
-  opacity: 0.9;
-  display: grid;
-  gap: 4px;
-  color: ${({ theme }) => theme.text};
-`;
+/* ── Estado de sucesso ──────────────────────────────────────────────────── */
 
-export const Chip = styled.div`
-  display: inline-flex;
+export const SuccessBox = styled.div`
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  color: ${({ theme }) => theme.text};
-  font-size: 12px;
-  font-weight: 800;
+  gap: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  animation: ${popIn} 280ms cubic-bezier(0.16, 1, 0.3, 1);
 `;
+
+export const SuccessCircle = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: ${({ theme }) => `${theme.secondary}1a`};
+  border: 2px solid ${({ theme }) => `${theme.secondary}40`};
+  color: ${({ theme }) => theme.secondary};
+`;
+
+export const SuccessTitle = styled.div`
+  font-size: 18px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const SuccessDesc = styled.div`
+  font-size: 14px;
+  color: ${({ theme }) => theme.description};
+  line-height: 1.5;
+  max-width: 300px;
+`;
+
+export const SuccessFileName = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput ?? theme.background};
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+export const SuccessActions = styled.div`
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+
+  button {
+    flex: 1;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: 0.12s ease;
+  }
+
+  .secondary {
+    background: ${({ theme }) => theme.lightPrimary};
+    color: ${({ theme }) => theme.primary};
+    border-color: ${({ theme }) => theme.active};
+    &:hover { background: ${({ theme }) => theme.active}; }
+  }
+
+  .primary {
+    background: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme["text-white"]};
+    &:hover { background: ${({ theme }) => theme.primaryHover ?? theme.primary}; }
+  }
+`;
+
+/* ── Footer do formulário ───────────────────────────────────────────────── */
 
 export const Footer = styled.div`
-  margin-top: 2px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid ${({ theme }) => theme.border};
+  position: sticky;
+  bottom: 0;
+  background: ${({ theme }) => theme.background};
 
   button {
     height: 42px;
-    padding: 0 14px;
+    padding: 0 18px;
     border-radius: 12px;
     font-size: 13px;
     font-weight: 900;
     border: 1px solid transparent;
     cursor: pointer;
     transition: 0.12s ease;
-
-    &:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
+    &:disabled { opacity: 0.55; cursor: not-allowed; }
   }
 
   .secondary {
-    background: ${({ theme }) => theme.lightPrimary ?? theme.BGlink ?? "#e0e0ff"};
+    background: ${({ theme }) => theme.lightPrimary};
     color: ${({ theme }) => theme.primary};
-    border-color: ${({ theme }) => theme.active ?? theme.border};
-
-    &:hover:not(:disabled) {
-      background: ${({ theme }) => theme.active ?? "#e0e0ff"};
-    }
+    border-color: ${({ theme }) => theme.active};
+    &:hover:not(:disabled) { background: ${({ theme }) => theme.active}; }
   }
 
   .primary {
     background: ${({ theme }) => theme.primary};
     color: ${({ theme }) => theme["text-white"]};
-
-    &:hover:not(:disabled) {
-      background: ${({ theme }) => theme.primaryHover ?? theme.primary};
-    }
+    &:hover:not(:disabled) { background: ${({ theme }) => theme.primaryHover ?? theme.primary}; }
   }
 `;

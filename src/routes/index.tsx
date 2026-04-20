@@ -22,6 +22,8 @@ import { ResetPassword } from "../pages/ResetPassword";
 import InscricaoDetalhePage from "../pages/InscricaoDetalhePage";
 import { RequireRole } from "./RequireRole";
 import { InscricoesAdmin } from "../pages/InscricoesAdmin";
+import { CriarAdmin } from "../pages/CriarAdmin";
+import { TiposDocumento } from "../pages/TiposDocumento";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -57,13 +59,21 @@ function AnimatedRoutes() {
             />
             <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
             <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
-              <Route 
+              <Route
                 path="/processos/:id/inscricoes/:id_inscricao/detalhe"
                 element={<InscricaoDetalhePage />}
               />
               <Route
                 path="/all-inscricoes/:id_processo_seletivo"
                 element={<InscricoesAdmin />}
+              />
+              <Route
+                path="/admin/usuarios"
+                element={<CriarAdmin />}
+              />
+              <Route
+                path="/admin/tipos-documento"
+                element={<TiposDocumento />}
               />
             </Route>
           </Route>

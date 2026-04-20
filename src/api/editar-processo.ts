@@ -4,9 +4,10 @@ type EditarProcessoPayload = {
   titulo?: string;
   secretaria?: string;
   ano?: number;
-  status?: "RASCUNHO" | "ABERTO" | "ENCERRADO" | "EM_ANALISE" | "PRORROGADO"; 
-  data_inicio_inscricoes?: string; // YYYY-MM-DD
-  data_fim_inscricoes?: string; // YYYY-MM-DD
+  status?: "RASCUNHO" | "ABERTO" | "ENCERRADO" | "EM_ANALISE" | "PRORROGADO";
+  data_inicio_inscricoes?: string;
+  data_fim_inscricoes?: string;
+  usa_classificacao?: boolean;
 };
 
 export async function editarProcesso(input: {

@@ -18,10 +18,11 @@ import {
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  email: string; // 👈 vem por props
+  email: string;
+  mailSent?: boolean;
 };
 
-export function ModalContaInativa({ open, onOpenChange, email }: Props) {
+export function ModalContaInativa({ open, onOpenChange, email, mailSent = true }: Props) {
   const navigate = useNavigate();
 
   const safeEmail = useMemo(() => (email ?? "").trim(), [email]);
@@ -62,17 +63,26 @@ export function ModalContaInativa({ open, onOpenChange, email }: Props) {
                 Sua conta foi criada com sucesso, mas ainda está <b>inativa</b>.
               </Subtitle>
 
-              <p>
-                Para ativar, confirme o e-mail enviado para:
-              </p>
-
-              <EmailBox title={safeEmail || "E-mail não informado"}>
-                {safeEmail || "—"}
-              </EmailBox>
-
-              <p>
-                Depois de confirmar, volte e faça login normalmente.
-              </p>
+              {mailSent ? (
+                <>
+                  <p>Para ativar, confirme o e-mail enviado para:</p>
+                  <EmailBox title={safeEmail || "E-mail não informado"}>
+                    {safeEmail || "—"}
+                  </EmailBox>
+                  <p>Depois de confirmar, volte e faça login normalmente.</p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    Houve um problema ao enviar o e-mail de confirmação para{" "}
+                    <b>{safeEmail || "—"}</b>.
+                  </p>
+                  <p>
+                    Na tela de login, use a opção{" "}
+                    <b>"Reenviar confirmação"</b> para receber um novo link.
+                  </p>
+                </>
+              )}
             </div>
           </Body>
 

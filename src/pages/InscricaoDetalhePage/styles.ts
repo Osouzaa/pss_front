@@ -525,11 +525,17 @@ export const AnswerBlock = styled.div<{ respondida?: boolean }>`
 
 export const DocBlock = styled(AnswerBlock)``;
 
+export const DocMultiList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+`;
+
 export const DocStatus = styled.div<{ type: "ok" | "missing" | "none" }>`
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-top: 5px;
   font-size: 12px;
   font-weight: 600;
   overflow-wrap: anywhere;

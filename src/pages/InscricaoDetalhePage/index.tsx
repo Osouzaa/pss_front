@@ -122,10 +122,12 @@ export default function InscricaoDetalhePage() {
     candidato.uf,
   ].filter(Boolean).join(", ");
 
-  // Todos os documentos da inscrição (da lista de perguntas que exigem comprovante)
+  // Todos os documentos da inscrição agrupados por pergunta (suporta múltiplos)
   const documentosAnexados = processo.perguntas
-    .filter((p) => p.comprovante_anexado)
-    .map((p) => ({ pergunta: p, doc: p.comprovante_anexado! }));
+    .filter((p) => p.comprovantes_anexados?.length > 0)
+    .flatMap((p) =>
+      (p.comprovantes_anexados ?? []).map((doc) => ({ pergunta: p, doc })),
+    );
 
   return (
     <S.Page>
@@ -307,12 +309,15 @@ export default function InscricaoDetalhePage() {
                       <span>Comprovante</span>
                       {!pergunta.exige_comprovante ? (
                         <S.DocStatus type="none">Não exigido</S.DocStatus>
-                      ) : pergunta.comprovante_anexado ? (
-                        <S.DocStatus type="ok">
-                          <br></br>
-                          <FiCheckCircle size={12} />
-                          {pergunta.comprovante_anexado.arquivo?.nome_original ?? pergunta.label_comprovante}
-                        </S.DocStatus>
+                      ) : pergunta.comprovantes_anexados?.length > 0 ? (
+                        <S.DocMultiList>
+                          {pergunta.comprovantes_anexados.map((c) => (
+                            <S.DocStatus key={c.id_candidato_documento} type="ok">
+                              <FiCheckCircle size={12} />
+                              {c.arquivo?.nome_original ?? pergunta.label_comprovante}
+                            </S.DocStatus>
+                          ))}
+                        </S.DocMultiList>
                       ) : (
                         <S.DocStatus type="missing">Não anexado</S.DocStatus>
                       )}

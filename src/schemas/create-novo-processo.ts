@@ -45,6 +45,8 @@ export const createNovoProcessoSchema = z
         (value) => !value || !isNaN(Date.parse(value)),
         "Data de fim inválida"
       ),
+
+    usa_classificacao: z.boolean().optional().default(true),
   })
   .refine(
     (data) => {

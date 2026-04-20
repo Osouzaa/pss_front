@@ -1,9 +1,8 @@
 import { api } from "../lib/axios";
-import type { DocumentoTipo } from "../utils/documentoTipos";
 
 type UploadDocumentoMeInput = {
   file: File;
-  tipo: DocumentoTipo;
+  tipo: string;
   descricao?: string;
 };
 

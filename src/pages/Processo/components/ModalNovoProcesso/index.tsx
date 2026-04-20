@@ -8,13 +8,18 @@ import {
   Row,
   Footer,
   Title,
+  ToggleRow,
+  ToggleLabel,
+  ToggleName,
+  ToggleHint,
+  Switch,
 } from "./styles";
 import { X } from "lucide-react";
 import { InputBase } from "../../../../components/InputBase";
 import { SelectBase } from "../../../../components/SelectBase";
 
 import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -81,6 +86,8 @@ export function ModalNovoProcesso({
     register,
     handleSubmit,
     reset,
+    setValue,
+    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateNovoProcessoFormData>({
     resolver: zodResolver(createNovoProcessoSchema),
@@ -92,8 +99,11 @@ export function ModalNovoProcesso({
       status: "ABERTO",
       data_inicio_inscricoes: "",
       data_fim_inscricoes: "",
+      usa_classificacao: true,
     },
   });
+
+  const usaClassificacao = useWatch({ control, name: "usa_classificacao" }) ?? true;
 
   useEffect(() => {
     if (!open) return;
@@ -110,6 +120,7 @@ export function ModalNovoProcesso({
           processoToEdit.data_inicio_inscricoes,
         ),
         data_fim_inscricoes: isoToInputDate(processoToEdit.data_fim_inscricoes),
+        usa_classificacao: processoToEdit.usa_classificacao ?? true,
       });
       return;
     }
@@ -121,6 +132,7 @@ export function ModalNovoProcesso({
       status: "ABERTO",
       data_inicio_inscricoes: "",
       data_fim_inscricoes: "",
+      usa_classificacao: true,
     });
   }, [
     open,
@@ -170,6 +182,10 @@ export function ModalNovoProcesso({
         ? data.secretaria
         : (user?.secretaria_usuario ?? data.secretaria);
 
+      // converte datetime-local (sem fuso) para ISO UTC, preservando o horário local
+      const toISO = (v?: string) =>
+        v ? new Date(v).toISOString() : undefined;
+
       if (isEdit && processoToEdit?.id_processo_seletivo) {
         await editarProcessoFn({
           id_processo_seletivo: processoToEdit.id_processo_seletivo,
@@ -178,8 +194,9 @@ export function ModalNovoProcesso({
             secretaria: secretariaFinal,
             ano: data.ano,
             status: data.status,
-            data_inicio_inscricoes: data.data_inicio_inscricoes,
-            data_fim_inscricoes: data.data_fim_inscricoes,
+            data_inicio_inscricoes: toISO(data.data_inicio_inscricoes),
+            data_fim_inscricoes: toISO(data.data_fim_inscricoes),
+            usa_classificacao: data.usa_classificacao,
           },
         });
 
@@ -193,8 +210,9 @@ export function ModalNovoProcesso({
         secretaria: secretariaFinal,
         ano: data.ano,
         status: data.status,
-        data_inicio_inscricoes: data.data_inicio_inscricoes,
-        data_fim_inscricoes: data.data_fim_inscricoes,
+        data_inicio_inscricoes: toISO(data.data_inicio_inscricoes),
+        data_fim_inscricoes: toISO(data.data_fim_inscricoes),
+        usa_classificacao: data.usa_classificacao,
       });
 
       toast.success("Processo criado com sucesso!");
@@ -290,6 +308,22 @@ export function ModalNovoProcesso({
                 error={errors.data_fim_inscricoes?.message}
               />
             </Row>
+
+            <ToggleRow>
+              <ToggleLabel>
+                <ToggleName>Usar classificação</ToggleName>
+                <ToggleHint>
+                  Quando ativo, candidatos são ranqueados com base em pontuação
+                </ToggleHint>
+              </ToggleLabel>
+              <Switch
+                type="button"
+                $on={usaClassificacao}
+                onClick={() => setValue("usa_classificacao", !usaClassificacao)}
+                aria-pressed={usaClassificacao}
+                aria-label="Alternar uso de classificação"
+              />
+            </ToggleRow>
 
             <Footer>
               <button type="button" className="secondary" onClick={handleClose}>

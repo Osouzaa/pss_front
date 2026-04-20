@@ -12,10 +12,18 @@ function getApiErrorMessage(e: any, fallback: string) {
   return e?.response?.data?.message ?? e?.message ?? fallback;
 }
 
-function getFaltandoDocs(e: any): string[] | null {
+export interface DocFaltando {
+  id_pergunta: string;
+  pergunta: string;
+  label_comprovante: string;
+  tipo_documento: string;
+  anexado: boolean;
+}
+
+function getDetalhesFaltando(e: any): DocFaltando[] | null {
   const data = e?.response?.data;
-  return Array.isArray(data?.faltandoDocumentos)
-    ? data.faltandoDocumentos
+  return Array.isArray(data?.detalhesFaltando) && data.detalhesFaltando.length
+    ? data.detalhesFaltando
     : null;
 }
 
@@ -29,8 +37,9 @@ export function useInscricaoActions(params: {
   idInscricao: string;
   perguntas: Array<{ id_pergunta: string; tipo: string }>;
   respostas: RespostasState;
+  onDocumentosFaltando?: (docs: DocFaltando[]) => void;
 }) {
-  const { idProcesso, idInscricao, perguntas, respostas } = params;
+  const { idProcesso, idInscricao, perguntas, respostas, onDocumentosFaltando } = params;
   const queryClient = useQueryClient();
 
   const invalidateAll = async () => {
@@ -81,12 +90,13 @@ export function useInscricaoActions(params: {
     },
 
     onError: (e: any) => {
-      const msg = getApiErrorMessage(e, "Erro ao enviar inscrição.");
-      const faltando = getFaltandoDocs(e);
+      const detalhes = getDetalhesFaltando(e);
 
-      toast.error(
-        faltando?.length ? `${msg} Faltando: ${faltando.join(", ")}.` : msg,
-      );
+      if (detalhes && onDocumentosFaltando) {
+        onDocumentosFaltando(detalhes);
+      } else {
+        toast.error(getApiErrorMessage(e, "Erro ao enviar inscrição."));
+      }
     },
   });
 

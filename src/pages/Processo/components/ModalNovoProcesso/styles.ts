@@ -90,6 +90,58 @@ export const Row = styled.div`
   }
 `;
 
+export const ToggleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  gap: 12px;
+`;
+
+export const ToggleLabel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const ToggleName = styled.span`
+  font-size: 13px;
+  font-weight: 800;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const ToggleHint = styled.span`
+  font-size: 11px;
+  color: ${({ theme }) => theme.description};
+`;
+
+export const Switch = styled.button<{ $on: boolean }>`
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: ${({ theme, $on }) => ($on ? theme.primary : theme.border)};
+  position: relative;
+  transition: background 0.18s ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: ${({ $on }) => ($on ? "23px" : "3px")};
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    transition: left 0.18s ease;
+  }
+`;
+
 export const Footer = styled.div`
   margin-top: 6px;
   display: flex;

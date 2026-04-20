@@ -6,6 +6,7 @@ import {
   FiShield,
   FiTrash2,
   FiDownload,
+  FiInfo,
 } from "react-icons/fi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -91,6 +92,14 @@ export function AnexosUser() {
           Adicionar arquivo
         </S.UploadButton>
       </S.DocActions>
+
+      <S.InfoBanner>
+        <FiInfo size={15} />
+        <span>
+          Você pode enviar <strong>quantos documentos quiser</strong>, um de cada vez.
+          Tem mais de uma especialidade, curso ou certificado? <strong>Envie todos aqui</strong> — basta clicar em "Adicionar arquivo" para cada um.
+        </span>
+      </S.InfoBanner>
 
       {docsBusy ? (
         <S.Empty>

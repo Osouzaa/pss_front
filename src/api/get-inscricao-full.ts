@@ -80,14 +80,14 @@ export interface Pergunta {
   id_pergunta: string;
   titulo: string;
   descricao: string | null;
-  tipo: 'BOOLEAN' | 'SELECT' | 'TEXT' | 'NUMBER' | 'DATE';
+  tipo: 'BOOLEAN' | 'SELECT' | 'TEXT' | 'NUMBER' | 'DATE' | 'EXPERIENCIA_DIAS' | 'TEXTO' | 'NUMERO' | 'DATA';
   obrigatoria: boolean;
   ordem: number;
   exige_comprovante: boolean;
   label_comprovante: string | null;
   opcoes: PerguntaOpcao[];
   resposta_candidato: RespostaCandidato | null;
-  comprovante_anexado: CandidatoDocumento | null;
+  comprovantes_anexados: CandidatoDocumento[];
 }
 
 export interface Processo {

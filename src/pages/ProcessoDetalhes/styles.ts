@@ -1109,6 +1109,116 @@ export const Select = styled.select`
   outline: none;
 `;
 
+export const SkeletonPulse = styled.div<{ $w?: string; $h?: string; $r?: string }>`
+  width: ${({ $w }) => $w ?? "100%"};
+  height: ${({ $h }) => $h ?? "14px"};
+  border-radius: ${({ $r }) => $r ?? "8px"};
+  background: linear-gradient(
+    90deg,
+    ${({ theme }) => theme.border} 25%,
+    ${({ theme }) => theme.bodyBg} 50%,
+    ${({ theme }) => theme.border} 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+export const InlineConfirm = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+export const InlineConfirmText = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
+  white-space: nowrap;
+`;
+
+export const InfoModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 9000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+`;
+
+export const InfoModalBox = styled.div`
+  background: ${({ theme }) => theme.background};
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: ${ui.radius.lg};
+  width: min(560px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: ${ui.shadow.md};
+  display: flex;
+  flex-direction: column;
+`;
+
+export const InfoModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const InfoModalTitle = styled.h2`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const InfoModalClose = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: ${ui.radius.pill};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: transparent;
+  color: ${({ theme }) => theme.text};
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  &:hover { background: ${({ theme }) => theme.active}; }
+`;
+
+export const InfoModalBody = styled.div`
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: ${({ theme }) => theme.text};
+  }
+
+  strong {
+    color: ${({ theme }) => theme.primary};
+    font-weight: 800;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 700;
+    color: ${({ theme }) => theme.text};
+  }
+`;
+
 export const DangerButton = styled.button`
   height: 40px;
   padding: 0 14px;

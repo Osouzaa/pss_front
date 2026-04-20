@@ -1,15 +1,14 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, UploadCloud, FileText } from "lucide-react";
+import { X, UploadCloud, CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
   Content,
-  FormStyles,
   HeaderContent,
   Overlay,
   Footer,
@@ -18,196 +17,143 @@ import {
   Section,
   SectionTitle,
   UploadZone,
-  UploadMeta,
   UploadName,
   UploadHint,
-  Chip,
   FieldGrid,
   UploadNote,
+  SuccessBox,
+  SuccessCircle,
+  SuccessTitle,
+  SuccessDesc,
+  SuccessFileName,
+  SuccessActions,
 } from "./styles";
 
 import { InputBase } from "../../../../components/InputBase";
 import { uploadDocumentoMe } from "../../../../api/upload-documento-me";
-import { DOCUMENTO_TIPO_OPTIONS } from "../../../../utils/documentoTipos";
 import {
   InputSelectFilter,
   type OptionBase,
 } from "../../../../components/InputSelectFilter";
+import { getTiposDocumento } from "../../../../api/tipo-documento";
 
-const DocumentoTipoEnum = z.enum(
-  DOCUMENTO_TIPO_OPTIONS.map((o) => o.value) as [
-    (typeof DOCUMENTO_TIPO_OPTIONS)[number]["value"],
-    ...(typeof DOCUMENTO_TIPO_OPTIONS)[number]["value"][],
-  ],
-  { message: "Selecione uma opção válida!" },
-);
-
-type DocumentoTipo = z.infer<typeof DocumentoTipoEnum>;
-
-const uploadDocumentoSchema = z.object({
-  tipo: DocumentoTipoEnum,
-  descricao: z
-    .string()
-    .trim()
-    .max(255, "Descrição muito longa (máx. 255)")
-    .optional()
-    .or(z.literal("")),
+const schema = z.object({
+  tipo: z.string().min(1, "Selecione um tipo"),
+  descricao: z.string().trim().max(255).optional().or(z.literal("")),
 });
 
-type UploadDocumentoFormData = z.infer<typeof uploadDocumentoSchema>;
+type FormData = z.infer<typeof schema>;
 
 interface IModalAddAnexo {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultTipo?: DocumentoTipo;
+  defaultTipo?: string;
 }
 
-const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIMES = ["application/pdf", "image/png", "image/jpeg"] as const;
 
 function formatBytes(bytes: number) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
   const kb = bytes / 1024;
   if (kb < 1024) return `${kb.toFixed(0)} KB`;
-  const mb = kb / 1024;
-  if (mb < 1024) return `${mb.toFixed(2)} MB`;
-  const gb = mb / 1024;
-  return `${gb.toFixed(2)} GB`;
+  return `${(kb / 1024).toFixed(2)} MB`;
 }
 
-function labelTipo(tipo: DocumentoTipo) {
-  return (
-    DOCUMENTO_TIPO_OPTIONS.find((o) => o.value === tipo)?.label ?? String(tipo)
-  );
-}
+type Phase = "form" | "sending" | "success";
 
-export function ModalAddAnexo({
-  open,
-  onOpenChange,
-  defaultTipo,
-}: IModalAddAnexo) {
+export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnexo) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [phase, setPhase] = useState<Phase>("form");
+  const [lastSentName, setLastSentName] = useState<string>("");
+
+  const { data: tiposDocumento = [], isLoading: isLoadingTipos } = useQuery({
+    queryKey: ["tipos-documento"],
+    queryFn: () => getTiposDocumento(true),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const tiposOptions = useMemo<OptionBase[]>(
+    () => tiposDocumento.map((t) => ({ value: t.nome, label: t.nome, description: t.descricao ?? undefined })),
+    [tiposDocumento],
+  );
 
   const {
     register,
-    handleSubmit,
     reset,
     watch,
     control,
-    formState: { errors, isSubmitting, isValid },
-  } = useForm<UploadDocumentoFormData>({
-    resolver: zodResolver(uploadDocumentoSchema),
+    formState: { errors, isValid },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
     mode: "onChange",
-    defaultValues: {
-      tipo: defaultTipo ?? "OUTROS",
-      descricao: "",
-    },
+    defaultValues: { tipo: defaultTipo ?? "", descricao: "" },
   });
 
   const tipo = watch("tipo");
 
+  function resetForm() {
+    reset({ tipo: defaultTipo ?? "", descricao: "" });
+    setSelectedFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   useEffect(() => {
     if (!open) return;
-
-    reset({
-      tipo: defaultTipo ?? "OUTROS",
-      descricao: "",
-    });
-    setSelectedFile(null);
-
-    // limpa o input file quando reabrir
-    if (fileRef.current) fileRef.current.value = "";
-  }, [open, defaultTipo, reset]);
+    setPhase("form");
+    resetForm();
+  }, [open, defaultTipo]);
 
   function handleClose() {
+    if (phase === "sending") return;
     onOpenChange(false);
   }
 
-  const titleText = useMemo(() => "Adicionar documento", []);
-  const submitText = useMemo(() => "Enviar arquivo", []);
-
-  const { mutateAsync: uploadFn } = useMutation({
-    mutationFn: uploadDocumentoMe,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["me-documentos"] });
-      toast.success("Documento enviado com sucesso!");
-      handleClose();
-    },
-    onError: (e: any) => {
-      toast.error(
-        e?.response?.data?.message ?? e?.message ?? "Falha ao enviar documento",
-      );
-    },
-  });
-
-  function validateAndSetFile(file: File | null) {
-    if (!file) {
-      setSelectedFile(null);
-      return;
-    }
-
-    // valida tipo (mime). Obs: alguns browsers podem mandar "" em casos raros
+  function validateFile(file: File): boolean {
     if (file.type && !ALLOWED_MIMES.includes(file.type as any)) {
       toast.error("Formato inválido. Envie PDF, PNG ou JPG.");
-      setSelectedFile(null);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
+      return false;
     }
-
-    // valida tamanho ANTES de aceitar selecionar
     if (file.size > MAX_BYTES) {
-      toast.error(
-        `Arquivo muito grande (${formatBytes(file.size)}). Máximo permitido: ${formatBytes(
-          MAX_BYTES,
-        )}.`,
-      );
-      setSelectedFile(null);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
+      toast.error(`Arquivo muito grande (${formatBytes(file.size)}). Máximo: 10 MB.`);
+      return false;
     }
-
-    setSelectedFile(file);
+    return true;
   }
 
-  const onSubmit = async (data: UploadDocumentoFormData) => {
-    if (!selectedFile) {
-      toast.error("Selecione um arquivo (máx. 10MB).");
-      return;
-    }
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null;
+    e.currentTarget.value = "";
+    if (!f) return;
+    if (!validateFile(f)) { setSelectedFile(null); return; }
+    setSelectedFile(f);
+  }
 
-    // redundante (segurança): garante que ninguém burle com state/DOM
-    if (selectedFile.size > MAX_BYTES) {
-      toast.error(
-        `Arquivo muito grande (${formatBytes(selectedFile.size)}). Máximo permitido: ${formatBytes(
-          MAX_BYTES,
-        )}.`,
-      );
-      setSelectedFile(null);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
-    }
+  async function handleEnviar() {
+    if (!tipo || !selectedFile) return;
 
-    if (
-      selectedFile.type &&
-      !ALLOWED_MIMES.includes(selectedFile.type as any)
-    ) {
-      toast.error("Formato inválido. Envie PDF, PNG ou JPG.");
-      setSelectedFile(null);
-      if (fileRef.current) fileRef.current.value = "";
-      return;
-    }
+    const descricao = watch("descricao")?.trim() || undefined;
 
-    const descricao = (data.descricao ?? "").trim();
-    await uploadFn({
-      file: selectedFile,
-      tipo: data.tipo,
-      // só envia quando OUTROS, mas pode enviar sempre se quiser
-      descricao: descricao ? descricao : undefined,
-    });
-  };
+    setPhase("sending");
+    try {
+      await uploadDocumentoMe({ file: selectedFile, tipo, descricao });
+      queryClient.invalidateQueries({ queryKey: ["me-documentos"] });
+      setLastSentName(selectedFile.name);
+      setPhase("success");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao enviar documento.");
+      setPhase("form");
+    }
+  }
+
+  function handleAddOutro() {
+    setPhase("form");
+    resetForm();
+  }
+
+  const canSend = !!tipo && !!selectedFile && isValid && phase === "form";
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -220,180 +166,146 @@ export function ModalAddAnexo({
         >
           <HeaderContent>
             <div>
-              <Title>{titleText}</Title>
+              <Title>Adicionar documento</Title>
               <div className="subtitle">
-                Escolha o tipo e envie seu arquivo com segurança.
+                {phase === "success"
+                  ? "Documento enviado! Deseja enviar mais algum?"
+                  : "Envie um arquivo por vez — pode repetir quantas vezes precisar."}
               </div>
             </div>
-
             <button type="button" onClick={handleClose} aria-label="Fechar">
               <X size={16} />
             </button>
           </HeaderContent>
 
-          <Body>
-            <FormStyles onSubmit={handleSubmit(onSubmit)}>
-              <Section>
-                <SectionTitle>Detalhes do documento</SectionTitle>
+          {/* ── Estado de sucesso ── */}
+          {phase === "success" && (
+            <SuccessBox>
+              <SuccessCircle>
+                <CheckCircle2 size={30} />
+              </SuccessCircle>
 
-                <FieldGrid>
-                  <Controller
-                    control={control}
-                    name="tipo"
-                    render={({ field }) => {
-                      const options = DOCUMENTO_TIPO_OPTIONS.map((t) => ({
-                        value: t.value, // string
-                        label: t.label,
-                        // description: t.description, // se existir
-                      })) as OptionBase[];
+              <div>
+                <SuccessTitle>Documento enviado!</SuccessTitle>
+                <SuccessDesc style={{ marginTop: 6 }}>
+                  O arquivo foi salvo com sucesso.
+                </SuccessDesc>
+              </div>
 
-                      const selected =
-                        options.find((o) => o.value === field.value) ?? null;
+              <SuccessFileName>{lastSentName}</SuccessFileName>
 
-                      return (
-                        <InputSelectFilter
-                          id="tipo_documento"
-                          label="Tipo do documento"
-                          placeholder="Digite para buscar (ex: CPF, diploma...)"
-                          options={options}
-                          value={(selected?.value ?? null) as any}
-                          onChange={(val) =>
-                            field.onChange((val ?? "OUTROS") as any)
-                          }
-                          clearable
-                          showCount
-                          loading={false}
-                          disabled={isSubmitting}
-                          error={errors.tipo?.message as any}
-                          helperText="Digite para filtrar e selecione um tipo."
-                        />
-                      );
-                    }}
+              <SuccessDesc>
+                Tem mais documentos para enviar? Por exemplo: outra especialidade,
+                curso, certificado ou comprovante? Adicione quantos precisar.
+              </SuccessDesc>
+
+              <SuccessActions>
+                <button type="button" className="secondary" onClick={() => onOpenChange(false)}>
+                  Não, fechar
+                </button>
+                <button type="button" className="primary" onClick={handleAddOutro}>
+                  Sim, adicionar
+                </button>
+              </SuccessActions>
+            </SuccessBox>
+          )}
+
+          {/* ── Formulário ── */}
+          {phase !== "success" && (
+            <>
+              <Body>
+                <Section>
+                  <SectionTitle>Tipo e descrição</SectionTitle>
+
+                  <FieldGrid>
+                    <Controller
+                      control={control}
+                      name="tipo"
+                      render={({ field }) => {
+                        const selected = tiposOptions.find((o) => o.value === field.value) ?? null;
+                        return (
+                          <InputSelectFilter
+                            id="tipo_documento"
+                            label="Tipo do documento"
+                            placeholder="Ex: CPF, Diploma..."
+                            options={tiposOptions}
+                            value={(selected?.value ?? null) as any}
+                            onChange={(val) => field.onChange(val ?? "")}
+                            clearable
+                            showCount
+                            loading={isLoadingTipos}
+                            disabled={phase === "sending" || isLoadingTipos}
+                            error={errors.tipo?.message as any}
+                          />
+                        );
+                      }}
+                    />
+
+                    <InputBase
+                      label="Descrição (opcional)"
+                      placeholder="Ex: Frente e verso"
+                      {...register("descricao")}
+                      error={errors.descricao?.message}
+                      disabled={phase === "sending"}
+                    />
+                  </FieldGrid>
+                </Section>
+
+                <Section>
+                  <SectionTitle>Arquivo</SectionTitle>
+
+                  <UploadNote>
+                    Formatos aceitos: <strong>PDF, PNG ou JPG</strong> · máx. 10 MB.
+                    Inclua frente e verso no mesmo arquivo quando necessário.{" "}
+                    Após enviar, você pode adicionar <strong>quantos documentos quiser</strong> — um de cada vez.
+                  </UploadNote>
+
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
                   />
 
-                  <InputBase
-                    label="Descrição (opcional)"
-                    placeholder={
-                      tipo === "CURSO"
-                        ? "Ex: Certificado - Excel Avançado"
-                        : "Ex: Frente e verso"
-                    }
-                    {...register("descricao")}
-                    error={errors.descricao?.message}
-                    disabled={isSubmitting}
-                  />
-                </FieldGrid>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    flexWrap: "wrap",
-                    marginTop: "10px",
-                  }}
-                >
-                  <Chip>
-                    <FileText size={14} />
-                    {labelTipo(tipo)}
-                  </Chip>
-                  <Chip>
-                    <UploadCloud size={14} />
-                    PDF/PNG/JPG • até 10MB
-                  </Chip>
-                </div>
-              </Section>
-
-              {/* ===== Seção: Upload ===== */}
-              <Section>
-                <SectionTitle>Arquivo</SectionTitle>
-
-                <UploadNote>
-                  Envie o documento com{" "}
-                  <strong>frente e verso no mesmo arquivo</strong>.
-                </UploadNote>
-
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0] ?? null;
-                    validateAndSetFile(f);
-
-                    // permite selecionar o mesmo arquivo novamente
-                    e.currentTarget.value = "";
-                  }}
-                />
-
-                <UploadZone
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={isSubmitting}
-                >
-                  <div className="icon">
-                    <UploadCloud size={18} />
-                  </div>
-
-                  <div className="text">
-                    <UploadName>
-                      {selectedFile ? "Trocar arquivo" : "Selecionar arquivo"}
-                    </UploadName>
-                    <UploadHint>
-                      Clique para escolher um arquivo no seu computador (máx.{" "}
-                      {formatBytes(MAX_BYTES)})
-                    </UploadHint>
-                  </div>
-                </UploadZone>
-
-                {selectedFile ? (
-                  <UploadMeta>
-                    <div>
-                      <strong>Arquivo:</strong> {selectedFile.name}
+                  <UploadZone
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={phase === "sending"}
+                    $hasFile={!!selectedFile}
+                  >
+                    <div className="icon">
+                      {selectedFile ? <CheckCircle2 size={18} /> : <UploadCloud size={18} />}
                     </div>
-                    <div>
-                      <strong>Tamanho:</strong> {formatBytes(selectedFile.size)}
+                    <div className="text">
+                      <UploadName>
+                        {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo"}
+                      </UploadName>
+                      <UploadHint>
+                        {selectedFile
+                          ? `${formatBytes(selectedFile.size)} · clique para trocar`
+                          : "PDF, PNG ou JPG · máx. 10 MB"}
+                      </UploadHint>
                     </div>
-                    <div>
-                      <strong>Tipo:</strong>{" "}
-                      {selectedFile.type ? selectedFile.type : "desconhecido"}
-                    </div>
-                  </UploadMeta>
-                ) : (
-                  <UploadMeta>
-                    <div>Formatos aceitos: PDF, PNG, JPG</div>
-                    <div>Tamanho máximo: {formatBytes(MAX_BYTES)}</div>
-                  </UploadMeta>
-                )}
-              </Section>
+                  </UploadZone>
+                </Section>
+              </Body>
 
               <Footer>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={handleClose}
-                  disabled={isSubmitting}
-                >
+                <button type="button" className="secondary" onClick={handleClose} disabled={phase === "sending"}>
                   Cancelar
                 </button>
-
                 <button
-                  type="submit"
+                  type="button"
                   className="primary"
-                  title={
-                    !selectedFile
-                      ? "Selecione um arquivo (máx. 10MB)"
-                      : !isValid
-                        ? "Preencha os campos corretamente"
-                        : submitText
-                  }
-                  disabled={isSubmitting || !selectedFile || !isValid}
+                  onClick={handleEnviar}
+                  disabled={!canSend || phase === "sending"}
                 >
-                  {isSubmitting ? "Enviando..." : submitText}
+                  {phase === "sending" ? "Enviando..." : "Enviar documento"}
                 </button>
               </Footer>
-            </FormStyles>
-          </Body>
+            </>
+          )}
         </Content>
       </Dialog.Portal>
     </Dialog.Root>

@@ -648,15 +648,6 @@ export const BooleanOption = styled.label<{
   }
 `;
 
-export const HeaderPerguntas = styled.div`
-  margin: 0;
-`;
-
-export const ContainerTwoColumns = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-`;
 
 export const Layout = styled.div<{ $singleColumn?: boolean }>`
   display: grid;

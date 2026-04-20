@@ -1,6 +1,6 @@
 // ProcessoSeletivosDetalhes.tsx
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as S from "./styles";
 
@@ -64,11 +64,13 @@ function getInitialTab(): TabKey {
 
 export function ProcessoSeletivosDetalhes() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<TabKey>(() => getInitialTab());
   const [qVaga, setQVaga] = useState("");
+  const [vagaToDelete, setVagaToDelete] = useState<string | null>(null);
 
   const [openModal, setOpenModal] = useState(false);
   const [vagaToEdit, setVagaToEdit] = useState<any>(null);
@@ -76,6 +78,7 @@ export function ProcessoSeletivosDetalhes() {
 
   const [openModalNovaPergunta, setOpenModalNovaPergunta] = useState(false);
   const [perguntaToEdit, setPerguntaToEdit] = useState<any>(null);
+  const [openInfoClassificacao, setOpenInfoClassificacao] = useState(false);
 
   // ── paginação ──────────────────────────────────────────────────────────────
   const [pageVagas, setPageVagas] = useState(1);
@@ -99,7 +102,7 @@ export function ProcessoSeletivosDetalhes() {
   // ── queries ───────────────────────────────────────────────────────────────
 
   // Processo — sempre necessário para renderizar o header
-  const { data: processo, isLoading } = useQuery({
+  const { data: processo, isLoading, isError } = useQuery({
     queryKey: ["processo", id],
     queryFn: () => getProcessoId(id!),
     enabled: !!id,
@@ -196,20 +199,22 @@ export function ProcessoSeletivosDetalhes() {
   }, [isAdmin]);
 
   const onApagarVaga = useCallback(
-    async (v: any) => {
+    (v: any) => {
       if (!isAdmin) {
         toast.error("Apenas administradores podem apagar vaga.");
         return;
       }
-
-      const ok = window.confirm(
-        `Tem certeza que deseja apagar a vaga "${v?.nome}"?\n\nEssa ação não pode ser desfeita.`,
-      );
-      if (!ok) return;
-
-      await excluirVagaAsync(v.id_vaga);
+      setVagaToDelete(v.id_vaga);
     },
-    [isAdmin, excluirVagaAsync],
+    [isAdmin],
+  );
+
+  const onConfirmarExclusao = useCallback(
+    async (v: any) => {
+      await excluirVagaAsync(v.id_vaga);
+      setVagaToDelete(null);
+    },
+    [excluirVagaAsync],
   );
 
   const sendEmail = useCallback(async () => {
@@ -230,9 +235,38 @@ export function ProcessoSeletivosDetalhes() {
       <S.Container>
         <S.Header>
           <S.HeaderLeft>
-            <S.Title>Carregando...</S.Title>
-            <S.Subtitle>Buscando dados do processo seletivo</S.Subtitle>
+            <S.SkeletonPulse $w="55%" $h="22px" />
+            <S.SkeletonPulse $w="35%" $h="16px" />
+            <S.BadgesRow>
+              <S.SkeletonPulse $w="80px" $h="26px" $r="999px" />
+              <S.SkeletonPulse $w="220px" $h="26px" $r="999px" />
+            </S.BadgesRow>
           </S.HeaderLeft>
+        </S.Header>
+        <S.Tabs>
+          <S.SkeletonPulse $w="100px" $h="38px" $r="999px" />
+          <S.SkeletonPulse $w="120px" $h="38px" $r="999px" />
+        </S.Tabs>
+      </S.Container>
+    );
+  }
+
+  // ── erro ao carregar processo ─────────────────────────────────────────────
+  if (isError || !processo) {
+    return (
+      <S.Container>
+        <S.Header>
+          <S.HeaderLeft>
+            <S.Title>Processo não encontrado</S.Title>
+            <S.Subtitle>
+              Não foi possível carregar este processo. Verifique o link ou volte para a lista.
+            </S.Subtitle>
+          </S.HeaderLeft>
+          <S.HeaderRight>
+            <S.SecondaryButton type="button" onClick={() => navigate("/processos")}>
+              ← Voltar para processos
+            </S.SecondaryButton>
+          </S.HeaderRight>
         </S.Header>
       </S.Container>
     );
@@ -242,7 +276,12 @@ export function ProcessoSeletivosDetalhes() {
   return (
     <S.Container>
       <S.Breadcrumbs>
-        <S.BreadcrumbLink href="#">Processos</S.BreadcrumbLink>
+        <S.BreadcrumbLink
+          href="/processos"
+          onClick={(e) => { e.preventDefault(); navigate("/processos"); }}
+        >
+          Processos
+        </S.BreadcrumbLink>
         <S.BreadcrumbSep>/</S.BreadcrumbSep>
         <S.BreadcrumbCurrent>Detalhes</S.BreadcrumbCurrent>
       </S.Breadcrumbs>
@@ -255,13 +294,17 @@ export function ProcessoSeletivosDetalhes() {
           </S.Subtitle>
 
           <S.BadgesRow>
-            <S.StatusPill $status={processo?.status!}>
+            <S.StatusPill $status={processo.status}>
               {processo?.status}
             </S.StatusPill>
 
             <S.InfoChip>
               Inscrições: {formatDate(processo?.data_inicio_inscricoes)} →{" "}
               {formatDate(processo?.data_fim_inscricoes)}
+            </S.InfoChip>
+
+            <S.InfoChip>
+              {processo.usa_classificacao ? "Com classificação" : "Sem classificação"}
             </S.InfoChip>
           </S.BadgesRow>
         </S.HeaderLeft>
@@ -280,6 +323,14 @@ export function ProcessoSeletivosDetalhes() {
               <S.PrimaryButton type="button" onClick={onCadastrarPergunta}>
                 Cadastrar perguntas
               </S.PrimaryButton>
+
+              <S.SecondaryButton
+                type="button"
+                onClick={() => setOpenInfoClassificacao(true)}
+                title="Como funciona a classificação"
+              >
+                ? Classificação
+              </S.SecondaryButton>
 
               {user?.email === "gabriel.alves@ibirite.mg.gov.br" && (
                 <S.PrimaryButton type="button" onClick={sendEmail}>
@@ -368,9 +419,6 @@ export function ProcessoSeletivosDetalhes() {
                       <S.Tr key={v.id_vaga}>
                         <S.Td>
                           <S.VagaName title={v.nome}>{v.nome}</S.VagaName>
-                          <S.VagaSubText>
-                            Processo: {v.id_processo_seletivo}
-                          </S.VagaSubText>
                         </S.Td>
 
                         <S.Td>
@@ -388,23 +436,45 @@ export function ProcessoSeletivosDetalhes() {
                         <S.Td style={{ textAlign: "right" }}>
                           <S.RowActions>
                             {isAdmin ? (
-                              <>
-                                <S.SecondaryButton
-                                  type="button"
-                                  onClick={() => onEditarVaga(v)}
-                                  disabled={isDeletingVaga}
-                                >
-                                  Editar
-                                </S.SecondaryButton>
+                              vagaToDelete === v.id_vaga ? (
+                                <S.InlineConfirm>
+                                  <S.InlineConfirmText>
+                                    Apagar "{v.nome}"?
+                                  </S.InlineConfirmText>
+                                  <S.DangerButton
+                                    type="button"
+                                    onClick={() => onConfirmarExclusao(v)}
+                                    disabled={isDeletingVaga}
+                                  >
+                                    {isDeletingVaga ? "Apagando..." : "Confirmar"}
+                                  </S.DangerButton>
+                                  <S.SecondaryButton
+                                    type="button"
+                                    onClick={() => setVagaToDelete(null)}
+                                    disabled={isDeletingVaga}
+                                  >
+                                    Cancelar
+                                  </S.SecondaryButton>
+                                </S.InlineConfirm>
+                              ) : (
+                                <>
+                                  <S.SecondaryButton
+                                    type="button"
+                                    onClick={() => onEditarVaga(v)}
+                                    disabled={isDeletingVaga}
+                                  >
+                                    Editar
+                                  </S.SecondaryButton>
 
-                                <S.DangerButton
-                                  type="button"
-                                  onClick={() => onApagarVaga(v)}
-                                  disabled={isDeletingVaga}
-                                >
-                                  Apagar
-                                </S.DangerButton>
-                              </>
+                                  <S.DangerButton
+                                    type="button"
+                                    onClick={() => onApagarVaga(v)}
+                                    disabled={isDeletingVaga}
+                                  >
+                                    Apagar
+                                  </S.DangerButton>
+                                </>
+                              )
                             ) : (
                               <S.Muted>—</S.Muted>
                             )}
@@ -481,6 +551,43 @@ export function ProcessoSeletivosDetalhes() {
         id_processo_seletivo={id!}
         perguntaToEdit={perguntaToEdit}
       />
+
+      {openInfoClassificacao && (
+        <S.InfoModalOverlay onClick={() => setOpenInfoClassificacao(false)}>
+          <S.InfoModalBox onClick={(e) => e.stopPropagation()}>
+            <S.InfoModalHeader>
+              <S.InfoModalTitle>Como funciona a classificação</S.InfoModalTitle>
+              <S.InfoModalClose type="button" onClick={() => setOpenInfoClassificacao(false)}>
+                ✕
+              </S.InfoModalClose>
+            </S.InfoModalHeader>
+            <S.InfoModalBody>
+              <p>
+                O sistema de classificação ranqueia candidatos automaticamente com base nas
+                respostas dadas durante a inscrição.
+              </p>
+              <p>
+                <strong>Perguntas com pontuação</strong> — Cada pergunta pode ter um peso
+                (pontuação máxima). As opções selecionadas pelo candidato somam pontos.
+              </p>
+              <p>
+                <strong>Experiência profissional</strong> — Candidatos que declaram experiência
+                igual ou superior a 365 dias (1 ano) recebem pontos conforme as faixas
+                configuradas na pergunta.
+              </p>
+              <p>
+                <strong>Nível da vaga</strong> — A pontuação pode variar entre vagas de nível
+                médio e superior, permitindo critérios distintos para cada perfil.
+              </p>
+              <p>
+                Quando <em>Usar classificação</em> está desativado neste processo, o
+                ranqueamento não é exibido e candidatos são listados apenas por ordem de
+                inscrição.
+              </p>
+            </S.InfoModalBody>
+          </S.InfoModalBox>
+        </S.InfoModalOverlay>
+      )}
     </S.Container>
   );
 }

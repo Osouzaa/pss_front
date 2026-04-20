@@ -25,6 +25,7 @@ import {
   FiEyeOff,
   FiLock,
   FiUser,
+  FiMail,
   FiCheckCircle,
   FiXCircle,
 } from "react-icons/fi";
@@ -55,9 +56,9 @@ export function Cadastro() {
   const [showPass, setShowPass] = useState(false);
   const [inlineMsg, setInlineMsg] = useState<InlineMsg>({});
 
-  // ✅ estado do modal de conta inativa
   const [openContaInativa, setOpenContaInativa] = useState(false);
   const [createdEmail, setCreatedEmail] = useState("");
+  const [mailSent, setMailSent] = useState(true);
 
   const {
     register,
@@ -70,16 +71,18 @@ export function Cadastro() {
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
+      nome_completo: "",
       email: "",
       senha: "",
-      role: "CANDIDATO",
     },
   });
 
   const hasInteracted =
-    submitCount > 0 || !!touchedFields.email || !!touchedFields.senha;
+    submitCount > 0 ||
+    !!touchedFields.nome_completo ||
+    !!touchedFields.email ||
+    !!touchedFields.senha;
 
-  // limpa mensagem de API/sucesso quando o usuário altera qualquer campo
   useEffect(() => {
     const sub = watch(() => {
       setInlineMsg((prev) =>
@@ -103,19 +106,17 @@ export function Cadastro() {
     try {
       setInlineMsg({});
 
-      await novoUsuarioFn({
-        email: data.email,
+      const result = await novoUsuarioFn({
+        nome_completo: data.nome_completo.trim(),
+        email: data.email.trim(),
         senha: data.senha,
-        role: data.role,
       });
 
-      // ✅ abre o modal de alerta com o e-mail que acabou de cadastrar
-      const email = (data.email ?? "").trim();
-      setCreatedEmail(email);
+      setCreatedEmail(data.email.trim());
+      setMailSent(result.mail_sent);
       setOpenContaInativa(true);
 
-      // opcional: limpa a senha do form (pra não ficar ali se voltar)
-      reset({ ...data, senha: "" }, { keepErrors: false, keepDirty: false });
+      reset({ nome_completo: "", email: data.email, senha: "" }, { keepErrors: false, keepDirty: false });
 
       toast.success("Conta criada! Verifique seu e-mail para ativar.");
     } catch (err) {
@@ -128,7 +129,8 @@ export function Cadastro() {
 
   const zodMsg = !hasInteracted
     ? undefined
-    : errors.email?.message ||
+    : errors.nome_completo?.message ||
+      errors.email?.message ||
       errors.senha?.message ||
       (pwd.ok ? undefined : "A senha precisa cumprir os requisitos acima.");
 
@@ -211,13 +213,30 @@ export function Cadastro() {
                 <S.FormSub>Preencha para criar sua conta.</S.FormSub>
 
                 <S.Form onSubmit={handleSubmit(onSubmit)}>
+                  {/* Nome completo */}
                   <S.Field>
-                    <S.Label htmlFor="email">E-mail</S.Label>
+                    <S.Label htmlFor="nome_completo">Nome completo</S.Label>
                     <S.InputWrap>
                       <S.InputIcon aria-hidden="true">
                         <FiUser />
                       </S.InputIcon>
+                      <S.Input
+                        id="nome_completo"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="Seu nome completo"
+                        {...register("nome_completo")}
+                      />
+                    </S.InputWrap>
+                  </S.Field>
 
+                  {/* E-mail */}
+                  <S.Field>
+                    <S.Label htmlFor="email">E-mail</S.Label>
+                    <S.InputWrap>
+                      <S.InputIcon aria-hidden="true">
+                        <FiMail />
+                      </S.InputIcon>
                       <S.Input
                         id="email"
                         type="email"
@@ -229,6 +248,7 @@ export function Cadastro() {
                     </S.InputWrap>
                   </S.Field>
 
+                  {/* Senha */}
                   <S.Field>
                     <S.Label htmlFor="senha">Senha</S.Label>
 
@@ -309,11 +329,11 @@ export function Cadastro() {
           </S.Card>
         </S.Center>
 
-        {/* ✅ MODAL DE ALERTA (sem form) */}
         <ModalContaInativa
           open={openContaInativa}
           onOpenChange={setOpenContaInativa}
           email={createdEmail || emailValue}
+          mailSent={mailSent}
         />
       </S.Page>
     </PageTransition>

@@ -35,10 +35,13 @@ export interface PerguntaOpcaoResponse {
   label: string;
   valor: string;
   pontos: number;
+  valor_fundamental: number | null;
+  valor_medio: number | null;
+  valor_superior: number | null;
   ordem: number;
   ativa: boolean;
-  data_criacao: string; // ISO
-  data_atualizacao: string; // ISO
+  data_criacao: string;
+  data_atualizacao: string;
   exige_comprovante: boolean;
   label_comprovante: string;
 }
@@ -55,9 +58,13 @@ export interface PerguntaProcessoResponse {
   ordem: number;
   ativa: boolean;
   pontuacao_maxima: number | null;
+  pontuacao_fundamental: number | null;
+  pontuacao_medio: number | null;
+  pontuacao_superior: number | null;
+  regra_json: string | null;
   opcoes: PerguntaOpcaoResponse[];
-  data_criacao: string; // ISO
-  data_atualizacao: string; // ISO
+  data_criacao: string;
+  data_atualizacao: string;
 }
 
 export interface ProcessoSeletivoResponse {
@@ -66,9 +73,10 @@ export interface ProcessoSeletivoResponse {
   secretaria: string | null;
   ano: number;
   status: ProcessoStatus;
-  data_inicio_inscricoes: string | null; // ISO | null
-  data_fim_inscricoes: string | null; // ISO | null
-  data_criacao: string; // ISO
+  data_inicio_inscricoes: string | null;
+  data_fim_inscricoes: string | null;
+  usa_classificacao: boolean;
+  data_criacao: string;
   data_atualizacao: string;
   vagas: VagaProcessoSeletivoResponse[];
   perguntas: PerguntaProcessoResponse[];

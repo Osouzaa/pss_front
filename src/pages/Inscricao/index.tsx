@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
+import { ModalDocsFaltando } from "./components/ModalDocsFaltando";
+import { type DocFaltando } from "./useInscricaoActions";
+
 import * as S from "./styles";
 
 import type { RespostasState } from "./types";
@@ -27,6 +30,8 @@ export function InscricaoPage() {
   const [idVaga, setIdVaga] = useState<string>("");
 
   const [respostas, setRespostas] = useState<RespostasState>({});
+  const [docsFaltando, setDocsFaltando] = useState<DocFaltando[]>([]);
+  const [modalDocsOpen, setModalDocsOpen] = useState(false);
 
   // ✅ em vez de boolean, guarda QUAL inscrição foi hidratada
   const hydratedIdRef = useRef<string | null>(null);
@@ -87,6 +92,10 @@ export function InscricaoPage() {
       idInscricao,
       perguntas,
       respostas,
+      onDocumentosFaltando: (docs) => {
+        setDocsFaltando(docs);
+        setModalDocsOpen(true);
+      },
     });
 
   async function handleIniciar() {
@@ -135,6 +144,8 @@ export function InscricaoPage() {
   if (idInscricao && inscricaoQuery.isLoading) return <InscricaoSkeleton />;
 
   const iniciou = !!idInscricao;
+  const vagaSelecionada = vagas?.find((v) => v.id_vaga === idVaga) ?? null;
+  const nivel = vagaSelecionada?.nivel ?? null;
   const MANY_QUESTIONS_THRESHOLD = 12;
   const isLongForm = (perguntas?.length ?? 0) >= MANY_QUESTIONS_THRESHOLD;
 
@@ -185,6 +196,7 @@ export function InscricaoPage() {
                   <PerguntasSection
                     perguntas={perguntas}
                     respostas={respostas}
+                    nivel={nivel}
                     onChangeResposta={(idPergunta, next) =>
                       setRespostas((prev) => ({ ...prev, [idPergunta]: next }))
                     }
@@ -217,6 +229,11 @@ export function InscricaoPage() {
           </S.Layout>
         </S.Form>
       </S.Card>
+      <ModalDocsFaltando
+        open={modalDocsOpen}
+        onOpenChange={setModalDocsOpen}
+        docs={docsFaltando}
+      />
     </S.Page>
   );
 }

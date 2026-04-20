@@ -193,6 +193,24 @@ export const Select = styled.select`
   }
 `;
 
+export const InfoBanner = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.lightPrimary};
+  border: 1px solid ${({ theme }) => theme.active};
+  color: ${({ theme }) => theme.primary};
+  font-size: 12px;
+  line-height: 1.5;
+
+  svg { flex-shrink: 0; margin-top: 1px; }
+
+  strong { font-weight: 800; }
+`;
+
 export const DocActions = styled.div`
   display: grid;
   grid-template-columns: 1fr;

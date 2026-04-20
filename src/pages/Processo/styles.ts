@@ -1,32 +1,19 @@
-// styles.ts — PATCH para não sobrepor a BottomBar/Sidebar no mobile
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
-/* =========================
-   TOKENS LOCAIS (não cores)
-========================= */
 const ui = {
-  radius: { md: "14px", lg: "18px", xl: "20px", pill: "999px" },
+  radius: { sm: "10px", md: "14px", lg: "18px", xl: "20px", pill: "999px" },
   space: { xs: "6px", sm: "10px", md: "12px", lg: "16px" },
-  h: { btn: "40px", input: "40px" },
-  shadow: {
-    sm: "0 10px 30px rgba(0,0,0,0.08)",
-    md: "0 16px 50px rgba(0,0,0,0.12)",
-  },
-
-  // ✅ altura aproximada da sua barra fixa no mobile (ajuste se preciso)
+  h: { btn: "38px", input: "38px" },
   mobileBottomBar: "90px",
 };
 
-/* =========================
-   LAYOUT
-========================= */
+/* ===================== Layout ===================== */
 export const ContainerProcesso = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 
-  /* ✅ evita que a barra fixa (sidebar/bottombar) sobreponha o fim da tela */
   @media (max-width: 768px) {
     padding-bottom: calc(
       ${ui.mobileBottomBar} + env(safe-area-inset-bottom, 0px)
@@ -79,59 +66,61 @@ export const HeaderActions = styled.div`
 
 export const CreateButton = styled.button`
   height: ${ui.h.btn};
-  padding: 0 14px;
+  padding: 0 16px;
   border-radius: ${ui.radius.md};
-  border: 1px solid ${({ theme }) => theme.border};
+  border: 1px solid transparent;
   background: ${({ theme }) => theme.primary};
   color: ${({ theme }) => theme["text-white"]};
-  font-weight: 900;
+  font-weight: 800;
+  font-size: 13px;
   cursor: pointer;
-
-  transition:
-    transform 0.14s ease,
-    background 0.14s ease,
-    opacity 0.14s ease;
+  white-space: nowrap;
+  transition: background 0.14s ease, transform 0.1s ease;
 
   &:hover {
     background: ${({ theme }) => theme.primaryHover};
     transform: translateY(-1px);
   }
-
   &:active {
-    transform: translateY(0px);
-    opacity: 0.92;
+    transform: translateY(0);
   }
 `;
 
-/* =========================
-   TOOLBAR
-========================= */
+/* ===================== Toolbar / Filtros ===================== */
 export const Toolbar = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 
-  padding: 12px;
+  padding: 12px 14px;
   border-radius: ${ui.radius.lg};
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
 
-  @media (max-width: 720px) {
+  @media (max-width: 600px) {
     flex-direction: column;
     align-items: stretch;
   }
 `;
 
-export const SearchWrap = styled.div`
-  display: grid;
-  gap: 6px;
+export const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 1;
-  min-width: 240px;
+  min-width: 180px;
+
+  @media (max-width: 600px) {
+    min-width: unset;
+  }
 `;
 
-export const SearchLabel = styled.label`
-  font-size: 12px;
+export const FilterLabel = styled.label`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: ${({ theme }) => theme.description};
 `;
 
@@ -143,273 +132,204 @@ export const SearchInput = styled.input`
   background: ${({ theme }) => theme.backgroundInput};
   color: ${({ theme }) => theme.text};
   padding: 0 12px;
+  font-size: 13px;
   outline: none;
-
-  transition:
-    border-color 0.14s ease,
-    box-shadow 0.14s ease;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
 
   &:focus {
     border-color: ${({ theme }) => theme.primary};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.active};
   }
-
   &::placeholder {
     color: ${({ theme }) => theme.description};
   }
 `;
 
-export const Counter = styled.div`
+export const FilterSelect = styled.select`
+  height: ${ui.h.input};
+  border-radius: ${ui.radius.md};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.text};
+  padding: 0 10px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.active};
+  }
+`;
+
+export const FilterActions = styled.div`
   display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
+  align-items: flex-end;
   gap: 8px;
 
-  font-size: 13px;
-  color: ${({ theme }) => theme.description};
+  @media (max-width: 600px) {
+    justify-content: flex-end;
+  }
+`;
 
-  @media (max-width: 720px) {
-    justify-content: flex-start;
+export const FilterButton = styled.button`
+  height: ${ui.h.btn};
+  padding: 0 16px;
+  border-radius: ${ui.radius.md};
+  border: 1px solid transparent;
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme["text-white"]};
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s ease, transform 0.1s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+    transform: translateY(-1px);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+export const ClearButton = styled.button`
+  height: ${ui.h.btn};
+  padding: 0 14px;
+  border-radius: ${ui.radius.md};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.text};
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.14s ease, border-color 0.14s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.active};
+    border-color: ${({ theme }) => theme.primary};
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+export const Counter = styled.div`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.description};
+  white-space: nowrap;
+
+  @media (max-width: 600px) {
+    margin-left: 0;
+    justify-content: flex-end;
   }
 `;
 
 export const CounterMuted = styled.span`
-  font-size: 12px;
-  opacity: 0.85;
+  opacity: 0.75;
 `;
 
-/* =========================
-   GRID / CARDS
-========================= */
-export const Grid = styled.div`
-  display: grid;
-  gap: 14px;
-  grid-template-columns: 1fr;
-
-  @media (min-width: 740px) {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-
-  @media (min-width: 1100px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-`;
-
-export const Card = styled.article`
-  position: relative;
-  overflow: hidden;
-
+/* ===================== Table Card ===================== */
+export const TableCard = styled.div`
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
   border-radius: ${ui.radius.xl};
-  padding: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+`;
 
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+export const TableScrollWrap = styled.div`
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+`;
 
-  box-shadow: ${ui.shadow.sm};
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+export const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+`;
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      900px 240px at 20% 0%,
-      ${({ theme }) => theme.lightPrimary},
-      transparent 55%
-    );
-    pointer-events: none;
-    opacity: 0.65;
+export const Thead = styled.thead`
+  background: ${({ theme }) => theme.bodyBg};
+  border-bottom: 2px solid ${({ theme }) => theme.border};
+`;
+
+export const Th = styled.th<{ $center?: boolean; $small?: boolean }>`
+  padding: 11px 14px;
+  text-align: ${({ $center }) => ($center ? "center" : "left")};
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.description};
+  white-space: nowrap;
+  width: ${({ $small }) => ($small ? "1px" : "auto")};
+`;
+
+export const Tbody = styled.tbody``;
+
+export const Tr = styled.tr`
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  transition: background 0.12s ease;
+
+  &:last-child {
+    border-bottom: none;
   }
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: ${({ theme }) => theme.primary};
-    box-shadow: ${ui.shadow.md};
-  }
-
-  &:active {
-    transform: translateY(-1px);
+    background: ${({ theme }) => `${theme.lightPrimary}55`};
   }
 `;
 
-export const CardTop = styled.div`
-  position: relative;
-  z-index: 1;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+export const Td = styled.td<{ $center?: boolean; $muted?: boolean }>`
+  padding: 13px 14px;
+  font-size: 13px;
+  color: ${({ theme, $muted }) => ($muted ? theme.description : theme.text)};
+  text-align: ${({ $center }) => ($center ? "center" : "left")};
+  vertical-align: middle;
 `;
 
-export const CardTitle = styled.h3`
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.25;
+export const TdTitle = styled.td`
+  padding: 13px 14px;
+  font-size: 13px;
+  font-weight: 700;
   color: ${({ theme }) => theme.text};
-  font-weight: 900;
+  vertical-align: middle;
+  max-width: 280px;
+`;
 
+export const TitleText = styled.span`
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  line-height: 1.35;
 `;
 
-export const CardDesc = styled.p`
-  position: relative;
-  z-index: 1;
-
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: ${({ theme }) => theme.description};
-`;
-
-/* =========================
-   META
-========================= */
-export const MetaRow = styled.div`
-  position: relative;
-  z-index: 1;
-
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  @media (max-width: 680px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-export const MetaItem = styled.div`
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
-  border-radius: ${ui.radius.lg};
-  padding: 10px 10px;
-
-  display: grid;
-  gap: 4px;
-`;
-
-export const MetaLabel = styled.span`
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.description};
-`;
-
-export const MetaValue = styled.span`
-  font-size: 13px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.text};
-
-  overflow: hidden;
-  text-overflow: ellipsis;
+export const TdActions = styled.td`
+  padding: 10px 14px;
+  vertical-align: middle;
   white-space: nowrap;
+  width: 1px;
 `;
 
-/* =========================
-   FOOTER / BUTTONS
-========================= */
-export const CardFooter = styled.div`
-  position: relative;
-  z-index: 2;
-
+export const ActionGroup = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  padding-top: 10px;
-  border-top: 1px solid ${({ theme }) => theme.border};
-
-  @media (max-width: 420px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  gap: 6px;
 `;
 
-export const SecondaryButton = styled.button`
-  position: relative;
-  z-index: 3;
-
-  height: ${ui.h.btn};
-  padding: 0 14px;
-  border-radius: ${ui.radius.md};
-
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
-  color: ${({ theme }) => theme.text};
-  font-weight: 900;
-
-  cursor: pointer;
-  transition:
-    transform 0.14s ease,
-    background 0.14s ease,
-    border-color 0.14s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    border-color: ${({ theme }) => theme.primary};
-    background: ${({ theme }) => theme.active};
-  }
-
-  &:active {
-    transform: translateY(0px);
-    opacity: 0.92;
-  }
-`;
-
-export const PrimaryButton = styled.button`
-  position: relative;
-  z-index: 3;
-
-  height: ${ui.h.btn};
-  padding: 0 14px;
-  border-radius: ${ui.radius.md};
-
-  border: 1px solid transparent;
-  background: ${({ theme }) => theme.primary};
-  color: ${({ theme }) => theme["text-white"]};
-  font-weight: 900;
-
-  cursor: pointer;
-
-  box-shadow: 0 14px 28px ${({ theme }) => theme.active};
-  transition:
-    transform 0.14s ease,
-    background 0.14s ease,
-    opacity 0.14s ease,
-    box-shadow 0.14s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    background: ${({ theme }) => theme.primaryHover};
-    box-shadow: 0 18px 34px ${({ theme }) => theme.active};
-  }
-
-  &:active {
-    transform: translateY(0px);
-    opacity: 0.92;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-/* =========================
-   STATUS PILL
-========================= */
+/* ===================== Status Pill ===================== */
 const statusTokens = (status: string, theme: any) => {
   switch (status) {
     case "ABERTO":
@@ -424,55 +344,89 @@ const statusTokens = (status: string, theme: any) => {
       return { bg: theme.statusCancelBg, fg: theme.statusCancelText };
     case "PRORROGADO":
       return { bg: theme.statusProrrogadoBg, fg: theme.statusProrrogadoText };
+    case "RASCUNHO":
+      return { bg: theme.lightDefault, fg: theme.description };
     default:
       return { bg: theme.lightDefault, fg: theme.text };
   }
 };
 
 export const StatusPill = styled.span<{ $status: string }>`
-  position: relative;
-  z-index: 2;
-
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-
-  padding: 6px 10px;
+  padding: 4px 10px;
   border-radius: ${ui.radius.pill};
-
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.03em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 
   ${({ $status, theme }) => {
     const c = statusTokens($status, theme);
-    return `
+    return css`
       background: ${c.bg};
       color: ${c.fg};
-      border: 1px solid ${theme.border};
     `;
   }}
 `;
 
-/* =========================
-   EMPTY / LOADING
-========================= */
-export const EmptyState = styled.div`
-  border: 1px dashed ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  border-radius: ${ui.radius.xl};
-  padding: 18px;
+/* ===================== Botões ações tabela ===================== */
+export const SecondaryButton = styled.button`
+  height: 32px;
+  padding: 0 12px;
+  border-radius: ${ui.radius.sm};
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.text};
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, border-color 0.12s ease;
 
+  &:hover {
+    background: ${({ theme }) => theme.active};
+    border-color: ${({ theme }) => theme.primary};
+    color: ${({ theme }) => theme.primary};
+  }
+`;
+
+export const PrimaryButton = styled.button`
+  height: 32px;
+  padding: 0 12px;
+  border-radius: ${ui.radius.sm};
+  border: 1px solid transparent;
+  background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme["text-white"]};
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, opacity 0.12s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.primaryHover};
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+/* ===================== Empty / Loading ===================== */
+export const EmptyState = styled.div`
+  padding: 40px 24px;
+  text-align: center;
   display: grid;
   gap: 6px;
+  justify-items: center;
 `;
 
 export const EmptyTitle = styled.h3`
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: ${({ theme }) => theme.text};
-  font-weight: 900;
+  font-weight: 800;
 `;
 
 export const EmptyText = styled.p`
@@ -481,13 +435,7 @@ export const EmptyText = styled.p`
   color: ${({ theme }) => theme.description};
 `;
 
-export const LoadingState = styled(EmptyState)``;
-export const LoadingTitle = styled(EmptyTitle)``;
-export const LoadingText = styled(EmptyText)``;
-
-/* =========================
-   PAGINATION
-========================= */
+/* ===================== Pagination ===================== */
 export const Pagination = styled.div`
   display: flex;
   align-items: center;
@@ -499,7 +447,6 @@ export const Pagination = styled.div`
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
 
-  /* ✅ mesma regra: nunca ficar “atrás” da barra fixa no mobile */
   @media (max-width: 768px) {
     margin-bottom: calc(
       ${ui.mobileBottomBar} + env(safe-area-inset-bottom, 0px)
@@ -511,30 +458,22 @@ export const PageButton = styled.button`
   height: ${ui.h.btn};
   padding: 0 14px;
   border-radius: ${ui.radius.md};
-
   border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
+  background: ${({ theme }) => theme.backgroundInput};
   color: ${({ theme }) => theme.text};
-  font-weight: 900;
-
+  font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
-  transition:
-    transform 0.14s ease,
-    background 0.14s ease;
+  transition: background 0.12s ease, transform 0.1s ease;
 
   &:hover {
     background: ${({ theme }) => theme.active};
+    border-color: ${({ theme }) => theme.primary};
     transform: translateY(-1px);
   }
-
-  &:active {
-    transform: translateY(0px);
-    opacity: 0.92;
-  }
-
   &:disabled {
+    opacity: 0.45;
     cursor: not-allowed;
-    opacity: 0.55;
     transform: none;
   }
 `;
@@ -544,106 +483,16 @@ export const PageInfo = styled.div`
   color: ${({ theme }) => theme.description};
 `;
 
-export const FilterActions = styled.div`
-  display: flex;
-  align-items: flex-end;
-  gap: ${ui.space.sm};
-
-  @media (max-width: 720px) {
-    align-items: center;
-    justify-content: flex-start;
-  }
-
-  @media (max-width: 420px) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: ${ui.space.sm};
-  }
-`;
-
-export const FilterButton = styled.button`
-  height: ${ui.h.btn};
-  padding: 0 14px;
-  border-radius: ${ui.radius.md};
-
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.primary};
-  color: ${({ theme }) => theme["text-white"]};
-  font-weight: 900;
-
-  cursor: pointer;
-  transition:
-    transform 0.14s ease,
-    background 0.14s ease,
-    opacity 0.14s ease;
-
-  &:hover {
-    background: ${({ theme }) => theme.primaryHover};
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0px);
-    opacity: 0.92;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    transform: none;
-  }
-`;
-
-export const ClearButton = styled.button`
-  height: ${ui.h.btn};
-  padding: 0 14px;
-  border-radius: ${ui.radius.md};
-
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.lightDefault};
-  color: ${({ theme }) => theme.text};
-  font-weight: 900;
-
-  cursor: pointer;
-  transition:
-    transform 0.14s ease,
-    background 0.14s ease,
-    border-color 0.14s ease,
-    opacity 0.14s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    border-color: ${({ theme }) => theme.primary};
-    background: ${({ theme }) => theme.active};
-  }
-
-  &:active {
-    transform: translateY(0px);
-    opacity: 0.92;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-    transform: none;
-  }
-`;
-
-/* =========================
-   WARN (mantive seu estilo atual)
-========================= */
+/* ===================== Profile Warn ===================== */
 export const ProfileWarn = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-
   padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid rgba(250, 204, 21, 0.35);
   background: rgba(250, 204, 21, 0.08);
-
-  margin-bottom: 14px;
 `;
 
 export const ProfileWarnInfo = styled.div`
@@ -654,29 +503,67 @@ export const ProfileWarnInfo = styled.div`
 
 export const ProfileWarnTitle = styled.div`
   font-weight: 800;
+  font-size: 13px;
+  color: ${({ theme }) => theme.text};
 `;
 
 export const ProfileWarnText = styled.div`
-  opacity: 0.9;
-  font-size: 0.95rem;
+  font-size: 13px;
+  color: ${({ theme }) => theme.description};
 `;
 
 export const ProfileWarnButton = styled.button`
   flex: 0 0 auto;
   border-radius: 999px;
-  padding: 10px 12px;
+  padding: 8px 14px;
   border: 1px solid rgba(250, 204, 21, 0.45);
   background: rgba(250, 204, 21, 0.14);
   cursor: pointer;
   font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
 
   &:hover {
-    filter: brightness(1.02);
+    filter: brightness(1.04);
   }
 `;
 
+/* manter para compatibilidade com outros imports existentes */
 export const ContainerButtons = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
 `;
+
+/* Skeleton para carregamento */
+export const SkeletonRow = styled.tr`
+  td {
+    padding: 13px 14px;
+  }
+`;
+
+export const SkeletonCell = styled.div<{ $w?: string }>`
+  height: 14px;
+  border-radius: 6px;
+  width: ${({ $w }) => $w ?? "80%"};
+  background: linear-gradient(
+    90deg,
+    ${({ theme }) => theme.border} 25%,
+    ${({ theme }) => theme.bodyBg} 50%,
+    ${({ theme }) => theme.border} 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+/* Campo busca (alias para SearchWrap) */
+export const SearchWrap = FilterGroup;
+export const SearchLabel = FilterLabel;
+
+/* Mantém Grid e Card caso seja importado em algum lugar */
+export const Grid = styled.div``;
+export const Card = styled.article``;

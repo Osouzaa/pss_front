@@ -7,6 +7,7 @@ interface FormData {
   status: string;
   data_inicio_inscricoes?: string;
   data_fim_inscricoes?: string;
+  usa_classificacao?: boolean;
 }
 
 export async function criarNovoProcesso({
@@ -15,7 +16,8 @@ export async function criarNovoProcesso({
   ano,
   status,
   data_fim_inscricoes,
-  data_inicio_inscricoes
+  data_inicio_inscricoes,
+  usa_classificacao,
 }: FormData) {
   await api.post('/processo-seletivo', {
     titulo,
@@ -23,6 +25,7 @@ export async function criarNovoProcesso({
     ano,
     data_fim_inscricoes,
     data_inicio_inscricoes,
-    status
+    status,
+    usa_classificacao,
   })
 }

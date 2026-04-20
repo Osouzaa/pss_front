@@ -37,20 +37,26 @@ export interface GetProcessosSeletivosResponse {
 
 interface GetAllProcessosParams {
   page?: number;
-  limit?: number,
-  q?: string
+  limit?: number;
+  q?: string;
+  status?: string;
+  ano?: number;
 }
 
 export async function getAllProcessos({
   limit,
   page,
-  q
+  q,
+  status,
+  ano,
 }: GetAllProcessosParams) {
   const response = await api.get<GetProcessosSeletivosResponse>('/processo-seletivo', {
     params: {
       limit,
       page,
-      q
+      q: q || undefined,
+      status: status || undefined,
+      ano: ano || undefined,
     }
   })
   return response.data

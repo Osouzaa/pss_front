@@ -1,12 +1,15 @@
 import React from "react";
-import { InputBase } from "../../../components/InputBase";
-import { SelectBase } from "../../../components/SelectBase";
+import { FiCheck, FiAlertCircle } from "react-icons/fi";
+import { Star } from "lucide-react";
+import { InputBase } from "../../../../components/InputBase";
+import { SelectBase } from "../../../../components/SelectBase";
 import type {
   PerguntaOpcaoResponse,
   PerguntaProcessoResponse,
-} from "../../../api/get-processo-id";
+  NivelVaga,
+} from "../../../../api/get-processo-id";
 
-import * as S from "../styles";
+import * as S from "./styles";
 
 type AnswerValue = boolean | number | string | null;
 
@@ -27,14 +30,6 @@ export function toDateInputValue(v?: string | null): string | null {
   return v;
 }
 
-type Props = {
-  p: PerguntaProcessoResponse;
-  value: AnswerValue;
-  disabled?: boolean;
-  onChangeValue: (next: AnswerValue) => void;
-};
-
-// ✅ regra: o comprovante está na PERGUNTA (qualquer tipo)
 function perguntaRequerComprovante(p: PerguntaProcessoResponse): {
   required: boolean;
   label: string | null;
@@ -43,13 +38,13 @@ function perguntaRequerComprovante(p: PerguntaProcessoResponse): {
 
   const required = Boolean(
     anyP?.exige_comprovante ??
-    anyP?.exigeComprovante ??
-    anyP?.comprovante_obrigatorio ??
-    anyP?.comprovanteObrigatorio ??
-    anyP?.anexo_obrigatorio ??
-    anyP?.anexoObrigatorio ??
-    anyP?.requer_anexo ??
-    anyP?.requerAnexo,
+      anyP?.exigeComprovante ??
+      anyP?.comprovante_obrigatorio ??
+      anyP?.comprovanteObrigatorio ??
+      anyP?.anexo_obrigatorio ??
+      anyP?.anexoObrigatorio ??
+      anyP?.requer_anexo ??
+      anyP?.requerAnexo,
   );
 
   const labelRaw =
@@ -67,10 +62,70 @@ function perguntaRequerComprovante(p: PerguntaProcessoResponse): {
   return { required, label };
 }
 
+function isAnswered(value: AnswerValue): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string") return value.trim() !== "";
+  if (typeof value === "number") return true;
+  if (typeof value === "boolean") return true;
+  return false;
+}
+
+function calcPontos(p: PerguntaProcessoResponse, nivel: NivelVaga | null): { pts: number; variavel: boolean } | null {
+  if (!nivel) return null;
+
+  const pick = (f: number | null | undefined, m: number | null | undefined, s: number | null | undefined) => {
+    if (nivel === "FUNDAMENTAL") return Number(f ?? 0);
+    if (nivel === "MEDIO") return Number(m ?? 0);
+    return Number(s ?? 0);
+  };
+
+  if (p.tipo === "BOOLEAN") {
+    const pts = pick(p.pontuacao_fundamental, p.pontuacao_medio, p.pontuacao_superior);
+    return pts > 0 ? { pts, variavel: false } : null;
+  }
+
+  if (p.tipo === "SELECT" || p.tipo === "MULTISELECT") {
+    const ativas = (p.opcoes ?? []).filter((o) => o.ativa);
+    const max = Math.max(0, ...ativas.map((o) =>
+      pick(o.valor_fundamental, o.valor_medio, o.valor_superior)
+    ));
+    return max > 0 ? { pts: max, variavel: true } : null;
+  }
+
+  if (p.tipo === "EXPERIENCIA_DIAS") {
+    try {
+      const regra = JSON.parse(p.regra_json ?? "null");
+      if (regra?.tipo === "FAIXAS_DIAS" && Array.isArray(regra.faixas)) {
+        const max = Math.max(0, ...regra.faixas.map((f: any) =>
+          nivel === "MEDIO" ? Number(f.medio ?? 0) : Number(f.superior ?? 0)
+        ));
+        return max > 0 ? { pts: max, variavel: true } : null;
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+type Props = {
+  p: PerguntaProcessoResponse;
+  index: number;
+  value: AnswerValue;
+  disabled?: boolean;
+  docTipos?: string[];
+  nivel?: NivelVaga | null;
+  onChangeValue: (next: AnswerValue) => void;
+};
+
 export function PerguntaField({
   p,
+  index,
   value,
   disabled = false,
+  docTipos = [],
+  nivel = null,
   onChangeValue,
 }: Props) {
   const idPergunta = p.id_pergunta;
@@ -87,33 +142,57 @@ export function PerguntaField({
   const { required: needsAttachment, label: attachmentLabelFromApi } =
     perguntaRequerComprovante(p);
 
-  const attachmentLabel =
-    attachmentLabelFromApi ?? "Esta pergunta exige anexo de confirmação.";
+  const attachmentLabel = attachmentLabelFromApi ?? "comprovante de confirmação";
 
-  // ✅ Descrição segura
+  const docAnexado =
+    needsAttachment && attachmentLabelFromApi
+      ? docTipos.includes(attachmentLabelFromApi)
+      : false;
+
   const descricao =
     typeof p.descricao === "string" && p.descricao.trim()
       ? p.descricao.trim()
       : null;
 
-  return (
-    <S.FieldCard>
-      <S.HeaderPerguntas>
-        <S.TitleRow>
-          <S.TitleInput>{p.titulo}</S.TitleInput>
+  const answered = isAnswered(value);
+  const pontosInfo = calcPontos(p, nivel ?? null);
 
-          {p.obrigatoria ? <S.Required>*</S.Required> : null}
+  return (
+    <S.Card $answered={answered}>
+      <S.Header>
+        <S.NumberBadge>{String(index).padStart(2, "0")}</S.NumberBadge>
+
+        <S.TitleArea>
+          <S.TitleRow>
+            <S.Title>{p.titulo}</S.Title>
+            {p.obrigatoria ? <S.Required>*</S.Required> : null}
+            {pontosInfo && (
+              <S.PointsBadge>
+                <Star size={10} />
+                {pontosInfo.variavel ? `até ${pontosInfo.pts} pts` : `${pontosInfo.pts} pts`}
+              </S.PointsBadge>
+            )}
+          </S.TitleRow>
 
           {needsAttachment ? (
-            <S.AttachmentBadge>
-              Anexo obrigatório: {attachmentLabel}
-            </S.AttachmentBadge>
+            <S.AttachmentStatus $ok={docAnexado}>
+              {docAnexado ? (
+                <>
+                  <FiCheck size={12} />
+                  Comprovante já enviado
+                </>
+              ) : (
+                <>
+                  <FiAlertCircle size={12} />
+                  Anexar: {attachmentLabel}
+                </>
+              )}
+            </S.AttachmentStatus>
           ) : null}
-        </S.TitleRow>
 
-        {/* ✅ Descrição (aparece somente se existir) */}
-        {descricao ? <S.Description>{descricao}</S.Description> : null}
-      </S.HeaderPerguntas>
+          {descricao ? <S.Description>{descricao}</S.Description> : null}
+        </S.TitleArea>
+      </S.Header>
 
       <S.Body>
         {p.tipo === "BOOLEAN" && (
@@ -155,24 +234,25 @@ export function PerguntaField({
             value={valueAsNumber ?? ""}
             disabled={disabled}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const n = safeNumber(e.target.value);
-              onChangeValue(n);
+              onChangeValue(safeNumber(e.target.value));
             }}
           />
         )}
 
         {p.tipo === "EXPERIENCIA_DIAS" && (
-          <InputBase
-            id={`p_${idPergunta}`}
-            type="number"
-            placeholder="Ex: 400"
-            value={valueAsNumber ?? ""}
-            disabled={disabled}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const n = safeNumber(e.target.value);
-              onChangeValue(n);
-            }}
-          />
+          <>
+            <InputBase
+              id={`p_${idPergunta}`}
+              type="number"
+              placeholder="Ex: 400"
+              value={valueAsNumber ?? ""}
+              disabled={disabled}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onChangeValue(safeNumber(e.target.value));
+              }}
+            />
+            <S.DaysHelper>Informe o total de dias trabalhados</S.DaysHelper>
+          </>
         )}
 
         {p.tipo === "TEXTO" && (
@@ -218,6 +298,6 @@ export function PerguntaField({
           />
         )}
       </S.Body>
-    </S.FieldCard>
+    </S.Card>
   );
 }

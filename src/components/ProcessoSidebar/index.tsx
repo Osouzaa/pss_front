@@ -9,6 +9,8 @@ import {
   FiSun,
   FiMoon,
   FiLogOut,
+  FiShield,
+  FiFileText,
 } from "react-icons/fi";
 import { toast } from "sonner";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
@@ -23,7 +25,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   useEffect(() => {
     setOpen(false);
@@ -37,10 +39,15 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         label: "Inscrições",
         icon: <FiUsers size={18} />,
       },
-     
       { to: "/perfil", label: "Perfil", icon: <FiUser size={18} /> },
+      ...(isAdmin
+        ? [
+            { to: "/admin/usuarios", label: "Usuários", icon: <FiShield size={18} /> },
+            { to: "/admin/tipos-documento", label: "Documentos", icon: <FiFileText size={18} /> },
+          ]
+        : []),
     ],
-    [],
+    [isAdmin],
   );
 
   const handleSignOut = () => {
@@ -58,7 +65,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         </S.BrandLogoWrap>
         <S.Brand>
           <S.BrandTitle>Processo Seletivo Simplificado</S.BrandTitle>
-          <S.BrandSubtitle>Painel Candidato</S.BrandSubtitle>
+          <S.BrandSubtitle>{isAdmin ? "Painel Admin" : "Painel Candidato"}</S.BrandSubtitle>
         </S.Brand>
 
         <S.Nav>
