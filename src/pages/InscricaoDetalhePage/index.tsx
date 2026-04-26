@@ -266,18 +266,31 @@ export default function InscricaoDetalhePage() {
         {!processo.perguntas.length ? (
           <S.Empty>Nenhuma pergunta neste processo.</S.Empty>
         ) : (
-          <S.ScrollArea>
-            {processo.perguntas.map((pergunta, idx) => {
-              const respostaTxt = renderResposta(pergunta);
-              const temResposta = !!pergunta.resposta_candidato;
-              const pontos = pergunta.resposta_candidato?.pontos_calculados ?? 0;
+          <S.TableWrapper>
+            <S.PerguntasTable>
+              <thead>
+                <tr>
+                  <S.Th style={{ width: 48 }}>#</S.Th>
+                  <S.Th>Pergunta</S.Th>
+                  <S.Th style={{ width: 120 }}>Tipo</S.Th>
+                  <S.Th style={{ width: 200 }}>Resposta</S.Th>
+                  <S.Th style={{ width: 72 }}>Pontos</S.Th>
+                  <S.Th style={{ width: 200 }}>Comprovante</S.Th>
+                </tr>
+              </thead>
+              <tbody>
+                {processo.perguntas.map((pergunta, idx) => {
+                  const respostaTxt = renderResposta(pergunta);
+                  const temResposta = !!pergunta.resposta_candidato;
+                  const pontos = pergunta.resposta_candidato?.pontos_calculados ?? 0;
 
-              return (
-                <S.Ficha key={pergunta.id_pergunta} respondida={temResposta}>
-                  <S.FichaHeader>
-                    <S.FichaLeft>
-                      <S.QIndex>Q{String(idx + 1).padStart(2, "0")}</S.QIndex>
-                      <div>
+                  return (
+                    <S.Tr key={pergunta.id_pergunta}>
+                      <S.Td>
+                        <S.QIndex>Q{String(idx + 1).padStart(2, "0")}</S.QIndex>
+                      </S.Td>
+
+                      <S.TdPergunta>
                         <S.QuestionTitle>
                           {pergunta.titulo}
                           {pergunta.obrigatoria && <S.Required title="Obrigatória">*</S.Required>}
@@ -285,58 +298,67 @@ export default function InscricaoDetalhePage() {
                         {pergunta.descricao && (
                           <S.QuestionDesc>{pergunta.descricao}</S.QuestionDesc>
                         )}
-                      </div>
-                    </S.FichaLeft>
-                    <S.FichaRight>
-                      <S.TypePill>{pergunta.tipo}</S.TypePill>
-                      {temResposta && (
-                        <S.Points positive={pontos > 0}>{pontos} pts</S.Points>
-                      )}
-                    </S.FichaRight>
-                  </S.FichaHeader>
+                        {pergunta.tipo === "SELECT" && pergunta.opcoes.length > 0 && (
+                          <S.OpcoesList>
+                            {pergunta.opcoes.map((op) => (
+                              <S.OpcaoItem
+                                key={op.id_opcao}
+                                selected={pergunta.resposta_candidato?.opcao_id === op.id_opcao}
+                              >
+                                {op.label}
+                              </S.OpcaoItem>
+                            ))}
+                          </S.OpcoesList>
+                        )}
+                      </S.TdPergunta>
 
-                  <S.FichaBody>
-                    <S.AnswerBlock respondida={temResposta}>
-                      <span>Resposta</span>
-                      <strong>{String(respostaTxt)}</strong>
-                    </S.AnswerBlock>
+                      <S.Td>
+                        <S.TypePill>{pergunta.tipo}</S.TypePill>
+                      </S.Td>
 
-                    <S.DocBlock>
-                      <span>Comprovante</span>
-                      {!pergunta.exige_comprovante ? (
-                        <S.DocStatus type="none">Não exigido</S.DocStatus>
-                      ) : pergunta.comprovantes_anexados?.length > 0 ? (
-                        <S.DocMultiList>
-                          {pergunta.comprovantes_anexados.map((c) => (
-                            <S.DocStatus key={c.id_candidato_documento} type="ok">
-                              <FiCheckCircle size={12} />
-                              {c.arquivo?.nome_original ?? pergunta.label_comprovante}
-                            </S.DocStatus>
-                          ))}
-                        </S.DocMultiList>
-                      ) : (
-                        <S.DocStatus type="missing">Não anexado</S.DocStatus>
-                      )}
-                    </S.DocBlock>
-                  </S.FichaBody>
+                      <S.TdAnswer respondida={temResposta}>
+                        {String(respostaTxt)}
+                      </S.TdAnswer>
 
-                  {/* Opções SELECT */}
-                  {pergunta.tipo === "SELECT" && pergunta.opcoes.length > 0 && (
-                    <S.OpcoesList>
-                      {pergunta.opcoes.map((op) => (
-                        <S.OpcaoItem
-                          key={op.id_opcao}
-                          selected={pergunta.resposta_candidato?.opcao_id === op.id_opcao}
-                        >
-                          {op.label}
-                        </S.OpcaoItem>
-                      ))}
-                    </S.OpcoesList>
-                  )}
-                </S.Ficha>
-              );
-            })}
-          </S.ScrollArea>
+                      <S.Td>
+                        {temResposta
+                          ? <S.Points positive={pontos > 0}>{pontos} pts</S.Points>
+                          : <S.TdMuted>—</S.TdMuted>
+                        }
+                      </S.Td>
+
+                      <S.Td>
+                        {!pergunta.exige_comprovante ? (
+                          <S.DocStatus type="none">Não exigido</S.DocStatus>
+                        ) : pergunta.comprovantes_anexados?.length > 0 ? (
+                          <S.DocMultiList>
+                            {pergunta.comprovantes_anexados.map((c) => {
+                              const url = c.arquivo ? buildFileUrl(c.arquivo.storage_key) : null;
+                              return (
+                                <S.DocStatus key={c.id_candidato_documento} type="ok">
+                                  <FiCheckCircle size={12} />
+                                  {url ? (
+                                    <S.ComprovantLink href={url} target="_blank" rel="noopener noreferrer">
+                                      {c.arquivo?.nome_original ?? pergunta.label_comprovante}
+                                      <FiExternalLink size={10} />
+                                    </S.ComprovantLink>
+                                  ) : (
+                                    c.arquivo?.nome_original ?? pergunta.label_comprovante
+                                  )}
+                                </S.DocStatus>
+                              );
+                            })}
+                          </S.DocMultiList>
+                        ) : (
+                          <S.DocStatus type="missing">Não anexado</S.DocStatus>
+                        )}
+                      </S.Td>
+                    </S.Tr>
+                  );
+                })}
+              </tbody>
+            </S.PerguntasTable>
+          </S.TableWrapper>
         )}
       </S.Card>
     </S.Page>

@@ -274,16 +274,74 @@ export const InfoValue = styled.div`
   overflow-wrap: anywhere;
 `;
 
-/* ===== Scroll ===== */
-export const ScrollArea = styled.div`
-  max-height: 65vh;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-right: 4px;
+/* ===== Table (Perguntas) ===== */
+export const TableWrapper = styled.div`
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  border-radius: 14px;
+  border: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const PerguntasTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 700px;
+`;
+
+export const Th = styled.th`
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.description};
+  background: ${({ theme }) => theme.bodyBg};
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  white-space: nowrap;
+`;
+
+export const Tr = styled.tr`
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  transition: background 0.1s ease;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: ${({ theme }) => theme.bodyBg}; }
+`;
+
+export const Td = styled.td`
+  padding: 12px;
+  vertical-align: top;
+  color: ${({ theme }) => theme.text};
+`;
+
+export const TdPergunta = styled(Td)`
+  min-width: 200px;
+`;
+
+export const TdAnswer = styled(Td)<{ respondida?: boolean }>`
+  color: ${({ theme, respondida }) => respondida ? theme.text : theme.description};
+  font-style: ${({ respondida }) => respondida ? "normal" : "italic"};
+  font-weight: ${({ respondida }) => respondida ? "600" : "400"};
+  overflow-wrap: anywhere;
+`;
+
+export const TdMuted = styled.span`
+  color: ${({ theme }) => theme.description};
+`;
+
+export const ComprovantLink = styled.a`
+  color: ${({ theme }) => theme.primary};
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+
+  &:hover { text-decoration: underline; }
 `;
 
 /* ===== Empty ===== */
@@ -390,55 +448,7 @@ export const DocDisabled = styled.div`
   @media (max-width: 640px) { width: 100%; }
 `;
 
-/* ===================== FICHA (PERGUNTAS) ===================== */
-export const Ficha = styled.div<{ respondida?: boolean }>`
-  border-radius: 16px;
-  border: 1px solid ${({ theme, respondida }) => respondida ? theme.border : theme.border};
-  padding: 14px 14px 14px 18px;
-  background: ${({ theme }) => theme.bodyBg};
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 10px;
-    bottom: 10px;
-    width: 4px;
-    border-radius: 999px;
-    background: ${({ theme, respondida }) => respondida ? theme.primary : theme.border};
-    opacity: ${({ respondida }) => respondida ? 0.7 : 0.4};
-  }
-`;
-
-export const FichaHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-  }
-`;
-
-export const FichaLeft = styled.div`
-  display: flex;
-  gap: 10px;
-  min-width: 0;
-  flex: 1;
-`;
-
-export const FichaRight = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  flex: 0 0 auto;
-`;
-
+/* ===================== PERGUNTAS ===================== */
 export const QIndex = styled.div`
   flex: 0 0 auto;
   padding: 5px 10px;
@@ -492,38 +502,6 @@ export const Points = styled.div<{ positive?: boolean }>`
   background: ${({ theme, positive }) => positive ? theme.active : theme.background};
   color: ${({ theme, positive }) => positive ? theme.primary : theme.description};
 `;
-
-export const FichaBody = styled.div`
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  gap: 10px;
-  min-width: 0;
-
-  @media (max-width: 860px) { grid-template-columns: 1fr; }
-`;
-
-export const AnswerBlock = styled.div<{ respondida?: boolean }>`
-  border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.border};
-  background: ${({ theme }) => theme.background};
-  padding: 10px 12px;
-  min-width: 0;
-
-  span { font-size: 11px; color: ${({ theme }) => theme.description}; }
-
-  strong {
-    display: block;
-    margin-top: 5px;
-    font-size: 13px;
-    color: ${({ theme, respondida }) => respondida ? theme.text : theme.description};
-    overflow-wrap: anywhere;
-    line-height: 1.4;
-    font-style: ${({ respondida }) => respondida ? "normal" : "italic"};
-  }
-`;
-
-export const DocBlock = styled(AnswerBlock)``;
 
 export const DocMultiList = styled.div`
   display: flex;
