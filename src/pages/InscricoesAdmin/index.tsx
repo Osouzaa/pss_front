@@ -18,6 +18,7 @@ import { ModalAvaliacaoSection } from "./components/ModalAvaliacaoSection";
 
 // ─── tipos ────────────────────────────────────────────────────
 type AvaliacaoResultado = "APROVADO" | "REPROVADO";
+type ReservaFilter = "ALL" | "SIM" | "NAO";
 
 type Vaga = {
   id_vaga: string;
@@ -162,7 +163,8 @@ export function InscricoesAdmin() {
   const [decisaoPendente, setDecisaoPendente] =
     useState<AvaliacaoResultado | null>(null);
   const [motivoReprovacao, setMotivoReprovacao] = useState("");
-  const [cota, setCota] = useState<string>("ALL");
+  const [reservaPcd, setReservaPcd] = useState<ReservaFilter>("ALL");
+  const [reservaPp, setReservaPp] = useState<ReservaFilter>("ALL");
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -182,7 +184,7 @@ export function InscricoesAdmin() {
 
   useEffect(() => {
     setPage(1);
-  }, [idVaga, limit]);
+  }, [idVaga, limit, reservaPcd, reservaPp]);
 
   useEffect(() => {
     if (!modalDetalhe) return;
@@ -210,7 +212,8 @@ export function InscricoesAdmin() {
       idVaga,
       debNome,
       debCpf,
-      cota,
+      reservaPcd,
+      reservaPp,
     ],
     enabled: Boolean(id_processo_seletivo),
     queryFn: async () => {
@@ -218,7 +221,8 @@ export function InscricoesAdmin() {
       if (idVaga !== "ALL") q.id_vaga = idVaga;
       if (debNome) q.nome = debNome;
       if (debCpf) q.cpf = debCpf;
-      if (cota !== "ALL") q.cota = cota;
+      if (reservaPcd !== "ALL") q.reserva_pcd = reservaPcd;
+      if (reservaPp !== "ALL") q.reserva_pp = reservaPp;
       const { data } = await api.get<PaginatedResponse<Inscricao>>(
         `processos-seletivos-inscricoes/all/${id_processo_seletivo}`,
         { params: q },
@@ -372,7 +376,8 @@ export function InscricoesAdmin() {
     setIdVaga("ALL");
     setNome("");
     setCpf("");
-    setCota("ALL"); // ← adicionar
+    setReservaPcd("ALL");
+    setReservaPp("ALL");
     setPage(1);
     setLimit(20);
   }
@@ -476,25 +481,31 @@ export function InscricoesAdmin() {
                 disabled={isLoading}
               />
             </S.Field>
-            {processoQuery.data?.titulo.includes("SECRETÁRIO ESCOLAR") && (
-              <S.Field>
-                <S.Label>Cota</S.Label>
-                <S.Select
-                  value={cota}
-                  onChange={(e) => {
-                    setCota(e.target.value);
-                    setPage(1);
-                  }}
-                  disabled={isLoading}
-                >
-                  <option value="ALL">Todas</option>
-                  <option value="pessoas_com_deficiencia_pcd">PCD</option>
-                  <option value="pessoas_pardas_ou_pretas_conforme_autodeclaracao_etnico_raci">
-                    Pretos e Pardos
-                  </option>
-                </S.Select>
-              </S.Field>
-            )}
+            <S.Field>
+              <S.Label>PCD</S.Label>
+              <S.Select
+                value={reservaPcd}
+                onChange={(e) => setReservaPcd(e.target.value as ReservaFilter)}
+                disabled={isLoading}
+              >
+                <option value="ALL">Todos</option>
+                <option value="SIM">Sim</option>
+                <option value="NAO">Não</option>
+              </S.Select>
+            </S.Field>
+
+            <S.Field>
+              <S.Label>Pretos/Pardos</S.Label>
+              <S.Select
+                value={reservaPp}
+                onChange={(e) => setReservaPp(e.target.value as ReservaFilter)}
+                disabled={isLoading}
+              >
+                <option value="ALL">Todos</option>
+                <option value="SIM">Sim</option>
+                <option value="NAO">Não</option>
+              </S.Select>
+            </S.Field>
 
             <S.Field>
               <S.Label>Por página</S.Label>
