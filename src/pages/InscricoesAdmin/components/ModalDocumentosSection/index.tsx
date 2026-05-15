@@ -1,4 +1,4 @@
-import { FiExternalLink, FiFile, FiImage } from "react-icons/fi";
+import { ExternalLink, FileText, Image } from "lucide-react";
 import * as S from "./styles";
 
 type Documento = {
@@ -57,7 +57,7 @@ export function ModalDocumentosSection({
               <S.DocItem key={doc.id_candidato_documento}>
                 <S.DocLeft>
                   <S.DocIconWrap $isPdf={isPdf}>
-                    {isPdf ? <FiFile /> : <FiImage />}
+                    {isPdf ? <FileText size={18} /> : <Image size={18} />}
                   </S.DocIconWrap>
 
                   <S.DocMeta>
@@ -82,7 +82,7 @@ export function ModalDocumentosSection({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <FiExternalLink size={13} />
+                  <ExternalLink size={13} />
                   Abrir
                 </S.OpenButton>
               </S.DocItem>

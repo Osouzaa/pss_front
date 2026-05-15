@@ -101,6 +101,10 @@ const buttonBase = css`
   height: ${ui.controlH};
   padding: 0 14px;
   border-radius: ${ui.radius.md};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   font-weight: 800;
   letter-spacing: 0.01em;
   border: 1px solid transparent;

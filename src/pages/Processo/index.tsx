@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { FiSearch, FiX } from "react-icons/fi";
+import {
+  ClipboardList,
+  Eye,
+  Plus,
+  Search,
+  UserPlus,
+  X,
+} from "lucide-react";
 import * as S from "./styles";
 
 import { getAllProcessos, type ProcessoSeletivoStatus } from "../../api/get-all-processos";
@@ -140,7 +147,8 @@ export function Processo() {
         <S.HeaderActions>
           {isAdmin && (
             <S.CreateButton type="button" onClick={() => setOpenModal(true)}>
-              + Criar processo
+              <Plus size={16} />
+              Criar processo
             </S.CreateButton>
           )}
         </S.HeaderActions>
@@ -151,7 +159,7 @@ export function Processo() {
         {/* busca por texto */}
         <S.FilterGroup style={{ flex: 2, minWidth: 200 }}>
           <S.FilterLabel htmlFor="q">
-            <FiSearch size={11} style={{ marginRight: 4 }} />
+            <Search size={12} />
             Buscar
           </S.FilterLabel>
           <S.SearchInput
@@ -197,6 +205,7 @@ export function Processo() {
         {/* ações */}
         <S.FilterActions>
           <S.FilterButton type="button" onClick={applyFilter}>
+            <Search size={15} />
             Filtrar
           </S.FilterButton>
           <S.ClearButton
@@ -205,7 +214,7 @@ export function Processo() {
             disabled={!qDraft && !statusDraft && !anoDraft && !hasFilters}
             title="Limpar filtros"
           >
-            <FiX size={13} />
+            <X size={15} />
           </S.ClearButton>
         </S.FilterActions>
 
@@ -300,6 +309,7 @@ export function Processo() {
                               navigate(`/processos_detalhes/${p.id_processo_seletivo}`)
                             }
                           >
+                            <Eye size={14} />
                             Detalhes
                           </S.SecondaryButton>
 
@@ -310,6 +320,7 @@ export function Processo() {
                               title={tooltipInscricao}
                               onClick={() => handleSubscribe(p.id_processo_seletivo)}
                             >
+                              <UserPlus size={14} />
                               Inscrever
                             </S.PrimaryButton>
                           )}
@@ -321,6 +332,7 @@ export function Processo() {
                                 navigate(`/all-inscricoes/${p.id_processo_seletivo}`)
                               }
                             >
+                              <ClipboardList size={14} />
                               Inscrições
                             </S.SecondaryButton>
                           )}

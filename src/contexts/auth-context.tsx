@@ -117,8 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isUnauthorized(err)) logout();
         else setUser(null);
       } finally {
-        if (!mounted) return;
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     })();
 

@@ -3,15 +3,15 @@ import { NavLink, useLocation, useNavigate } from "react-router";
 import * as S from "./styles";
 
 import {
-  FiClipboard,
-  FiUsers,
-  FiUser,
-  FiSun,
-  FiMoon,
-  FiLogOut,
-  FiShield,
-  FiFileText,
-} from "react-icons/fi";
+  ClipboardList,
+  FileText,
+  LogOut,
+  Moon,
+  Shield,
+  Sun,
+  User,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
 import logo_pmi_positiva from "../../assets/logo-pmi-positiva.png";
@@ -34,21 +34,21 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
 
   const nav = useMemo(
     () => [
-      { to: "/processos", label: "Processo", icon: <FiClipboard size={18} /> },
+      { to: "/processos", label: "Processo", icon: <ClipboardList size={18} /> },
       ...(isCandidato
         ? [
             {
               to: "/minhas-inscricoes",
               label: "Inscrições",
-              icon: <FiUsers size={18} />,
+              icon: <Users size={18} />,
             },
-            { to: "/perfil", label: "Perfil", icon: <FiUser size={18} /> },
+            { to: "/perfil", label: "Perfil", icon: <User size={18} /> },
           ]
         : []),
       ...(isAdmin
         ? [
-            { to: "/admin/usuarios", label: "Usuários", icon: <FiShield size={18} /> },
-            { to: "/admin/tipos-documento", label: "Documentos", icon: <FiFileText size={18} /> },
+            { to: "/admin/usuarios", label: "Usuários", icon: <Shield size={18} /> },
+            { to: "/admin/tipos-documento", label: "Documentos", icon: <FileText size={18} /> },
           ]
         : []),
     ],
@@ -94,7 +94,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
               aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
             >
               <span aria-hidden>
-                {isDark ? <FiMoon size={16} /> : <FiSun size={16} />}
+                {isDark ? <Moon size={16} /> : <Sun size={16} />}
               </span>
               <span>{isDark ? "Dark" : "Light"}</span>
             </S.ThemeToggleFooter>
@@ -125,7 +125,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
           title="Sair"
         >
           <S.BottomIcon>
-            <FiLogOut size={18} />
+            <LogOut size={18} />
           </S.BottomIcon>
           <S.BottomLabel>Sair</S.BottomLabel>
         </S.BottomAction>
@@ -137,7 +137,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
           title={isDark ? "Claro" : "Escuro"}
         >
           <S.BottomIcon>
-            {isDark ? <FiMoon size={18} /> : <FiSun size={18} />}
+            {isDark ? <Moon size={18} /> : <Sun size={18} />}
           </S.BottomIcon>
           <S.BottomLabel>Tema</S.BottomLabel>
         </S.BottomAction>

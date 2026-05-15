@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 import * as S from "./styles";
 import {
   getAllVagasProcessoId,
@@ -699,6 +700,7 @@ export function InscricoesAdmin() {
                             disabled={deletarMutation.isPending}
                             onClick={() => apagarInscricao(i)}
                           >
+                            <Trash2 size={14} />
                             Apagar
                           </S.Button>
                         </td>

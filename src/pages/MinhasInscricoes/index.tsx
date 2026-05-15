@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Eye, RefreshCw, Trash2 } from "lucide-react";
 import * as S from "./styles";
 
 import type { InscricaoStatus } from "../../api/inscricoes";
@@ -159,6 +160,7 @@ export function MinhasInscricoes() {
             onClick={() => refetch()}
             disabled={isLoading}
           >
+            <RefreshCw size={15} />
             Atualizar
           </S.RefreshButton>
         </S.HeaderRight>
@@ -283,6 +285,7 @@ export function MinhasInscricoes() {
                         : "Ver detalhes do processo"
                     }
                   >
+                    <Eye size={15} />
                     Ver processo
                   </S.SecondaryButton>
 
@@ -291,6 +294,7 @@ export function MinhasInscricoes() {
                     onClick={() => handleDelete(i)}
                     disabled={deletarMutation.isPending}
                   >
+                    <Trash2 size={15} />
                     Apagar
                   </S.DangerButton>
 

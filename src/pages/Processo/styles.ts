@@ -75,6 +75,10 @@ export const CreateButton = styled.button`
   font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   transition: background 0.14s ease, transform 0.1s ease;
 
   &:hover {
@@ -117,6 +121,9 @@ export const FilterGroup = styled.div`
 `;
 
 export const FilterLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -184,6 +191,10 @@ export const FilterButton = styled.button`
   font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   transition: background 0.14s ease, transform 0.1s ease;
 
   &:hover {
@@ -208,6 +219,8 @@ export const ClearButton = styled.button`
   font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-grid;
+  place-items: center;
   transition: background 0.14s ease, border-color 0.14s ease;
 
   &:hover {
@@ -382,6 +395,10 @@ export const SecondaryButton = styled.button`
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: background 0.12s ease, border-color 0.12s ease;
 
   &:hover {
@@ -402,6 +419,10 @@ export const PrimaryButton = styled.button`
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: background 0.12s ease, opacity 0.12s ease;
 
   &:hover {
@@ -464,6 +485,10 @@ export const PageButton = styled.button`
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: background 0.12s ease, transform 0.1s ease;
 
   &:hover {
