@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import * as S from "./styles";
 import type { InscricaoStatus } from "../../api/inscricoes";
 import { getInscricoesMe } from "../../api/get-inscricoes-me";
 import { deletarInscricao } from "../../api/deletar-inscricao";
+import { ModalConfirmDelete } from "../../components/ModalConfirmDelete";
 
 function fmtDateTimeBR(iso?: string | null) {
   if (!iso) return "—";
@@ -70,6 +71,8 @@ type InscricoesMeResponse = ProcessoComMinhasInscricoes[];
 export function MinhasInscricoes() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [inscricaoToDelete, setInscricaoToDelete] =
+    useState<MinhaInscricaoListItem | null>(null);
 
   const { data, isLoading, isError, error, refetch } =
     useQuery<InscricoesMeResponse>({
@@ -130,12 +133,7 @@ export function MinhasInscricoes() {
   }
 
   function handleDelete(item: MinhaInscricaoListItem) {
-    const confirmed = window.confirm(
-      "Deseja apagar esta inscrição? Esta ação não pode ser desfeita.",
-    );
-    if (!confirmed) return;
-
-    deletarMutation.mutate(item.id_inscricao);
+    setInscricaoToDelete(item);
   }
 
   return (
@@ -316,6 +314,30 @@ export function MinhasInscricoes() {
           })}
         </S.Grid>
       )}
+
+      <ModalConfirmDelete
+        open={!!inscricaoToDelete}
+        onOpenChange={(open) => {
+          if (!open) setInscricaoToDelete(null);
+        }}
+        itemName={inscricaoToDelete?.processo?.titulo ?? "esta inscrição"}
+        title="Apagar inscrição"
+        confirmLabel="Apagar inscrição"
+        pendingLabel="Apagando..."
+        description={
+          <>
+            Tem certeza que deseja apagar a inscrição em{" "}
+            <strong>
+              {inscricaoToDelete?.processo?.titulo ?? "Processo seletivo"}
+            </strong>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        onConfirm={async () => {
+          if (!inscricaoToDelete?.id_inscricao) return;
+          await deletarMutation.mutateAsync(inscricaoToDelete.id_inscricao);
+        }}
+      />
     </S.Page>
   );
 }

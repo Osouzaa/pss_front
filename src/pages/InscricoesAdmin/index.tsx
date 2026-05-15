@@ -18,6 +18,7 @@ import { ModalDesempateSection } from "./components/ModalDesempateSection";
 import { ModalDocumentosSection } from "./components/ModalDocumentosSection";
 import { ModalAvaliacaoSection } from "./components/ModalAvaliacaoSection";
 import { deletarInscricao } from "../../api/deletar-inscricao";
+import { ModalConfirmDelete } from "../../components/ModalConfirmDelete";
 
 // ─── tipos ────────────────────────────────────────────────────
 type AvaliacaoResultado = "APROVADO" | "REPROVADO";
@@ -163,6 +164,8 @@ export function InscricoesAdmin() {
   const [debNome, setDebNome] = useState("");
   const [debCpf, setDebCpf] = useState("");
   const [modalDetalhe, setModalDetalhe] = useState<ModalDetalhe | null>(null);
+  const [inscricaoToDelete, setInscricaoToDelete] =
+    useState<Inscricao | null>(null);
   const [decisaoPendente, setDecisaoPendente] =
     useState<AvaliacaoResultado | null>(null);
   const [motivoReprovacao, setMotivoReprovacao] = useState("");
@@ -392,12 +395,7 @@ export function InscricoesAdmin() {
   }
 
   function apagarInscricao(i: Inscricao) {
-    const confirmed = window.confirm(
-      "Deseja apagar esta inscrição? Esta ação não pode ser desfeita.",
-    );
-    if (!confirmed) return;
-
-    deletarMutation.mutate(i.id_inscricao);
+    setInscricaoToDelete(i);
   }
 
   function clearFilters() {
@@ -825,6 +823,34 @@ export function InscricoesAdmin() {
           </S.Modal>
         </S.Overlay>
       )}
+
+      <ModalConfirmDelete
+        open={!!inscricaoToDelete}
+        onOpenChange={(open) => {
+          if (!open) setInscricaoToDelete(null);
+        }}
+        itemName={
+          inscricaoToDelete?.usuario?.candidato?.nome_completo ??
+          "esta inscrição"
+        }
+        title="Apagar inscrição"
+        confirmLabel="Apagar inscrição"
+        pendingLabel="Apagando..."
+        description={
+          <>
+            Tem certeza que deseja apagar a inscrição de{" "}
+            <strong>
+              {inscricaoToDelete?.usuario?.candidato?.nome_completo ??
+                "candidato"}
+            </strong>
+            ? Esta ação não pode ser desfeita.
+          </>
+        }
+        onConfirm={async () => {
+          if (!inscricaoToDelete?.id_inscricao) return;
+          await deletarMutation.mutateAsync(inscricaoToDelete.id_inscricao);
+        }}
+      />
     </S.Page>
   );
 }

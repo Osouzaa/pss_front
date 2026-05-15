@@ -1,6 +1,16 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, UploadCloud, CheckCircle2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CheckCircle2,
+  FileText,
+  FileUp,
+  Image,
+  Loader2,
+  Plus,
+  Trash2,
+  UploadCloud,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,34 +18,41 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
+  Body,
   Content,
+  FieldGrid,
+  Footer,
+  FormatList,
+  FormatPill,
   HeaderContent,
   Overlay,
-  Footer,
-  Title,
-  Body,
+  RemoveFileButton,
   Section,
+  SectionDesc,
+  SectionHeader,
   SectionTitle,
-  UploadZone,
-  UploadName,
-  UploadHint,
-  FieldGrid,
-  UploadNote,
+  SuccessActions,
   SuccessBox,
   SuccessCircle,
-  SuccessTitle,
   SuccessDesc,
   SuccessFileName,
-  SuccessActions,
+  SuccessTitle,
+  Title,
+  TitleIcon,
+  TitleRow,
+  UploadHint,
+  UploadName,
+  UploadNote,
+  UploadZone,
 } from "./styles";
 
-import { InputBase } from "../../../../components/InputBase";
+import { getTiposDocumento } from "../../../../api/tipo-documento";
 import { uploadDocumentoMe } from "../../../../api/upload-documento-me";
+import { InputBase } from "../../../../components/InputBase";
 import {
   InputSelectFilter,
   type OptionBase,
 } from "../../../../components/InputSelectFilter";
-import { getTiposDocumento } from "../../../../api/tipo-documento";
 
 const schema = z.object({
   tipo: z.string().min(1, "Selecione um tipo"),
@@ -52,6 +69,9 @@ interface IModalAddAnexo {
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIMES = ["application/pdf", "image/png", "image/jpeg"] as const;
+type AllowedMime = (typeof ALLOWED_MIMES)[number];
+
+type Phase = "form" | "sending" | "success";
 
 function formatBytes(bytes: number) {
   const kb = bytes / 1024;
@@ -59,15 +79,23 @@ function formatBytes(bytes: number) {
   return `${(kb / 1024).toFixed(2)} MB`;
 }
 
-type Phase = "form" | "sending" | "success";
+function isAllowedMime(mime: string): mime is AllowedMime {
+  return ALLOWED_MIMES.includes(mime as AllowedMime);
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return "Erro ao enviar documento.";
+}
 
 export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnexo) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [phase, setPhase] = useState<Phase>("form");
-  const [lastSentName, setLastSentName] = useState<string>("");
+  const [lastSentName, setLastSentName] = useState("");
 
   const { data: tiposDocumento = [], isLoading: isLoadingTipos } = useQuery({
     queryKey: ["tipos-documento"],
@@ -76,7 +104,12 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
   });
 
   const tiposOptions = useMemo<OptionBase[]>(
-    () => tiposDocumento.map((t) => ({ value: t.nome, label: t.nome, description: t.descricao ?? undefined })),
+    () =>
+      tiposDocumento.map((tipoDocumento) => ({
+        value: tipoDocumento.nome,
+        label: tipoDocumento.nome,
+        description: tipoDocumento.descricao ?? undefined,
+      })),
     [tiposDocumento],
   );
 
@@ -94,17 +127,18 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
 
   const tipo = watch("tipo");
 
-  function resetForm() {
+  const resetForm = useCallback(() => {
     reset({ tipo: defaultTipo ?? "", descricao: "" });
     setSelectedFile(null);
+    setIsDragging(false);
     if (fileRef.current) fileRef.current.value = "";
-  }
+  }, [defaultTipo, reset]);
 
   useEffect(() => {
     if (!open) return;
     setPhase("form");
     resetForm();
-  }, [open, defaultTipo]);
+  }, [open, resetForm]);
 
   function handleClose() {
     if (phase === "sending") return;
@@ -112,23 +146,68 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
   }
 
   function validateFile(file: File): boolean {
-    if (file.type && !ALLOWED_MIMES.includes(file.type as any)) {
+    if (file.type && !isAllowedMime(file.type)) {
       toast.error("Formato inválido. Envie PDF, PNG ou JPG.");
       return false;
     }
+
     if (file.size > MAX_BYTES) {
       toast.error(`Arquivo muito grande (${formatBytes(file.size)}). Máximo: 10 MB.`);
       return false;
     }
+
     return true;
   }
 
+  function handleSelectedFile(file: File | null) {
+    if (!file) return;
+
+    if (!validateFile(file)) {
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0] ?? null;
+    const file = e.target.files?.[0] ?? null;
     e.currentTarget.value = "";
-    if (!f) return;
-    if (!validateFile(f)) { setSelectedFile(null); return; }
-    setSelectedFile(f);
+    handleSelectedFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    if (phase !== "sending") setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (phase === "sending") return;
+    handleSelectedFile(e.dataTransfer.files?.[0] ?? null);
+  }
+
+  function handleOpenFilePicker() {
+    if (phase === "sending") return;
+    fileRef.current?.click();
+  }
+
+  function handleUploadKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    handleOpenFilePicker();
+  }
+
+  function handleRemoveFile(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    setSelectedFile(null);
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   async function handleEnviar() {
@@ -142,8 +221,8 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
       queryClient.invalidateQueries({ queryKey: ["me-documentos"] });
       setLastSentName(selectedFile.name);
       setPhase("success");
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao enviar documento.");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
       setPhase("form");
     }
   }
@@ -153,25 +232,30 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
     resetForm();
   }
 
-  const isFormPhase = (phase as string) === "form";
-  const canSend = !!tipo && !!selectedFile && isValid && isFormPhase;
+  const isSending = phase === "sending";
+  const canSend = !!tipo && !!selectedFile && isValid && phase === "form";
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Overlay />
         <Content
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.preventDefault()}
         >
           <HeaderContent>
             <div>
-              <Title>Adicionar documento</Title>
+              <TitleRow>
+                <TitleIcon>
+                  <FileUp size={18} />
+                </TitleIcon>
+                <Title>Adicionar documento</Title>
+              </TitleRow>
               <div className="subtitle">
                 {phase === "success"
                   ? "Documento enviado! Deseja enviar mais algum?"
-                  : "Envie um arquivo por vez — pode repetir quantas vezes precisar."}
+                  : "Envie um arquivo por vez. Depois você pode adicionar outros documentos."}
               </div>
             </div>
             <button type="button" onClick={handleClose} aria-label="Fechar">
@@ -179,7 +263,6 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
             </button>
           </HeaderContent>
 
-          {/* ── Estado de sucesso ── */}
           {phase === "success" && (
             <SuccessBox>
               <SuccessCircle>
@@ -196,8 +279,7 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
               <SuccessFileName>{lastSentName}</SuccessFileName>
 
               <SuccessDesc>
-                Tem mais documentos para enviar? Por exemplo: outra especialidade,
-                curso, certificado ou comprovante? Adicione quantos precisar.
+                Tem mais documentos para enviar? Adicione quantos precisar, um de cada vez.
               </SuccessDesc>
 
               <SuccessActions>
@@ -205,38 +287,41 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
                   Não, fechar
                 </button>
                 <button type="button" className="primary" onClick={handleAddOutro}>
+                  <Plus size={15} />
                   Sim, adicionar
                 </button>
               </SuccessActions>
             </SuccessBox>
           )}
 
-          {/* ── Formulário ── */}
           {phase !== "success" && (
             <>
               <Body>
                 <Section>
-                  <SectionTitle>Tipo e descrição</SectionTitle>
+                  <SectionHeader>
+                    <SectionTitle>Tipo e descrição</SectionTitle>
+                    <SectionDesc>Informe como esse arquivo deve aparecer na análise.</SectionDesc>
+                  </SectionHeader>
 
                   <FieldGrid>
                     <Controller
                       control={control}
                       name="tipo"
                       render={({ field }) => {
-                        const selected = tiposOptions.find((o) => o.value === field.value) ?? null;
+                        const selected = tiposOptions.find((option) => option.value === field.value) ?? null;
                         return (
                           <InputSelectFilter
                             id="tipo_documento"
                             label="Tipo do documento"
                             placeholder="Ex: CPF, Diploma..."
                             options={tiposOptions}
-                            value={(selected?.value ?? null) as any}
-                            onChange={(val) => field.onChange(val ?? "")}
+                            value={selected?.value ?? null}
+                            onChange={(value) => field.onChange(value ?? "")}
                             clearable
                             showCount
                             loading={isLoadingTipos}
                             disabled={phase === "sending" || isLoadingTipos}
-                            error={errors.tipo?.message as any}
+                            error={errors.tipo?.message}
                           />
                         );
                       }}
@@ -253,12 +338,27 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
                 </Section>
 
                 <Section>
-                  <SectionTitle>Arquivo</SectionTitle>
+                  <SectionHeader>
+                    <SectionTitle>Arquivo</SectionTitle>
+                    <SectionDesc>Use um arquivo legível, com frente e verso juntos quando necessário.</SectionDesc>
+                  </SectionHeader>
 
                   <UploadNote>
-                    Formatos aceitos: <strong>PDF, PNG ou JPG</strong> · máx. 10 MB.
-                    Inclua frente e verso no mesmo arquivo quando necessário.{" "}
-                    Após enviar, você pode adicionar <strong>quantos documentos quiser</strong> — um de cada vez.
+                    <FormatList aria-label="Formatos aceitos">
+                      <FormatPill>
+                        <FileText size={14} />
+                        PDF
+                      </FormatPill>
+                      <FormatPill>
+                        <Image size={14} />
+                        PNG
+                      </FormatPill>
+                      <FormatPill>
+                        <Image size={14} />
+                        JPG
+                      </FormatPill>
+                      <FormatPill>até 10 MB</FormatPill>
+                    </FormatList>
                   </UploadNote>
 
                   <input
@@ -270,39 +370,56 @@ export function ModalAddAnexo({ open, onOpenChange, defaultTipo }: IModalAddAnex
                   />
 
                   <UploadZone
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    disabled={phase === "sending"}
+                    role="button"
+                    tabIndex={isSending ? -1 : 0}
+                    aria-disabled={isSending}
+                    onClick={handleOpenFilePicker}
+                    onKeyDown={handleUploadKeyDown}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                     $hasFile={!!selectedFile}
+                    $isDragging={isDragging}
+                    $disabled={isSending}
                   >
                     <div className="icon">
-                      {selectedFile ? <CheckCircle2 size={18} /> : <UploadCloud size={18} />}
+                      {selectedFile ? <CheckCircle2 size={20} /> : <UploadCloud size={20} />}
                     </div>
                     <div className="text">
                       <UploadName>
-                        {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo"}
+                        {selectedFile ? selectedFile.name : "Clique ou arraste o arquivo aqui"}
                       </UploadName>
                       <UploadHint>
                         {selectedFile
                           ? `${formatBytes(selectedFile.size)} · clique para trocar`
-                          : "PDF, PNG ou JPG · máx. 10 MB"}
+                          : "PDF, PNG ou JPG · máximo de 10 MB"}
                       </UploadHint>
                     </div>
+                    {selectedFile ? (
+                      <RemoveFileButton
+                        type="button"
+                        aria-label="Remover arquivo selecionado"
+                        onClick={handleRemoveFile}
+                      >
+                        <Trash2 size={15} />
+                      </RemoveFileButton>
+                    ) : null}
                   </UploadZone>
                 </Section>
               </Body>
 
               <Footer>
-                <button type="button" className="secondary" onClick={handleClose} disabled={phase === "sending"}>
+                <button type="button" className="secondary" onClick={handleClose} disabled={isSending}>
                   Cancelar
                 </button>
                 <button
                   type="button"
                   className="primary"
                   onClick={handleEnviar}
-                  disabled={!canSend || phase === "sending"}
+                  disabled={!canSend || isSending}
                 >
-                  {phase === "sending" ? "Enviando..." : "Enviar documento"}
+                  {isSending ? <Loader2 className="spin" size={15} /> : <UploadCloud size={15} />}
+                  {isSending ? "Enviando..." : "Enviar documento"}
                 </button>
               </Footer>
             </>

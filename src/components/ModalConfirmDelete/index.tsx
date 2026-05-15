@@ -1,19 +1,22 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { AlertTriangle, Loader2, X } from "lucide-react";
 import type { QueryKey } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 
 import {
-  DialogOverlay,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  IconButton,
-  ButtonContainer,
   Button,
+  ButtonContainer,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogIcon,
+  DialogOverlay,
+  DialogTitle,
+  IconButton,
 } from "./styles";
-import { useNavigate } from "react-router";
 
 interface ConfirmDeleteModalProps {
   itemName: string;
@@ -22,6 +25,10 @@ interface ConfirmDeleteModalProps {
   onOpenChange: (open: boolean) => void;
   invalidateQueryKeys?: QueryKey[];
   location?: string;
+  title?: string;
+  description?: ReactNode;
+  confirmLabel?: string;
+  pendingLabel?: string;
 }
 
 export function ModalConfirmDelete({
@@ -30,27 +37,27 @@ export function ModalConfirmDelete({
   open,
   onOpenChange,
   location,
+  title = "Confirmar exclusão",
+  description,
+  confirmLabel = "Sim, excluir",
+  pendingLabel = "Excluindo...",
   invalidateQueryKeys = [],
 }: ConfirmDeleteModalProps) {
   const queryClient = useQueryClient();
-  const [isPending, setIsPending] = useState(false);
   const navigate = useNavigate();
+  const [isPending, setIsPending] = useState(false);
+
   const handleConfirm = async () => {
     try {
       setIsPending(true);
-
-      // 1) executa ação (delete)
       await onConfirm();
-
-      // 2) invalida queries pedidas
       await Promise.all(
         invalidateQueryKeys.map((key) =>
           queryClient.invalidateQueries({ queryKey: key }),
         ),
       );
-      if (location) {
-        navigate(location);
-      }
+
+      if (location) navigate(location);
       onOpenChange(false);
     } finally {
       setIsPending(false);
@@ -58,16 +65,28 @@ export function ModalConfirmDelete({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={isPending ? undefined : onOpenChange}>
       <Dialog.Portal>
         <DialogOverlay />
         <DialogContent>
-          <DialogTitle>Confirmar Exclusão</DialogTitle>
-          <DialogDescription>
-            Tem certeza que deseja excluir o item: <strong>{itemName}</strong>?
-            <br />
-            Esta ação não pode ser desfeita.
-          </DialogDescription>
+          <DialogHeader>
+            <DialogIcon>
+              <AlertTriangle size={22} />
+            </DialogIcon>
+
+            <div>
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>
+                {description ?? (
+                  <>
+                    Tem certeza que deseja excluir <strong>{itemName}</strong>?
+                    <br />
+                    Esta ação não pode ser desfeita.
+                  </>
+                )}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
 
           <ButtonContainer>
             <Dialog.Close asChild>
@@ -81,7 +100,14 @@ export function ModalConfirmDelete({
               onClick={handleConfirm}
               disabled={isPending}
             >
-              {isPending ? "Excluindo..." : "Sim, Excluir"}
+              {isPending ? (
+                <>
+                  <Loader2 className="spin" size={16} />
+                  {pendingLabel}
+                </>
+              ) : (
+                confirmLabel
+              )}
             </Button>
           </ButtonContainer>
 
