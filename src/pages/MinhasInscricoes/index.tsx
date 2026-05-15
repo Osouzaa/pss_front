@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import * as S from "./styles";
 
 import type { InscricaoStatus } from "../../api/inscricoes";
 import { getInscricoesMe } from "../../api/get-inscricoes-me";
+import { deletarInscricao } from "../../api/deletar-inscricao";
 
 function fmtDateTimeBR(iso?: string | null) {
   if (!iso) return "—";
@@ -66,6 +68,7 @@ type InscricoesMeResponse = ProcessoComMinhasInscricoes[];
 
 export function MinhasInscricoes() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError, error, refetch } =
     useQuery<InscricoesMeResponse>({
@@ -76,6 +79,20 @@ export function MinhasInscricoes() {
         return res as unknown as InscricoesMeResponse;
       },
     });
+
+  const deletarMutation = useMutation({
+    mutationFn: deletarInscricao,
+    onSuccess: () => {
+      toast.success("Inscrição apagada com sucesso.");
+      queryClient.invalidateQueries({ queryKey: ["minhas-inscricoes"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ??
+          "Não foi possível apagar a inscrição.",
+      );
+    },
+  });
 
   // ✅ achata todas as inscrições e injeta o processo (pra sempre ter titulo/ano)
   const items = useMemo(() => {
@@ -109,6 +126,15 @@ export function MinhasInscricoes() {
     if (!pid || !iid) return;
 
     navigate(`/processos/${pid}/inscricao/${iid}`);
+  }
+
+  function handleDelete(item: MinhaInscricaoListItem) {
+    const confirmed = window.confirm(
+      "Deseja apagar esta inscrição? Esta ação não pode ser desfeita.",
+    );
+    if (!confirmed) return;
+
+    deletarMutation.mutate(item.id_inscricao);
   }
 
   return (
@@ -259,6 +285,14 @@ export function MinhasInscricoes() {
                   >
                     Ver processo
                   </S.SecondaryButton>
+
+                  <S.DangerButton
+                    type="button"
+                    onClick={() => handleDelete(i)}
+                    disabled={deletarMutation.isPending}
+                  >
+                    Apagar
+                  </S.DangerButton>
 
                   <S.PrimaryButton
                     type="button"

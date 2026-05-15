@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
 import logo_pmi_positiva from "../../assets/logo-pmi-positiva.png";
 import { useAuth } from "../../contexts/auth-context";
+
 type Props = {
   isDark: boolean;
   onToggleTheme: () => void;
@@ -25,7 +26,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout, isAdmin } = useAuth();
+  const { logout, isAdmin, isCandidato } = useAuth();
 
   useEffect(() => {
     setOpen(false);
@@ -34,12 +35,16 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
   const nav = useMemo(
     () => [
       { to: "/processos", label: "Processo", icon: <FiClipboard size={18} /> },
-      {
-        to: "/minhas-inscricoes",
-        label: "Inscrições",
-        icon: <FiUsers size={18} />,
-      },
-      { to: "/perfil", label: "Perfil", icon: <FiUser size={18} /> },
+      ...(isCandidato
+        ? [
+            {
+              to: "/minhas-inscricoes",
+              label: "Inscrições",
+              icon: <FiUsers size={18} />,
+            },
+            { to: "/perfil", label: "Perfil", icon: <FiUser size={18} /> },
+          ]
+        : []),
       ...(isAdmin
         ? [
             { to: "/admin/usuarios", label: "Usuários", icon: <FiShield size={18} /> },
@@ -47,13 +52,13 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
           ]
         : []),
     ],
-    [isAdmin],
+    [isAdmin, isCandidato],
   );
 
   const handleSignOut = () => {
     toast.success("Saindo do sistema!");
 
-    logout(); // 🔴 ESSENCIAL
+    logout();
     navigate("/login", { replace: true });
   };
 

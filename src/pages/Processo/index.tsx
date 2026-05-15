@@ -45,7 +45,7 @@ function SkeletonRows() {
 
 export function Processo() {
   const navigate = useNavigate();
-  const { user, isAdmin, isPrimeiroAcesso, isLoading: loadingMe } = useAuth();
+  const { user, isAdmin, isCandidato, isPrimeiroAcesso, isLoading: loadingMe } = useAuth();
 
   const isPerfilIncompleto = useMemo(
     () => user?.tipo === "CANDIDATO" && !user?.id_candidato,
@@ -107,6 +107,7 @@ export function Processo() {
   }
 
   function handleSubscribe(id: string) {
+    if (!isCandidato) return;
     if (isPerfilIncompleto) { navigate("/perfil"); return; }
     navigate(`/processos/${id}/inscricao/`);
   }
@@ -302,14 +303,16 @@ export function Processo() {
                             Detalhes
                           </S.SecondaryButton>
 
-                          <S.PrimaryButton
-                            type="button"
-                            disabled={inscricaoDesabilitada}
-                            title={tooltipInscricao}
-                            onClick={() => handleSubscribe(p.id_processo_seletivo)}
-                          >
-                            Inscrever
-                          </S.PrimaryButton>
+                          {isCandidato && (
+                            <S.PrimaryButton
+                              type="button"
+                              disabled={inscricaoDesabilitada}
+                              title={tooltipInscricao}
+                              onClick={() => handleSubscribe(p.id_processo_seletivo)}
+                            >
+                              Inscrever
+                            </S.PrimaryButton>
+                          )}
 
                           {isAdmin && (
                             <S.SecondaryButton

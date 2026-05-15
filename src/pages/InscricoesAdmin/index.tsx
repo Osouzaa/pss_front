@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import * as S from "./styles";
 import {
   getAllVagasProcessoId,
@@ -15,6 +16,7 @@ import { ModalScoreSection } from "./components/ModalScoreSection";
 import { ModalDesempateSection } from "./components/ModalDesempateSection";
 import { ModalDocumentosSection } from "./components/ModalDocumentosSection";
 import { ModalAvaliacaoSection } from "./components/ModalAvaliacaoSection";
+import { deletarInscricao } from "../../api/deletar-inscricao";
 
 // ─── tipos ────────────────────────────────────────────────────
 type AvaliacaoResultado = "APROVADO" | "REPROVADO";
@@ -300,6 +302,21 @@ export function InscricoesAdmin() {
       queryClient.invalidateQueries({ queryKey: ["inscricoes-admin"] });
     },
   });
+
+  const deletarMutation = useMutation({
+    mutationFn: deletarInscricao,
+    onSuccess: () => {
+      toast.success("Inscrição apagada com sucesso.");
+      fecharModal();
+      queryClient.invalidateQueries({ queryKey: ["inscricoes-admin"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message ??
+          "Não foi possível apagar a inscrição.",
+      );
+    },
+  });
   const navigate = useNavigate();
 
   // 3. função de navegação
@@ -372,6 +389,16 @@ export function InscricoesAdmin() {
     setMotivoReprovacao(i.motivo_reprovacao ?? "");
     setModalDetalhe({ inscricao: i, detalhes });
   }
+
+  function apagarInscricao(i: Inscricao) {
+    const confirmed = window.confirm(
+      "Deseja apagar esta inscrição? Esta ação não pode ser desfeita.",
+    );
+    if (!confirmed) return;
+
+    deletarMutation.mutate(i.id_inscricao);
+  }
+
   function clearFilters() {
     setIdVaga("ALL");
     setNome("");
@@ -563,6 +590,7 @@ export function InscricoesAdmin() {
                 <th style={{ width: 100 }}>Status</th>
                 {idVaga !== "ALL" && <th style={{ width: 110 }}>Avaliação</th>}
                 <th style={{ width: 130 }}>Enviado em</th>
+                <th style={{ width: 100 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -570,7 +598,7 @@ export function InscricoesAdmin() {
                 ? Array.from({ length: 6 }).map((_, idx) => (
                     <tr key={idx}>
                       {Array.from({
-                        length: mostrarEspecializacao ? 12 : 11,
+                        length: mostrarEspecializacao ? 13 : 12,
                       }).map((__, c) => (
                         <td key={c}>
                           <S.Skeleton />
@@ -664,6 +692,16 @@ export function InscricoesAdmin() {
                           </td>
                         )}
                         <td>{formatDateTimeBR(i.data_envio)}</td>
+                        <td>
+                          <S.Button
+                            type="button"
+                            $variant="danger"
+                            disabled={deletarMutation.isPending}
+                            onClick={() => apagarInscricao(i)}
+                          >
+                            Apagar
+                          </S.Button>
+                        </td>
                       </tr>
                     );
                   })}

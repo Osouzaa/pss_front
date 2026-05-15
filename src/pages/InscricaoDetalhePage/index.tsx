@@ -1,11 +1,14 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   FiArrowLeft,
+  FiAlertCircle,
   FiClipboard,
   FiCheckCircle,
   FiClock,
   FiFileText,
+  FiFilter,
   FiPaperclip,
   FiExternalLink,
   FiUser,
@@ -14,10 +17,14 @@ import {
   FiMail,
   FiAward,
   FiHelpCircle,
+  FiSearch,
 } from "react-icons/fi";
 import * as S from "./styles";
 import { getInscricaoFull, type InscricaoFull } from "../../api/get-inscricao-full";
 import { env } from "../../env";
+import { Pagination } from "../../components/Pagination";
+
+type DetailSection = "dados" | "documentos" | "perguntas";
 
 /* ===================== Utils ===================== */
 function formatDateBR(iso?: string | null) {
@@ -97,12 +104,21 @@ function Skeleton() {
 export default function InscricaoDetalhePage() {
   const { id_inscricao } = useParams();
   const navigate = useNavigate();
+  const [docSearch, setDocSearch] = useState("");
+  const [docTipoFilter, setDocTipoFilter] = useState("todos");
+  const [docPage, setDocPage] = useState(1);
+  const [docPageSize, setDocPageSize] = useState(8);
+  const [activeSection, setActiveSection] = useState<DetailSection>("documentos");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["inscricao-full", id_inscricao],
     queryFn: () => getInscricaoFull(String(id_inscricao)),
     enabled: !!id_inscricao,
   });
+
+  useEffect(() => {
+    setDocPage(1);
+  }, [docSearch, docTipoFilter, docPageSize]);
 
   if (isLoading) return <Skeleton />;
   if (isError || !data) return (
@@ -112,6 +128,39 @@ export default function InscricaoDetalhePage() {
   );
 
   const { candidato, inscricao, processo, documentos_candidato = [] } = data;
+  const perguntas = processo.perguntas ?? [];
+  const perguntasRespondidas = perguntas.filter((pergunta) => pergunta.resposta_candidato).length;
+  const perguntasComComprovante = perguntas.filter((pergunta) => pergunta.exige_comprovante);
+  const comprovantesPendentes = perguntasComComprovante.filter(
+    (pergunta) => !pergunta.comprovantes_anexados?.length,
+  ).length;
+  const respostasPercentual = perguntas.length ? Math.round((perguntasRespondidas / perguntas.length) * 100) : 100;
+
+  const documentosTipos = Array.from(
+    new Set(documentos_candidato.map((doc) => doc.tipo).filter(Boolean)),
+  ).sort();
+
+  const termoDocumento = docSearch.trim().toLowerCase();
+
+  const documentosFiltrados = documentos_candidato.filter((doc) => {
+    const matchesTipo = docTipoFilter === "todos" || doc.tipo === docTipoFilter;
+    const searchable = [
+      doc.tipo,
+      doc.descricao,
+      doc.arquivo?.nome_original,
+      doc.arquivo?.mime_type,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return matchesTipo && (!termoDocumento || searchable.includes(termoDocumento));
+  });
+
+  const totalDocumentosPages = Math.max(1, Math.ceil(documentosFiltrados.length / docPageSize));
+  const safeDocPage = Math.min(docPage, totalDocumentosPages);
+  const startDocumento = (safeDocPage - 1) * docPageSize;
+  const documentosPaginados = documentosFiltrados.slice(startDocumento, startDocumento + docPageSize);
 
   const enderecoCompleto = [
     candidato.logradouro,
@@ -167,29 +216,90 @@ export default function InscricaoDetalhePage() {
               <strong>{formatDateBR(inscricao.data_envio)}</strong>
             </div>
           </S.MetaCard>
-
-          <S.MetaWide>
-            <S.ScoreRow>
-              <div>
-                <S.CandidatoNome>{candidato.nome_completo}</S.CandidatoNome>
-                <S.CandidatoCPF>CPF: {formatCPF(candidato.cpf)}</S.CandidatoCPF>
-              </div>
-              <S.ScoreBadge>
-                <FiAward size={14} />
-                {inscricao.pontuacao_total} pts
-              </S.ScoreBadge>
-            </S.ScoreRow>
-            {inscricao.observacao && <S.Obs>{inscricao.observacao}</S.Obs>}
-          </S.MetaWide>
         </S.MetaGrid>
       </S.Header>
 
+      {/* ================= PAINEL DE ANÁLISE ================= */}
+      <S.ReviewPanel>
+        <S.ScoreSummary>
+          <span>Pontuação total</span>
+          <strong>{inscricao.pontuacao_total}</strong>
+          <small>pontos calculados</small>
+        </S.ScoreSummary>
+
+        <S.ReviewMetrics>
+          <S.SummaryMetric>
+            <span>Respostas</span>
+            <strong>{perguntasRespondidas}/{perguntas.length}</strong>
+            <S.MiniProgress aria-hidden="true">
+              <S.MiniProgressFill $percent={respostasPercentual} />
+            </S.MiniProgress>
+          </S.SummaryMetric>
+          <S.SummaryMetric>
+            <span>Documentos</span>
+            <strong>{documentos_candidato.length}</strong>
+            <small>arquivos anexados</small>
+          </S.SummaryMetric>
+          <S.SummaryMetric $tone={comprovantesPendentes > 0 ? "warning" : "success"}>
+            <span>Pendências</span>
+            <strong>{comprovantesPendentes}</strong>
+            <small>
+              {comprovantesPendentes > 0
+                ? "Comprovantes obrigatórios sem anexo vinculado"
+                : "Comprovantes obrigatórios conferidos"}
+            </small>
+          </S.SummaryMetric>
+        </S.ReviewMetrics>
+
+        {inscricao.observacao && (
+          <S.ReviewObservation>
+            <span>Observação</span>
+            <p>{inscricao.observacao}</p>
+          </S.ReviewObservation>
+        )}
+      </S.ReviewPanel>
+
+      <S.SectionTabs aria-label="Seções da inscrição">
+        <S.SectionTab
+          type="button"
+          $active={activeSection === "dados"}
+          onClick={() => setActiveSection("dados")}
+        >
+          <FiUser size={15} />
+          Dados
+        </S.SectionTab>
+        <S.SectionTab
+          type="button"
+          $active={activeSection === "documentos"}
+          onClick={() => setActiveSection("documentos")}
+        >
+          <FiPaperclip size={15} />
+          Documentos
+        </S.SectionTab>
+        <S.SectionTab
+          type="button"
+          $active={activeSection === "perguntas"}
+          onClick={() => setActiveSection("perguntas")}
+        >
+          <FiHelpCircle size={15} />
+          Perguntas
+        </S.SectionTab>
+      </S.SectionTabs>
+
       {/* ================= DADOS DO CANDIDATO ================= */}
-      <S.Card>
+      {activeSection === "dados" && <S.Card>
         <S.CardHeader>
           <h3><FiUser size={15} /> Dados Pessoais</h3>
         </S.CardHeader>
         <S.CandidatoGrid>
+          <S.InfoItem>
+            <S.InfoLabel>Nome</S.InfoLabel>
+            <S.InfoValue>{candidato.nome_completo}</S.InfoValue>
+          </S.InfoItem>
+          <S.InfoItem>
+            <S.InfoLabel>CPF</S.InfoLabel>
+            <S.InfoValue>{formatCPF(candidato.cpf)}</S.InfoValue>
+          </S.InfoItem>
           <S.InfoItem>
             <S.InfoLabel><FiMail size={12} /> E-mail</S.InfoLabel>
             <S.InfoValue>{candidato.email}</S.InfoValue>
@@ -217,53 +327,122 @@ export default function InscricaoDetalhePage() {
             </S.InfoItemWide>
           )}
         </S.CandidatoGrid>
-      </S.Card>
+      </S.Card>}
 
       {/* ================= TODOS OS DOCUMENTOS DO CANDIDATO ================= */}
-      <S.Card>
+      {activeSection === "documentos" && <S.Card>
         <S.CardHeader>
           <h3><FiPaperclip size={15} /> Documentos do Candidato</h3>
           {documentos_candidato.length > 0 && (
             <S.QCount>{documentos_candidato.length} arquivo{documentos_candidato.length !== 1 ? "s" : ""}</S.QCount>
           )}
         </S.CardHeader>
+
+        {documentos_candidato.length > 0 && (
+          <S.DocToolbar>
+            <S.SearchField>
+              <FiSearch size={14} />
+              <input
+                value={docSearch}
+                onChange={(event) => setDocSearch(event.target.value)}
+                placeholder="Buscar por tipo, nome do arquivo ou descrição"
+              />
+            </S.SearchField>
+
+            <S.FilterField>
+              <FiFilter size={14} />
+              <select
+                value={docTipoFilter}
+                onChange={(event) => setDocTipoFilter(event.target.value)}
+                aria-label="Filtrar por tipo de documento"
+              >
+                <option value="todos">Todos os tipos</option>
+                {documentosTipos.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo}
+                  </option>
+                ))}
+              </select>
+            </S.FilterField>
+
+            {(docSearch || docTipoFilter !== "todos") && (
+              <S.ClearFilterButton
+                type="button"
+                onClick={() => {
+                  setDocSearch("");
+                  setDocTipoFilter("todos");
+                }}
+              >
+                Limpar filtros
+              </S.ClearFilterButton>
+            )}
+          </S.DocToolbar>
+        )}
+
         {!documentos_candidato.length ? (
           <S.Empty>Nenhum documento anexado.</S.Empty>
+        ) : !documentosFiltrados.length ? (
+          <S.Empty>
+            <FiAlertCircle size={16} />
+            Nenhum documento encontrado com os filtros atuais.
+          </S.Empty>
         ) : (
-          <S.DocGrid>
-            {documentos_candidato.map((doc) => {
-              const url = doc.arquivo ? buildFileUrl(doc.arquivo.storage_key) : null;
-              return (
-                <S.DocItem key={doc.id_candidato_documento}>
-                  <S.DocInfo>
-                    <strong>{doc.tipo}</strong>
-                    <div>{doc.arquivo?.nome_original ?? "—"}</div>
-                    <small>
-                      {doc.arquivo?.mime_type ?? "—"} • {formatBytes(doc.arquivo?.tamanho_bytes)}
-                    </small>
-                    {doc.descricao && <S.DocPerguntaRef>{doc.descricao}</S.DocPerguntaRef>}
-                  </S.DocInfo>
-                  {url ? (
-                    <S.DocLink href={url} target="_blank" rel="noopener noreferrer">
-                      <FiExternalLink size={14} /> Abrir
-                    </S.DocLink>
-                  ) : (
-                    <S.DocDisabled>Sem link</S.DocDisabled>
-                  )}
-                </S.DocItem>
-              );
-            })}
-          </S.DocGrid>
+          <>
+            <S.DocResultBar>
+              <span>
+                {documentosFiltrados.length} de {documentos_candidato.length} documento
+                {documentos_candidato.length !== 1 ? "s" : ""}
+              </span>
+              <strong>Página {safeDocPage}</strong>
+            </S.DocResultBar>
+
+            <S.DocGrid>
+              {documentosPaginados.map((doc) => {
+                const url = doc.arquivo ? buildFileUrl(doc.arquivo.storage_key) : null;
+                return (
+                  <S.DocItem key={doc.id_candidato_documento}>
+                    <S.DocInfo>
+                      <strong>{doc.tipo}</strong>
+                      <div>{doc.arquivo?.nome_original ?? "—"}</div>
+                      <small>
+                        {doc.arquivo?.mime_type ?? "—"} • {formatBytes(doc.arquivo?.tamanho_bytes)}
+                      </small>
+                      {doc.descricao && <S.DocPerguntaRef>{doc.descricao}</S.DocPerguntaRef>}
+                    </S.DocInfo>
+                    {url ? (
+                      <S.DocLink href={url} target="_blank" rel="noopener noreferrer">
+                        <FiExternalLink size={14} /> Abrir
+                      </S.DocLink>
+                    ) : (
+                      <S.DocDisabled>Sem link</S.DocDisabled>
+                    )}
+                  </S.DocItem>
+                );
+              })}
+            </S.DocGrid>
+
+            <S.DocPaginationWrap>
+              <Pagination
+                page={safeDocPage}
+                total={documentosFiltrados.length}
+                pageSize={docPageSize}
+                onPageChange={setDocPage}
+                showPageSize
+                pageSizeOptions={[5, 8, 12, 20]}
+                onPageSizeChange={setDocPageSize}
+              />
+            </S.DocPaginationWrap>
+          </>
         )}
-      </S.Card>
+      </S.Card>}
 
       {/* ================= PERGUNTAS ================= */}
-      <S.Card>
+      {activeSection === "perguntas" && <S.Card>
         <S.CardHeader>
           <h3><FiHelpCircle size={15} /> Perguntas e Respostas</h3>
-          <S.QCount>{processo.perguntas.length} pergunta{processo.perguntas.length !== 1 ? "s" : ""}</S.QCount>
+          <S.QCount>{perguntas.length} pergunta{perguntas.length !== 1 ? "s" : ""}</S.QCount>
         </S.CardHeader>
-        {!processo.perguntas.length ? (
+        {!perguntas.length ? (
           <S.Empty>Nenhuma pergunta neste processo.</S.Empty>
         ) : (
           <S.TableWrapper>
@@ -279,7 +458,7 @@ export default function InscricaoDetalhePage() {
                 </tr>
               </thead>
               <tbody>
-                {processo.perguntas.map((pergunta, idx) => {
+                {perguntas.map((pergunta, idx) => {
                   const respostaTxt = renderResposta(pergunta);
                   const temResposta = !!pergunta.resposta_candidato;
                   const pontos = pergunta.resposta_candidato?.pontos_calculados ?? 0;
@@ -360,7 +539,7 @@ export default function InscricaoDetalhePage() {
             </S.PerguntasTable>
           </S.TableWrapper>
         )}
-      </S.Card>
+      </S.Card>}
     </S.Page>
   );
 }

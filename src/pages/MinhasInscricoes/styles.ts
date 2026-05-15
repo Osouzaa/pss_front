@@ -415,6 +415,17 @@ export const SecondaryButton = styled.button`
   }
 `;
 
+export const DangerButton = styled.button`
+  ${buttonBase};
+  background: ${({ theme }) => theme.danger};
+  color: ${({ theme }) => theme["text-white"]};
+  border-color: ${({ theme }) => theme.danger};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.hoverDanger};
+  }
+`;
+
 export const Pagination = styled.div`
   display: flex;
   align-items: center;

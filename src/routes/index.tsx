@@ -48,16 +48,18 @@ function AnimatedRoutes() {
               path="/processos_detalhes/:id"
               element={<ProcessoSeletivosDetalhes />}
             />
-            <Route path="/perfil" element={<Perfil />} />
-            <Route
-              path="/processos/:id/inscricao"
-              element={<InscricaoPage />}
-            />
-            <Route
-              path="/processos/:id/inscricao/:id_inscricao"
-              element={<InscricaoPage />}
-            />
-            <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
+            <Route element={<RequireRole allowedRoles={["CANDIDATO"]} />}>
+              <Route path="/perfil" element={<Perfil />} />
+              <Route
+                path="/processos/:id/inscricao"
+                element={<InscricaoPage />}
+              />
+              <Route
+                path="/processos/:id/inscricao/:id_inscricao"
+                element={<InscricaoPage />}
+              />
+              <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
+            </Route>
             <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
               <Route
                 path="/processos/:id/inscricoes/:id_inscricao/detalhe"

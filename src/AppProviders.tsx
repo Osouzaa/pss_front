@@ -8,6 +8,7 @@ import { theme } from "./styles/theme";
 import { darkTheme } from "./styles/darkTheme";
 import { GlobalStyles } from "./styles/global";
 import Router from "./routes";
+import { UpdateNotice } from "./components/UpdateNotice";
 
 import { ThemeContext, type ThemeMode } from "./contexts/ThemeContext";
 
@@ -47,6 +48,7 @@ export function AppProviders() {
           <Toaster richColors position="top-center" duration={5000} />
           <GlobalStyles />
           <Router />
+          <UpdateNotice />
         </ThemeProvider>
       </QueryClientProvider>
     </ThemeContext.Provider>
