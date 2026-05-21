@@ -5,6 +5,7 @@ export type ProcessoStatus =
   | "ABERTO"
   | "EM_ANALISE"
   | "EM_ANDAMENTO"
+  | "PRORROGADO"
   | "ENCERRADO";
 
 export type PerguntaTipo =
@@ -79,13 +80,20 @@ export interface ProcessoSeletivoResponse {
   usa_classificacao: boolean;
   data_criacao: string;
   data_atualizacao: string;
-  vagas: VagaProcessoSeletivoResponse[];
-  perguntas: PerguntaProcessoResponse[];
+  vagas?: VagaProcessoSeletivoResponse[];
+  perguntas?: PerguntaProcessoResponse[];
 }
 
 export async function getProcessoId(id: string) {
   const response = await api.get<ProcessoSeletivoResponse>(
     `/processo-seletivo/${id}`,
+  );
+  return response.data;
+}
+
+export async function getProcessoFormulario(id: string) {
+  const response = await api.get<ProcessoSeletivoResponse>(
+    `/processo-seletivo/${id}/formulario`,
   );
   return response.data;
 }

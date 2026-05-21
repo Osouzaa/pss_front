@@ -61,8 +61,7 @@ export const GlobalStyles = createGlobalStyle`
     font-family: 'Roboto', sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
-    height: 100%;
-     padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+    min-height: 100%;
 
     @media screen and (max-width: 768px) {
       overflow-y: auto;

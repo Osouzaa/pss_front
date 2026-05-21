@@ -24,6 +24,7 @@ import { RequireRole } from "./RequireRole";
 import { InscricoesAdmin } from "../pages/InscricoesAdmin";
 import { CriarAdmin } from "../pages/CriarAdmin";
 import { TiposDocumento } from "../pages/TiposDocumento";
+import { CandidatosAdmin } from "../pages/CandidatosAdmin";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -60,7 +61,7 @@ function AnimatedRoutes() {
               />
               <Route path="/minhas-inscricoes" element={<MinhasInscricoes />} />
             </Route>
-            <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
+            <Route element={<RequireRole allowedRoles={["ADMIN", "SUPER_ADMIN"]} />}>
               <Route
                 path="/processos/:id/inscricoes/:id_inscricao/detalhe"
                 element={<InscricaoDetalhePage />}
@@ -70,12 +71,18 @@ function AnimatedRoutes() {
                 element={<InscricoesAdmin />}
               />
               <Route
+                path="/admin/tipos-documento"
+                element={<TiposDocumento />}
+              />
+            </Route>
+            <Route element={<RequireRole allowedRoles={["SUPER_ADMIN"]} />}>
+              <Route
                 path="/admin/usuarios"
                 element={<CriarAdmin />}
               />
               <Route
-                path="/admin/tipos-documento"
-                element={<TiposDocumento />}
+                path="/super-admin/candidatos"
+                element={<CandidatosAdmin />}
               />
             </Route>
           </Route>

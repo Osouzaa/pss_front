@@ -1,10 +1,14 @@
 import styled from "styled-components";
 
 const bp = {
-  md: "48rem", // 768px
+  md: "48rem",
 };
 
-const bottomBarH = "5.75rem"; // ~92px
+const mobileHeaderH = "4.25rem";
+const mobileHeaderSpace = `calc(${mobileHeaderH} + env(safe-area-inset-top, 0px))`;
+
+export const MOBILE_BOTTOM_BAR_SPACE = mobileHeaderSpace;
+export const MOBILE_BOTTOM_BAR_HEIGHT = mobileHeaderH;
 
 export const Sidebar = styled.aside`
   display: none;
@@ -15,27 +19,15 @@ export const Sidebar = styled.aside`
     top: 0;
     height: 100vh;
     width: 100%;
-
-    background: ${({ theme }) => theme.background};
-    border-right: 1px solid ${({ theme }) => theme.border};
-
     flex-direction: column;
     padding: 1rem;
+    background: ${({ theme }) => theme.background};
+    border-right: 1px solid ${({ theme }) => theme.border};
   }
 `;
 
-export const Brand = styled.div`
-  padding: 0.75rem;
-  border-radius: 1rem;
-
-  background: ${({ theme }) => theme.bodyBg};
-  border: 1px solid ${({ theme }) => theme.border};
-`;
-
 export const BrandLogoWrap = styled.div`
-  max-width: 50rem;
   width: 100%;
-  border-radius: 14px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -46,27 +38,29 @@ export const BrandLogoWrap = styled.div`
     height: 100px;
     object-fit: contain;
   }
+`;
 
-  /* opcional: não mostrar no mobile */
-  @media (max-width: 768px) {
-    display: none;
-  }
+export const Brand = styled.div`
+  padding: 0.75rem;
+  border-radius: 0.85rem;
+  background: ${({ theme }) => theme.bodyBg};
+  border: 1px solid ${({ theme }) => theme.border};
 `;
 
 export const BrandTitle = styled.h3`
-  font-weight: 600;
-  font-size: clamp(0.95rem, 0.8rem + 0.4vw, 1.05rem);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
+  margin: 0;
   color: ${({ theme }) => theme.text};
   font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
 `;
 
 export const BrandSubtitle = styled.span`
+  display: block;
   margin-top: 0.25rem;
-  font-size: 0.8rem;
   color: ${({ theme }) => theme.description};
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
 `;
 
 export const Nav = styled.nav`
@@ -82,20 +76,16 @@ export const NavLinkStyled = styled.a`
   display: flex;
   align-items: center;
   gap: 0.625rem;
-
-  padding: 0.75rem;
-  border-radius: 0.875rem;
-
+  padding: 0.72rem;
+  border-radius: 0.75rem;
   text-decoration: none;
   color: ${({ theme }) => theme.text};
-
   border: 1px solid ${({ theme }) => theme.border};
   background: ${({ theme }) => theme.background};
-
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    transform 120ms ease;
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 
   &:hover {
     background: ${({ theme }) => theme.BGlink};
@@ -103,7 +93,7 @@ export const NavLinkStyled = styled.a`
   }
 
   &:active {
-    transform: translateY(0.0625rem);
+    transform: translateY(1px);
   }
 
   &.active {
@@ -113,13 +103,11 @@ export const NavLinkStyled = styled.a`
 `;
 
 export const IconWrap = styled.span`
-  width: 2.375rem;
-  height: 2.375rem;
-  border-radius: 0.875rem;
-
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
   display: grid;
   place-items: center;
-
   background: ${({ theme }) => theme.lightDefault};
   border: 1px solid ${({ theme }) => theme.border};
   color: ${({ theme }) => theme.primary};
@@ -131,14 +119,14 @@ export const IconWrap = styled.span`
 `;
 
 export const NavLabel = styled.span`
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.94rem;
+  font-weight: 650;
 `;
 
 export const ActivePill = styled.span`
   margin-left: auto;
-  width: 0.625rem;
-  height: 0.625rem;
+  width: 0.55rem;
+  height: 0.55rem;
   border-radius: 999px;
   background: transparent;
 
@@ -156,11 +144,9 @@ export const SidebarFooter = styled.footer`
 
 export const FooterRow = styled.div`
   padding: 0.75rem;
-  border-radius: 1rem;
-
+  border-radius: 0.85rem;
   background: ${({ theme }) => theme.bodyBg};
   border: 1px solid ${({ theme }) => theme.border};
-
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -170,108 +156,189 @@ export const FooterRow = styled.div`
 export const FooterLabel = styled.span`
   font-size: 0.8rem;
   color: ${({ theme }) => theme.description};
-  font-weight: 500;
+  font-weight: 600;
 `;
 
 export const ThemeToggleFooter = styled.button`
   height: 2.5rem;
   padding: 0.25rem 0.75rem;
-
   border-radius: 999px;
   border: 1px solid ${({ theme }) => theme.border};
-
   background: ${({ theme }) => theme.backgroundInput};
   color: ${({ theme }) => theme.text};
-
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 
   span {
     font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  &:active {
-    transform: translateY(0.0625rem);
+    font-weight: 700;
   }
 `;
 
 export const LogoutButton = styled.button`
   width: 100%;
   height: 2.75rem;
-
   border: 0;
-  border-radius: 0.875rem;
-
+  border-radius: 0.75rem;
   background: ${({ theme }) => theme.logoutBg};
   color: ${({ theme }) => theme["text-white"]};
-
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: 700;
 
   &:hover {
     background: ${({ theme }) => theme.logoutBgHover};
   }
-
-  &:active {
-    transform: translateY(0.0625rem);
-  }
 `;
 
-/* =========================
-   MOBILE BOTTOM BAR
-========================= */
+export const MobileHeader = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  height: ${mobileHeaderSpace};
+  padding: calc(env(safe-area-inset-top, 0px) + 0.55rem) 0.75rem 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+  background: color-mix(in srgb, ${({ theme }) => theme.background} 94%, transparent);
+  backdrop-filter: blur(14px);
 
-export const BottomBar = styled.nav`
-  /* ✅ altura única e reutilizável (inclui safe-area) */
-  --bottom-bar-space: calc(${bottomBarH} + env(safe-area-inset-bottom));
-
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  z-index: 70;
-
-  height: var(--bottom-bar-space);
-  box-sizing: border-box;
-
-  background: ${({ theme }) => theme.background};
-  border-top: 1px solid ${({ theme }) => theme.border};
-
-  /* padding “interno” sem estourar a altura */
-  padding: 0.5rem 0.625rem;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
-
-  @media (min-width: 48rem) {
+  @media (min-width: ${bp.md}) {
     display: none;
   }
 `;
 
-/* ✅ exporta a var pra usar no layout */
-export const MOBILE_BOTTOM_BAR_SPACE = "var(--bottom-bar-space)";
+export const MobileBrand = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: ${({ theme }) => theme.text};
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+`;
 
-export const BottomItem = styled.a`
-  text-decoration: none;
-  color: ${({ theme }) => theme.description};
-
+export const MobileBrandMark = styled.strong`
+  width: 2.45rem;
+  height: 2.45rem;
   display: grid;
-  justify-items: center;
-  gap: 0.25rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: ${({ theme }) => theme.text};
+  color: ${({ theme }) => theme.background};
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+`;
 
-  padding: 0.5rem 0.375rem;
-  border-radius: 0.875rem;
-
+export const MobileMenuButton = styled.button`
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.6rem;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.text};
   transition:
-    background 120ms ease,
-    color 120ms ease,
-    transform 120ms ease;
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
 
   &:active {
-    transform: translateY(0.0625rem);
+    transform: scale(0.96);
+  }
+
+  &[aria-expanded="true"] {
+    border-color: ${({ theme }) => theme.primary};
+    background: ${({ theme }) => theme.active};
+  }
+`;
+
+export const MobileScrim = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(2px);
+
+  @media (min-width: ${bp.md}) {
+    display: none;
+  }
+`;
+
+export const MobileDrawer = styled.aside`
+  position: fixed;
+  z-index: 90;
+  top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  right: 0.75rem;
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top, 0px));
+  overflow: auto;
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 0.9rem;
+  background: ${({ theme }) => theme.background};
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+  transform: translateY(-0.5rem) scale(0.98);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+
+  &[data-open="true"] {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (min-width: ${bp.md}) {
+    display: none;
+  }
+`;
+
+export const MobileDrawerHeader = styled.div`
+  padding: 1rem 1rem 0.8rem;
+  border-bottom: 1px solid ${({ theme }) => theme.border};
+`;
+
+export const MobileDrawerTitle = styled.div`
+  color: ${({ theme }) => theme.text};
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+`;
+
+export const MobileDrawerSubtitle = styled.div`
+  margin-top: 0.25rem;
+  color: ${({ theme }) => theme.description};
+  font-size: 0.82rem;
+`;
+
+export const MobileNav = styled.nav`
+  display: grid;
+  padding: 0.65rem;
+  gap: 0.35rem;
+`;
+
+export const MobileNavLink = styled.a`
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3.1rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.55rem;
+  color: ${({ theme }) => theme.text};
+  text-decoration: none;
+  font-size: 0.94rem;
+  font-weight: 750;
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
+
+  &:active {
+    transform: translateX(2px);
   }
 
   &.active {
@@ -280,57 +347,39 @@ export const BottomItem = styled.a`
   }
 `;
 
-export const BottomAction = styled.button`
-  border: 0;
-  background: transparent;
-  color: ${({ theme }) => theme.description};
-
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-
-  padding: 0.5rem 0.375rem;
-  border-radius: 0.875rem;
-
-  transition:
-    background 120ms ease,
-    color 120ms ease,
-    transform 120ms ease;
-
-  &:active {
-    transform: translateY(0.0625rem);
-  }
-
-  &:hover {
-    background: ${({ theme }) => theme.BGlink};
-    color: ${({ theme }) => theme.primary};
-  }
-`;
-
-export const BottomIcon = styled.span`
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.875rem;
-
+export const MobileNavIcon = styled.span`
+  width: 2.2rem;
+  height: 2.2rem;
   display: grid;
   place-items: center;
-
-  background: ${({ theme }) => theme.lightDefault};
   border: 1px solid ${({ theme }) => theme.border};
-  color: ${({ theme }) => theme.primary};
-
-  ${BottomItem}.active & {
-    background: ${({ theme }) => theme.lightPrimary};
-    border-color: ${({ theme }) => theme.primary};
-  }
+  border-radius: 0.5rem;
+  background: ${({ theme }) => theme.backgroundInput};
 `;
 
-export const BottomLabel = styled.span`
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+export const MobileDrawerActions = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border-top: 1px solid ${({ theme }) => theme.border};
 `;
 
-/* Exporta a altura do BottomBar pra você usar no layout */
-export const MOBILE_BOTTOM_BAR_HEIGHT = bottomBarH;
+export const MobileUtilityButton = styled.button`
+  min-height: 2.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 0.55rem;
+  border: 1px solid ${({ theme }) => theme.border};
+  background: ${({ theme }) => theme.backgroundInput};
+  color: ${({ theme }) => theme.text};
+  font-weight: 800;
+`;
 
+export const MobileLogoutButton = styled(MobileUtilityButton)`
+  background: ${({ theme }) => theme.logoutBg};
+  border-color: ${({ theme }) => theme.logoutBg};
+  color: ${({ theme }) => theme["text-white"]};
+`;

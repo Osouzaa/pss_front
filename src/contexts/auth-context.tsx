@@ -21,6 +21,7 @@ type AuthContextData = {
   isAuthenticated: boolean;
 
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isCandidato: boolean;
   isAtivo: boolean;
   isPrimeiroAcesso: boolean;
@@ -56,7 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasSession = !!token;
   const isAuthenticated = !!token && !!user; // ou só !!token, você escolhe
 
-  const isAdmin = user?.tipo === "ADMIN";
+  const isSuperAdmin = user?.tipo === "SUPER_ADMIN";
+  const isAdmin = user?.tipo === "ADMIN" || isSuperAdmin;
   const isCandidato = user?.tipo === "CANDIDATO";
   const isAtivo = !!user?.ativo;
   const isPrimeiroAcesso = !!user?.fl_primeiro_acesso;
@@ -136,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasSession,
       isAuthenticated,
       isAdmin,
+      isSuperAdmin,
       isCandidato,
       isAtivo,
       isPrimeiroAcesso,
@@ -153,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       hasSession,
       isAuthenticated,
       isAdmin,
+      isSuperAdmin,
       isCandidato,
       isAtivo,
       isPrimeiroAcesso,

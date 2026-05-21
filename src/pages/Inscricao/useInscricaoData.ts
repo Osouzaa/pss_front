@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  getProcessoId,
+  getProcessoFormulario,
   type ProcessoSeletivoResponse,
 } from "../../api/get-processo-id";
 import { getInscricaoById } from "../../api/get-inscricao-by-id";
@@ -18,7 +18,7 @@ export function useInscricaoData(params: {
     queryKey: ["processo-id", idProcesso],
     queryFn: () => {
       if (!idProcesso) throw new Error("Processo inválido");
-      return getProcessoId(idProcesso);
+      return getProcessoFormulario(idProcesso);
     },
     enabled: !!idProcesso,
     staleTime: 60_000,

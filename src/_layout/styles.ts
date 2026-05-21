@@ -1,5 +1,4 @@
 import styled from "styled-components";
-import { MOBILE_BOTTOM_BAR_SPACE } from "../components/ProcessoSidebar/styles";
 
 const bp = {
   md: "48rem",
@@ -30,7 +29,8 @@ export const Content = styled.main`
 
   /* ✅ reserva espaço no MOBILE (sempre funciona) */
   @media (max-width: ${bp.md}) {
-    padding-bottom: calc(${MOBILE_BOTTOM_BAR_SPACE} + 1rem);
+    padding: 0.875rem;
+    padding-bottom: 1.25rem;
   }
 
   @media (min-width: ${bp.xl}) {

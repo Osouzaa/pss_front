@@ -1,6 +1,6 @@
 import { api } from "../lib/axios";
 
-export type UsuarioTipo = "CANDIDATO" | "ADMIN" | "AVALIADOR";
+export type UsuarioTipo = "CANDIDATO" | "ADMIN" | "SUPER_ADMIN" | "AVALIADOR";
 
 export type ProcessoSeletivoCandidatoDTO = {
   id_candidato: string;

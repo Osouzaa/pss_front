@@ -6,11 +6,14 @@ import {
   ClipboardList,
   FileText,
   LogOut,
+  Menu,
   Moon,
   Shield,
   Sun,
   User,
+  UserRoundSearch,
   Users,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import logo_pmi_negativa from "../../assets/logo-pmi-negativa.png";
@@ -26,7 +29,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout, isAdmin, isCandidato } = useAuth();
+  const { logout, isAdmin, isCandidato, isSuperAdmin } = useAuth();
 
   useEffect(() => {
     setOpen(false);
@@ -39,7 +42,7 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         ? [
             {
               to: "/minhas-inscricoes",
-              label: "Inscrições",
+              label: "Inscricoes",
               icon: <Users size={18} />,
             },
             { to: "/perfil", label: "Perfil", icon: <User size={18} /> },
@@ -47,12 +50,21 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         : []),
       ...(isAdmin
         ? [
-            { to: "/admin/usuarios", label: "Usuários", icon: <Shield size={18} /> },
             { to: "/admin/tipos-documento", label: "Documentos", icon: <FileText size={18} /> },
           ]
         : []),
+      ...(isSuperAdmin
+        ? [
+            { to: "/admin/usuarios", label: "Usuarios", icon: <Shield size={18} /> },
+            {
+              to: "/super-admin/candidatos",
+              label: "Candidatos",
+              icon: <UserRoundSearch size={18} />,
+            },
+          ]
+        : []),
     ],
-    [isAdmin, isCandidato],
+    [isAdmin, isCandidato, isSuperAdmin],
   );
 
   const handleSignOut = () => {
@@ -70,7 +82,13 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         </S.BrandLogoWrap>
         <S.Brand>
           <S.BrandTitle>Processo Seletivo Simplificado</S.BrandTitle>
-          <S.BrandSubtitle>{isAdmin ? "Painel Admin" : "Painel Candidato"}</S.BrandSubtitle>
+          <S.BrandSubtitle>
+            {isSuperAdmin
+              ? "Painel Super Admin"
+              : isAdmin
+                ? "Painel Admin"
+                : "Painel Candidato"}
+          </S.BrandSubtitle>
         </S.Brand>
 
         <S.Nav>
@@ -106,42 +124,60 @@ export function ProcessoSidebar({ isDark, onToggleTheme }: Props) {
         </S.SidebarFooter>
       </S.Sidebar>
 
-      <S.BottomBar role="navigation" aria-label="Menu principal">
-        {nav.map((item) => (
-          <S.BottomItem
-            key={item.to}
-            as={NavLink}
-            to={item.to}
-            end={item.to === "/"}
-          >
-            <S.BottomIcon>{item.icon}</S.BottomIcon>
-            <S.BottomLabel>{item.label}</S.BottomLabel>
-          </S.BottomItem>
-        ))}
-        <S.BottomAction
+      <S.MobileHeader>
+        <S.MobileBrand>
+          <S.MobileBrandMark>PSS</S.MobileBrandMark>
+          <span>{isSuperAdmin ? "Super Admin" : isAdmin ? "Admin" : "Candidato"}</span>
+        </S.MobileBrand>
+        <S.MobileMenuButton
           type="button"
-          onClick={handleSignOut}
-          aria-label="Sair do sistema"
-          title="Sair"
+          onClick={() => setOpen((value) => !value)}
+          aria-label={open ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={open}
         >
-          <S.BottomIcon>
-            <LogOut size={18} />
-          </S.BottomIcon>
-          <S.BottomLabel>Sair</S.BottomLabel>
-        </S.BottomAction>
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </S.MobileMenuButton>
+      </S.MobileHeader>
 
-        <S.BottomAction
-          type="button"
-          onClick={onToggleTheme}
-          aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
-          title={isDark ? "Claro" : "Escuro"}
-        >
-          <S.BottomIcon>
+      {open && <S.MobileScrim onClick={() => setOpen(false)} />}
+
+      <S.MobileDrawer data-open={open}>
+        <S.MobileDrawerHeader>
+          <S.MobileDrawerTitle>Menu</S.MobileDrawerTitle>
+          <S.MobileDrawerSubtitle>
+            Processo Seletivo Simplificado
+          </S.MobileDrawerSubtitle>
+        </S.MobileDrawerHeader>
+
+        <S.MobileNav role="navigation" aria-label="Menu principal">
+          {nav.map((item) => (
+            <S.MobileNavLink
+              key={item.to}
+              as={NavLink}
+              to={item.to}
+              end={item.to === "/"}
+            >
+              <S.MobileNavIcon>{item.icon}</S.MobileNavIcon>
+              <span>{item.label}</span>
+            </S.MobileNavLink>
+          ))}
+        </S.MobileNav>
+
+        <S.MobileDrawerActions>
+          <S.MobileUtilityButton
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
+          >
             {isDark ? <Moon size={18} /> : <Sun size={18} />}
-          </S.BottomIcon>
-          <S.BottomLabel>Tema</S.BottomLabel>
-        </S.BottomAction>
-      </S.BottomBar>
+            <span>{isDark ? "Tema escuro" : "Tema claro"}</span>
+          </S.MobileUtilityButton>
+          <S.MobileLogoutButton type="button" onClick={handleSignOut}>
+            <LogOut size={18} />
+            <span>Sair</span>
+          </S.MobileLogoutButton>
+        </S.MobileDrawerActions>
+      </S.MobileDrawer>
     </>
   );
 }
